@@ -12,7 +12,7 @@ pad.setup = function() {
 	// pad.addCircle({x:0, y:0, r:5});
 
 	// pad.addPoint(20,20,"p0");
-
+	
  //    pad("p0").x=7;
  //    pad("p.*").y=5;
 
