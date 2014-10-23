@@ -395,6 +395,5 @@ $(this.canvas).mouseup(this.mouse.onMouseUp);
 
 
 
-
 };
 
