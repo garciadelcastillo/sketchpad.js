@@ -1,4 +1,3 @@
-
 // ███████╗██╗  ██╗███████╗████████╗ ██████╗██╗  ██╗██████╗  █████╗ ██████╗ ██╗
 // ██╔════╝██║ ██╔╝██╔════╝╚══██╔══╝██╔════╝██║  ██║██╔══██╗██╔══██╗██╔══██╗██║
 // ███████╗█████╔╝ █████╗     ██║   ██║     ███████║██████╔╝███████║██║  ██║██║
@@ -6,280 +5,316 @@
 // ███████║██║  ██╗███████╗   ██║   ╚██████╗██║  ██║██║     ██║  ██║██████╔╝██╗
 // ╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═════╝ ╚═╝
 
+Sketchpad = function(canvasId) {
+
+
+
+// ██████╗  █████╗ ███████╗███████╗
+// ██╔══██╗██╔══██╗██╔════╝██╔════╝
+// ██████╔╝███████║███████╗█████╗  
+// ██╔══██╗██╔══██║╚════██║██╔══╝  
+// ██████╔╝██║  ██║███████║███████╗
+// ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+	
+// Private properties
+var self = this;  // store this context
+this.elements = [];
+this.init = false;
+this.canvas;
+this.canvasId
+this.gr;
+this.parentDiv;
+this.foo;
+
+// Public properties
+this.frameCount = 0;
+
 /**
- * Main Sketchpad namespace
- * @type {[type]}
+ * An 'update' function with code to run on each sketchpad loop.
+ * Will be executed AFTER the render fn.
+ * This is mean to be overriden by the user:
+ *   pad.update = function() {
+ *     point.move(1, 0);  
+ *   };
+ *   
  */
-var Sketchpad = Sketchpad || {};
+this.update = function() { };
+
+/**
+ * The main render function for this Sketchpad
+ */
+this.render = function() {
+	// clean the background
+	self.gr.globalAlpha = 1.00;
+	self.gr.fillStyle = "#ffffff";
+	self.gr.fillRect(0, 0, self.width, self.height);
+
+	// render each element
+	for (var i = 0; i < self.elements.length; i++) {
+	  if (!self.elements[i].visible) continue;
+	  self.elements[i].render(self.gr);
+	}
+};
+
+/**
+ * Main internal auto loop function
+ */
+this.loop = function() {
+	window.requestAnimFrame(self.loop);
+	self.render();
+	self.update();
+	self.frameCount++;
+};
+
+/**
+ * Adds an element to the list of linked objects
+ * @param {Geometry} element 
+ */
+this.addElement = function(element) {
+	self.elements.push(element);
+};
+
+// Initialize canvas
+this.canvasId = canvasId;
+this.canvas = document.getElementById(canvasId);
+if (this.canvas) {
+	this.gr = this.canvas.getContext('2d');
+	this.parentDiv = this.canvas.parentNode;
+	this.width = $(this.parentDiv).innerWidth();
+	this.height = $(this.parentDiv).innerHeight();
+	this.canvas.width = this.width;
+	this.canvas.height = this.height;
+	this.init = true;  // looping kicks in
+	this.loop();
+} else {
+	console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
+		' DOM canvas object, e.g. var pad = new Sketchpad("sketchPadCanvas")');
+	return null;
+}
 
 
-Sketchpad.Canvas = function(canvasId) {
-  this.frameCount = 0;
 
-  this.elements = [];
-  // this.elementdict={};
+//  ██████╗ ███████╗ ██████╗ ███╗   ███╗███████╗████████╗██████╗ ██╗   ██╗
+// ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+// ██║  ███╗█████╗  ██║   ██║██╔████╔██║█████╗     ██║   ██████╔╝ ╚████╔╝ 
+// ██║   ██║██╔══╝  ██║   ██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗  ╚██╔╝  
+// ╚██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   
+//  ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
 
-  this.initialized = false;
+/**
+ * A base Geometry class from with any other graphical object inherits
+ */
+this.Geometry = function() {
+	this.parents = [];
+	this.children = [];
+	this.visible = true;
+};
 
-  this.canvas = document.getElementById(canvasId);
-  this.parentDiv = this.canvas.parentNode;
-  this.gr = this.canvas.getContext('2d');
+/**
+ * Appends a child object to this element
+ * @param {Geometry} child A child object dependant on this element
+ */
+this.Geometry.prototype.addChild = function(child) {
+	this.children.push(child);
+};
 
-  this.width = $(this.parentDiv).innerWidth();
-  this.height = $(this.parentDiv).innerHeight();
-  this.canvas.width = this.width;
-  this.canvas.height = this.height;
+/**
+ * Calls the update methods on each children
+ * @return {[type]} [description]
+ */
+this.Geometry.prototype.updateChildren = function() {
+	for (var i = 0; i < this.children.length; i++) {
+		this.children[i].update();
+	}
+};
 
-  $(this.canvas).mousedown(onMouseDown);
-  $(this.canvas).mousemove(onMouseMove);
-  $(this.canvas).mouseup(onMouseUp);
-
-  // to be overriden by user
-  this.setup = function() { };
-  this.update = function() { };
-
-    // internal rendering function
-  this.render = function() {
-    // clean the background
-    this.gr.globalAlpha = 1.00;
-    this.gr.fillStyle = "#FFFFFF";
-    this.gr.fillRect(0, 0, this.width, this.height);
-
-    // render each element
-    for (var i = 0; i < this.elements.length; i++) {
-      if (!this.elements[i].isVisible) continue;
-      this.elements[i].render(this.gr);
-    }
-  };
-
-  // SOLVE THE LOOP PROBLEM BY STORING THE CONTEXT IN THE CLOSURE
-  var that=this;
-  
-  // main internal loop fn
-  this.loop = function() {
-    window.requestAnimFrame(pad.loop);
-
-    pad.render();
-    pad.update();
-
-    pad.frameCount++;
-  };
+/**
+ * Sets the 'visible' property of an object
+ * @param {Boolean} isVisible
+ */
+this.Geometry.prototype.setVisible = function(isVisible) {
+	this.visible = isVisible;
+};
 
 
-  return this;
+
+// ██████╗  ██████╗ ██╗███╗   ██╗████████╗
+// ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
+// ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   
+// ██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   
+// ██║     ╚██████╔╝██║██║ ╚████║   ██║   
+// ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   
+
+/**
+ * Base Point class, represents coordinates in 2D space
+ * @param {Number} xpos 
+ * @param {Number} ypos 
+ */
+this.Point = function(xpos, ypos) {
+	self.Geometry.call(this);
+	this.pad = self;
+	this.x = xpos;
+	this.y = ypos;
+	this.r = 5;  // for representation when visible
+	this.pad.elements.push(this);
+};
+this.Point.prototype = Object.create(this.Geometry.prototype);
+this.Point.prototype.constructor = this.Point;
+
+/**
+ * Render method
+ */
+this.Point.prototype.render = function() {
+	self.gr.lineWidth = 1.0;
+	self.gr.strokeStyle = "#000";
+	self.gr.beginPath();
+	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+	self.gr.stroke();
+};
+
+/**
+ * Sets the position of the Point
+ * @param {Number} xpos 
+ * @param {Number} ypos 
+ */		
+this.Point.prototype.setPosition = function(xpos, ypos) {
+	this.x = xpos;
+	this.y = ypos;
+	this.updateChildren();
+};
+
+/**
+ * Moves the Point a certain increment
+ * @param  {Number} xinc
+ * @param  {Number} yinc
+ */
+this.Point.prototype.move = function(xinc, yinc) {
+	this.x += xinc;
+	this.y += yinc;
+	this.updateChildren();
+};
+
+
+
+// ██╗     ██╗███╗   ██╗███████╗
+// ██║     ██║████╗  ██║██╔════╝
+// ██║     ██║██╔██╗ ██║█████╗  
+// ██║     ██║██║╚██╗██║██╔══╝  
+// ███████╗██║██║ ╚████║███████╗
+// ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝                             
+
+this.Line = function(startPoint, endPoint) {
+	self.Geometry.call(this);
+
+	self.addElement(this);
+	startPoint.addChild(this);
+	endPoint.addChild(this);
+
+	this.startPoint = startPoint;
+	this.endPoint = endPoint;
+	this.x0 = 0, this.y0 = 0;
+	this.x1 = 0, this.y1 = 0;
+
+	this.update();
+};
+this.Line.prototype = Object.create(this.Geometry.prototype);
+this.Line.prototype.constructor = this.Line;
+
+this.Line.prototype.render = function() {
+	self.gr.beginPath();
+	self.gr.lineWidth = 1.0;
+	self.gr.strokeStyle = "#000"; 
+	self.gr.moveTo(this.x0, this.y0);
+	self.gr.lineTo(this.x1, this.y1);
+	self.gr.stroke();
+}
+
+this.Line.prototype.update = function() {
+	this.x0 = this.startPoint.x;
+	this.y0 = this.startPoint.y;
+	this.x1 = this.endPoint.x;
+	this.y1 = this.endPoint.y;
+	this.updateChildren();
 };
 
 
 
 
 
-Geometry = function() {
-  this.parents = [];
-  this.children = [];
+//  ██████╗██╗██████╗  ██████╗██╗     ███████╗
+// ██╔════╝██║██╔══██╗██╔════╝██║     ██╔════╝
+// ██║     ██║██████╔╝██║     ██║     █████╗  
+// ██║     ██║██╔══██╗██║     ██║     ██╔══╝  
+// ╚██████╗██║██║  ██║╚██████╗███████╗███████╗
+//  ╚═════╝╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚══════╝
 
-  this.isVisible = true;
+this.Circle = function(centerPoint, radius) {
+	self.Geometry.call(this);
+	self.addElement(this);
 
-  this.updateChildren = function() {
-    for (var i = 0; i < this.children.length; i++) {
-      this.children[i].update();
-    }
-  };
+	centerPoint.addChild(this);
+	this.centerPoint = centerPoint;
+	this.r = radius;
+	this.x = 0, this.y = 0;
 
-  this.setVisible = function(isVisible) {
-    this.isVisible = isVisible;
-  };
+	this.update();
+};
+this.Circle.prototype = Object.create(this.Geometry.prototype);
+this.Circle.prototype.constructor = this.Circle;
+
+this.Circle.prototype.render = function() {
+	self.gr.lineWidth = 1.0;
+	self.gr.strokeStyle = "#000"; 
+	self.gr.beginPath();
+	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+	self.gr.stroke();
+};
+
+this.Circle.prototype.update = function() {
+	this.x = this.centerPoint.x;
+	this.y = this.centerPoint.y;
+	this.updateChildren();
 };
 
 
-Point = function(canvas, xpos, ypos) {
-  Geometry.call(this); // call the parent constructor
 
-  this.x = xpos;
-  this.y = ypos;
-  this.r = 5;
+// ██████╗ ███████╗ ██████╗████████╗ █████╗ ███╗   ██╗ ██████╗ ██╗     ███████╗
+// ██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔══██╗████╗  ██║██╔════╝ ██║     ██╔════╝
+// ██████╔╝█████╗  ██║        ██║   ███████║██╔██╗ ██║██║  ███╗██║     █████╗  
+// ██╔══██╗██╔══╝  ██║        ██║   ██╔══██║██║╚██╗██║██║   ██║██║     ██╔══╝  
+// ██║  ██║███████╗╚██████╗   ██║   ██║  ██║██║ ╚████║╚██████╔╝███████╗███████╗
+// ╚═╝  ╚═╝╚══════╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝
 
-  canvas.elements.push(this);
+this.Rectangle = function(basePoint, width, height) {
+	self.Geometry.call(this);
+	self.addElement(this);
 
-  this.setPosition = function(xpos, ypos) {
-    this.x = xpos;
-    this.y = ypos;
-    this.updateChildren();
-  };
+	basePoint.addChild(this);
+	this.basePoint = basePoint;
+	this.w = width;
+	this.h = height;
+	this.x0 = 0, this.y0 = 0;
 
-  this.move = function(incX, incY) {
-    this.x += incX;
-    this.y += incY;
-
-
-
-    this.updateChildren();
-  };
-
-  this.render = function(gr) {
-    gr.lineWidth = 1.0;
-    gr.strokeStyle = "#000";
-    // gr.fillStyle = '#ddd';
-    gr.beginPath();
-    gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-    // gr.fill();
-    gr.stroke();
-  };
+	this.update();
 };
-Point.prototype = Object.create(Geometry.prototype);
-Point.prototype.constructor = Point;
+this.Rectangle.prototype = Object.create(this.Geometry.prototype);
+this.Rectangle.prototype.constructor = this.Rectangle;
 
-
-PointAt = function(canvas, parentLine, parameter) {
-  Geometry.call(this);
-
-  parentLine.children.push(this);
-  canvas.elements.push(this);
-
-  this.parentLine = parentLine;
-  this.parameter = parameter;
-  this.r = 5;
-
-  this.setParameter = function(parameter) {
-    this.parameter = parameter;
-    this.update();
-    this.updateChildren();
-  }
-
-  this.update = function() {
-    this.x = this.parentLine.x0 + this.parameter * (this.parentLine.x1 - this.parentLine.x0);
-    this.y = this.parentLine.y0 + this.parameter * (this.parentLine.y1 - this.parentLine.y0);
-    this.updateChildren();
-  };
-
-  this.render = function(gr) {
-    gr.lineWidth = 1.0;
-    gr.strokeStyle = "#000"; 
-    gr.beginPath();
-    gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-    gr.stroke();
-  };
-
-  this.update();
+this.Rectangle.prototype.render = function() {
+	self.gr.lineWidth = 1.0;
+	self.gr.strokeStyle = "#000"; 
+	self.gr.beginPath();
+	self.gr.rect(this.x0, this.y0, this.w, this.h);
+	self.gr.stroke();
 };
-PointAt.prototype = Object.create(Geometry.prototype);
-PointAt.prototype.constructor = PointAt;
 
-
-Line = function(canvas, startPoint, endPoint) {
-  Geometry.call(this);
-
-  startPoint.children.push(this);
-  endPoint.children.push(this);
-  canvas.elements.push(this);
-
-  this.startPoint = startPoint;
-  this.endPoint = endPoint;
-
-  this.render = function(gr) {
-    gr.beginPath();
-    gr.lineWidth = 1.0;
-    gr.strokeStyle = "#000"; 
-    gr.moveTo(this.x0, this.y0);
-    gr.lineTo(this.x1, this.y1);
-    gr.stroke();
-  };
-
-  this.update = function() {
-    this.x0 = this.startPoint.x;
-    this.y0 = this.startPoint.y;
-    this.x1 = this.endPoint.x;
-    this.y1 = this.endPoint.y;
-    this.updateChildren();
-  };
-  
-  // this.x0 = this.startPoint.x;
-  // this.y0 = this.startPoint.y;
-  // this.x1 = this.endPoint.x;
-  // this.y1 = this.endPoint.y;
-  this.update();
-
+this.Rectangle.prototype.update = function() {
+	this.x0 = this.basePoint.x;
+	this.y0 = this.basePoint.y;
+	this.updateChildren();
 };
-Line.prototype = Object.create(Geometry.prototype);
-Line.prototype.constructor = Line;
 
 
-
-
-Circle = function(canvas, centerPoint, radius) {
-  Geometry.call(this);
-
-  centerPoint.children.push(this);
-  canvas.elements.push(this);
-
-  this.centerPoint = centerPoint;
-  this.r = radius;
-
-  this.render = function(gr) {
-    gr.lineWidth = 1.0;
-    gr.strokeStyle = "#000"; 
-    gr.beginPath();
-    gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-    gr.stroke();
-  };
-
-  this.update = function() {
-    this.x = this.centerPoint.x;
-    this.y = this.centerPoint.y;
-    this.updateChildren();
-  };
-
-  this.update();
-
-};
-Circle.prototype = Object.create(Geometry.prototype);
-Circle.prototype.constructor = Circle;
-
-
-
-Rectangle = function(canvas, basePoint, width, height) {
-  Geometry.call(this);
-
-  basePoint.children.push(this);
-  canvas.elements.push(this);
-
-  this.basePoint = basePoint;
-  this.w = width;
-  this.h = height;
-
-  this.render = function(gr) {
-    gr.lineWidth = 1.0;
-    gr.strokeStyle = "#000"; 
-    gr.beginPath();
-    gr.rect(this.x0, this.y0, this.w, this.h);
-    gr.stroke();
-  };
-
-  this.update = function() {
-    this.x0 = this.basePoint.x;
-    this.y0 = this.basePoint.y;
-    this.updateChildren();
-  };
-
-  this.update();
-
-};
-Rectangle.prototype = Object.create(Geometry.prototype);
-Rectangle.prototype.constructor = Rectangle;
-
-Rectangle.prototype.pointAtCenter = function(canvas) {
-
-  var p = new Point(canvas, 0, 0);
-  this.children.push(p);
-  p.parentRectangle = this;
-  p.update = function() {
-    this.x = this.parentRectangle.x0 + this.parentRectangle.w / 2;
-    this.y = this.parentRectangle.y0 + this.parentRectangle.h / 2;
-    this.updateChildren();
-  };
-  p.update();
-
-  return p;
-};
 
 
 
@@ -302,48 +337,63 @@ Rectangle.prototype.pointAtCenter = function(canvas) {
 // ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝███████║███████╗
 // ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
 
-var mouse = {
-  x: 0,
-  y: 0,
-  down: false,
-  downX: 0,
-  downY: 0,
-  dragObject: null
+/**
+ * A mouse object encapsulating state-based properties and mouse events
+ * @type {Object}
+ */
+this.mouse = {
+	x: 0,
+	y: 0,
+	down: false,
+	downX: 0,
+	downY: 0,
+	dragObject: null,
+
+	dist2ToPoint: function (x, y, point) {
+		return (point.x - x) * (point.x - x) + (point.y - y) * (point.y - y);
+	},
+
+	searchPointToDrag: function (x, y) {
+		for (var len = self.elements.length, i = 0; i < len; i++) {
+			var elem = self.elements[i];
+			if (elem.constructor != self.Point) continue;
+			if (this.dist2ToPoint(x, y, elem) < 25) return elem;		// <--- SUPER DIRTY, NEEDS IMPROV
+		}
+		return null;
+	},
+
+	onMouseDown: function (e) {
+		self.mouse.down = true;
+		self.mouse.downX = self.mouse.x;
+		self.mouse.downY = self.mouse.y;
+		self.mouse.dragObject = self.mouse.searchPointToDrag(self.mouse.downX, self.mouse.downY);
+	},
+
+	onMouseMove: function (e) {
+		var offset = $(self.canvas).offset();
+		self.mouse.x = e.pageX - offset.left;
+		self.mouse.y = e.pageY - offset.top;
+		if (self.mouse.dragObject) {
+			self.mouse.dragObject.x = self.mouse.x;
+			self.mouse.dragObject.y = self.mouse.y;
+			self.mouse.dragObject.updateChildren();
+		}
+	},
+
+	onMouseUp: function (e) {
+		self.mouse.down = false;
+		self.mouse.dragObject = null;
+	}
 };
 
-function onMouseDown(e) {
-  mouse.down = true;
-  mouse.downX = mouse.x;
-  mouse.downY = mouse.y;
-  mouse.dragObject = searchPointToDrag(mouse.downX, mouse.downY);
-};
-
-function onMouseMove(e) {
-  var offset = $(pad.canvas).offset();
-  mouse.x = e.pageX - offset.left;
-  mouse.y = e.pageY - offset.top;
-  if (mouse.dragObject) {
-    mouse.dragObject.x = mouse.x;
-    mouse.dragObject.y = mouse.y;
-    mouse.dragObject.updateChildren();
-  }
-};
-
-function onMouseUp(e) {
-  mouse.down = false;
-  mouse.dragObject = null;
-};
+$(this.canvas).mousedown(this.mouse.onMouseDown);
+$(this.canvas).mousemove(this.mouse.onMouseMove);
+$(this.canvas).mouseup(this.mouse.onMouseUp);
 
 
-function searchPointToDrag(x, y) {
-  for (var len = pad.elements.length, i = 0; i < len; i++) {
-    var elem = pad.elements[i];
-    if (elem.constructor != Point) continue;
-    if (dist2ToPoint(x, y, elem) < 25) return elem;
-  }
-  return null;
+
+
+
+
 };
 
-function dist2ToPoint(x, y, point) {
-  return (point.x - x) * (point.x - x) + (point.y - y) * (point.y - y);
-};
