@@ -68,7 +68,7 @@ this.loop = function() {
 
 /**
  * Adds an element to the list of linked objects
- * @param {Geometry} element 
+ * @param {Element} element 
  */
 this.addElement = function(element) {
 	self.elements.push(element);
@@ -94,17 +94,21 @@ if (this.canvas) {
 
 
 
-//  ██████╗ ███████╗ ██████╗ ███╗   ███╗███████╗████████╗██████╗ ██╗   ██╗
-// ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
-// ██║  ███╗█████╗  ██║   ██║██╔████╔██║█████╗     ██║   ██████╔╝ ╚████╔╝ 
-// ██║   ██║██╔══╝  ██║   ██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗  ╚██╔╝  
-// ╚██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   
-//  ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
+
+
+// ███████╗██╗     ███████╗███╗   ███╗███████╗███╗   ██╗████████╗
+// ██╔════╝██║     ██╔════╝████╗ ████║██╔════╝████╗  ██║╚══██╔══╝
+// █████╗  ██║     █████╗  ██╔████╔██║█████╗  ██╔██╗ ██║   ██║   
+// ██╔══╝  ██║     ██╔══╝  ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   
+// ███████╗███████╗███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   
+// ╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝                                                         
 
 /**
- * A base Geometry class from with any other graphical object inherits
+ * A base Element class from which any associative object inherits
+ * @comment Should probably implement a middleware Geometry class to 
+ * differentiate from Style or Measure elements
  */
-this.Geometry = function() {
+this.Element = function() {
 	this.parents = [];
 	this.children = [];
 	this.visible = true;
@@ -112,9 +116,9 @@ this.Geometry = function() {
 
 /**
  * Appends a child object to this element
- * @param {Geometry} child A child object dependant on this element
+ * @param {Element} child A child object dependant on this element
  */
-this.Geometry.prototype.addChild = function(child) {
+this.Element.prototype.addChild = function(child) {
 	this.children.push(child);
 };
 
@@ -122,7 +126,7 @@ this.Geometry.prototype.addChild = function(child) {
  * Calls the update methods on each children
  * @return {[type]} [description]
  */
-this.Geometry.prototype.updateChildren = function() {
+this.Element.prototype.updateChildren = function() {
 	for (var i = 0; i < this.children.length; i++) {
 		this.children[i].update();
 	}
@@ -132,7 +136,7 @@ this.Geometry.prototype.updateChildren = function() {
  * Sets the 'visible' property of an object
  * @param {Boolean} isVisible
  */
-this.Geometry.prototype.setVisible = function(isVisible) {
+this.Element.prototype.setVisible = function(isVisible) {
 	this.visible = isVisible;
 };
 
@@ -151,14 +155,14 @@ this.Geometry.prototype.setVisible = function(isVisible) {
  * @param {Number} ypos 
  */
 this.Point = function(xpos, ypos) {
-	self.Geometry.call(this);
+	self.Element.call(this);
 	this.pad = self;
 	this.x = xpos;
 	this.y = ypos;
 	this.r = 5;  // for representation when visible
 	this.pad.elements.push(this);
 };
-this.Point.prototype = Object.create(this.Geometry.prototype);
+this.Point.prototype = Object.create(this.Element.prototype);
 this.Point.prototype.constructor = this.Point;
 
 /**
@@ -203,39 +207,73 @@ this.Point.prototype.move = function(xinc, yinc) {
 // ███████╗██║██║ ╚████║███████╗
 // ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝                             
 
-this.Line = function(startPoint, endPoint) {
-	self.Geometry.call(this);
+/**
+ * Base primitive Line class, constructed from x y coordinates 
+ * @param {Number} xpos0 
+ * @param {Number} ypos0 
+ * @param {Number} xpos1 
+ * @param {Number} ypos1 
+ */
+this.Line = function(xpos0, ypos0, xpos1, ypos1) {
+  self.Element.call(this);
+  self.addElement(this);
 
-	self.addElement(this);
-	startPoint.addChild(this);
-	endPoint.addChild(this);
-
-	this.startPoint = startPoint;
-	this.endPoint = endPoint;
-	this.x0 = 0, this.y0 = 0;
-	this.x1 = 0, this.y1 = 0;
-
-	this.update();
+  this.x0 = xpos0;
+  this.y0 = ypos0;
+  this.x1 = xpos1;
+  this.y1 = ypos1;
 };
-this.Line.prototype = Object.create(this.Geometry.prototype);
+this.Line.prototype = Object.create(this.Element.prototype);
 this.Line.prototype.constructor = this.Line;
 
+/**
+ * Render method
+ */
 this.Line.prototype.render = function() {
-	self.gr.beginPath();
-	self.gr.lineWidth = 1.0;
-	self.gr.strokeStyle = "#000"; 
-	self.gr.moveTo(this.x0, this.y0);
-	self.gr.lineTo(this.x1, this.y1);
-	self.gr.stroke();
-}
-
-this.Line.prototype.update = function() {
-	this.x0 = this.startPoint.x;
-	this.y0 = this.startPoint.y;
-	this.x1 = this.endPoint.x;
-	this.y1 = this.endPoint.y;
-	this.updateChildren();
+  self.gr.beginPath();
+  self.gr.lineWidth = 1.0;
+  self.gr.strokeStyle = "#000"; 
+  self.gr.moveTo(this.x0, this.y0);
+  self.gr.lineTo(this.x1, this.y1);
+  self.gr.stroke();
 };
+
+
+
+
+// this.Line = function(startPoint, endPoint) {
+// 	self.Element.call(this);
+
+// 	self.addElement(this);
+// 	startPoint.addChild(this);
+// 	endPoint.addChild(this);
+
+// 	this.startPoint = startPoint;
+// 	this.endPoint = endPoint;
+// 	this.x0 = 0, this.y0 = 0;
+// 	this.x1 = 0, this.y1 = 0;
+
+// 	this.update();
+// };
+// this.Line.prototype = Object.create(this.Element.prototype);
+// this.Line.prototype.constructor = this.Line;
+
+// this.Line.prototype.render = function() {
+// 	self.gr.beginPath();
+// 	self.gr.lineWidth = 1.0;
+// 	self.gr.strokeStyle = "#000"; 
+// 	self.gr.moveTo(this.x0, this.y0);
+// 	self.gr.lineTo(this.x1, this.y1);
+// 	self.gr.stroke();
+// }
+
+// this.Line.prototype.update = function() {
+// 	this.x0 = this.startPoint.x;
+// 	this.y0 = this.startPoint.y;
+// 	this.x1 = this.endPoint.x;
+// 	this.y1 = this.endPoint.y;
+// 	this.updateChildren();
+// };
 
 
 
@@ -248,33 +286,62 @@ this.Line.prototype.update = function() {
 // ╚██████╗██║██║  ██║╚██████╗███████╗███████╗
 //  ╚═════╝╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚══════╝
 
-this.Circle = function(centerPoint, radius) {
-	self.Geometry.call(this);
-	self.addElement(this);
+/**
+ * Base primitive Circle method, created from x y coords and radius
+ * @param {Number} xpos   
+ * @param {Number} ypos   
+ * @param {Number} radius 
+ */
+this.Circle = function(xpos, ypos, radius) {
+  self.Element.call(this);
+  self.addElement(this);
 
-	centerPoint.addChild(this);
-	this.centerPoint = centerPoint;
-	this.r = radius;
-	this.x = 0, this.y = 0;
-
-	this.update();
+  this.x = xpos;
+  this.y = ypos;
+  this.r = radius;
 };
-this.Circle.prototype = Object.create(this.Geometry.prototype);
+this.Circle.prototype = Object.create(this.Element.prototype);
 this.Circle.prototype.constructor = this.Circle;
 
+/**
+ * Render method
+ */
 this.Circle.prototype.render = function() {
-	self.gr.lineWidth = 1.0;
-	self.gr.strokeStyle = "#000"; 
-	self.gr.beginPath();
-	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-	self.gr.stroke();
+  self.gr.lineWidth = 1.0;
+  self.gr.strokeStyle = "#000"; 
+  self.gr.beginPath();
+  self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+  self.gr.stroke();
 };
 
-this.Circle.prototype.update = function() {
-	this.x = this.centerPoint.x;
-	this.y = this.centerPoint.y;
-	this.updateChildren();
-};
+
+// this.Circle = function(centerPoint, radius) {
+// 	self.Element.call(this);
+// 	self.addElement(this);
+
+// 	centerPoint.addChild(this);
+// 	this.centerPoint = centerPoint;
+// 	this.r = radius;
+// 	this.x = 0, this.y = 0;
+
+// 	this.update();
+// };
+// this.Circle.prototype = Object.create(this.Element.prototype);
+// this.Circle.prototype.constructor = this.Circle;
+
+// this.Circle.prototype.render = function() {
+// 	self.gr.lineWidth = 1.0;
+// 	self.gr.strokeStyle = "#000"; 
+// 	self.gr.beginPath();
+// 	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+// 	self.gr.stroke();
+// };
+
+// this.Circle.prototype.update = function() {
+// 	this.x = this.centerPoint.x;
+// 	this.y = this.centerPoint.y;
+// 	this.updateChildren();
+// };
 
 
 
@@ -285,34 +352,36 @@ this.Circle.prototype.update = function() {
 // ██║  ██║███████╗╚██████╗   ██║   ██║  ██║██║ ╚████║╚██████╔╝███████╗███████╗
 // ╚═╝  ╚═╝╚══════╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝
 
-this.Rectangle = function(basePoint, width, height) {
-	self.Geometry.call(this);
-	self.addElement(this);
+// TEMP OFF
 
-	basePoint.addChild(this);
-	this.basePoint = basePoint;
-	this.w = width;
-	this.h = height;
-	this.x0 = 0, this.y0 = 0;
+// this.Rectangle = function(basePoint, width, height) {
+// 	self.Element.call(this);
+// 	self.addElement(this);
 
-	this.update();
-};
-this.Rectangle.prototype = Object.create(this.Geometry.prototype);
-this.Rectangle.prototype.constructor = this.Rectangle;
+// 	basePoint.addChild(this);
+// 	this.basePoint = basePoint;
+// 	this.w = width;
+// 	this.h = height;
+// 	this.x0 = 0, this.y0 = 0;
 
-this.Rectangle.prototype.render = function() {
-	self.gr.lineWidth = 1.0;
-	self.gr.strokeStyle = "#000"; 
-	self.gr.beginPath();
-	self.gr.rect(this.x0, this.y0, this.w, this.h);
-	self.gr.stroke();
-};
+// 	this.update();
+// };
+// this.Rectangle.prototype = Object.create(this.Element.prototype);
+// this.Rectangle.prototype.constructor = this.Rectangle;
 
-this.Rectangle.prototype.update = function() {
-	this.x0 = this.basePoint.x;
-	this.y0 = this.basePoint.y;
-	this.updateChildren();
-};
+// this.Rectangle.prototype.render = function() {
+// 	self.gr.lineWidth = 1.0;
+// 	self.gr.strokeStyle = "#000"; 
+// 	self.gr.beginPath();
+// 	self.gr.rect(this.x0, this.y0, this.w, this.h);
+// 	self.gr.stroke();
+// };
+
+// this.Rectangle.prototype.update = function() {
+// 	this.x0 = this.basePoint.x;
+// 	this.y0 = this.basePoint.y;
+// 	this.updateChildren();
+// };
 
 
 
