@@ -8,7 +8,7 @@ body {
 	height: 100%;
 }
 
-/*#sketchpaddiv 
+#sketchpaddiv 
 {
     background-color:#000000;
     float: left;
@@ -20,9 +20,9 @@ body {
     border: 1px solid #000;
 }
 
-#sketchpad
+#sketchPadCanvas
 {
     position:absolute;
     left:0;
     top:0;
-}*/
+}

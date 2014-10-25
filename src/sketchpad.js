@@ -7,6 +7,10 @@
 
 Sketchpad = function(canvasId) {
 
+// Some internal constants
+this.POINT = 1;
+this.LINE = 2;
+this.CIRCLE = 3;
 
 
 // ██████╗  █████╗ ███████╗███████╗
@@ -36,7 +40,6 @@ this.frameCount = 0;
  *   pad.update = function() {
  *     point.move(1, 0);  
  *   };
- *   
  */
 this.update = function() { };
 
@@ -91,6 +94,109 @@ if (this.canvas) {
 		' DOM canvas object, e.g. var pad = new Sketchpad("sketchPadCanvas")');
 	return null;
 }
+
+
+
+
+
+//  ██████╗ ███████╗ ██████╗  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
+// ██╔════╝ ██╔════╝██╔═══██╗██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
+// ██║  ███╗█████╗  ██║   ██║██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
+// ██║   ██║██╔══╝  ██║   ██║██║     ██║   ██║██║╚██╗██║╚════██║   ██║   
+// ╚██████╔╝███████╗╚██████╔╝╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   
+//  ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   
+
+/**
+ * An library to store all independent Geometry construction functions
+ * @type {Object}
+ */
+this.G = {
+
+  /**
+   * Create a Point along a Line at the relative length 'parameter'
+   * @param  {Line} line      
+   * @param  {Number} parameter Relative length along the line
+   * @return {Point}           
+   */
+  pointOnLine: function(line, parameter) {
+    var p = new self.Point(0, 0);
+    line.addChild(p);
+    p.parentLine = line;
+    p.parameter = parameter;
+    p.update = function() {
+      this.x = this.parentLine.x0 + this.parameter * (this.parentLine.x1 - this.parentLine.x0);
+      this.y = this.parentLine.y0 + this.parameter * (this.parentLine.y1 - this.parentLine.y0);
+      this.updateChildren();
+    };
+    p.setParameter = function(parameter) {
+      this.parameter = parameter;
+      this.update();
+    };
+    p.update();
+    return p;
+  },
+
+  /**
+   * Create a Point along a Circle at the relative length 'parameter'
+   * @param  {Circle} circle
+   * @param  {Number} parameter
+   * @return {Point}
+   */
+  pointOnCircle: function(circle, parameter) {
+    var p = new self.Point(0, 0);
+    circle.addChild(p);
+    p.parentCircle = circle;
+    p.parameter = parameter;
+    p.update = function() {
+      var a = (this.parameter % 1) * 180 / Math.PI;  // does this work for negative numbers?
+      this.x = this.parentCircle.x + this.parentCircle.r * Math.cos(a);
+      this.y = this.parentCircle.y + this.parentCircle.r * Math.sin(a);
+    };
+    p.setParameter = function(parameter) {
+      this.parameter = parameter;
+      this.update();
+    };
+    p.update();
+    return p;
+  },
+
+  /**
+   * Create a Line from two Points
+   * @param  {Point} startPoint 
+   * @param  {Point} endPoint   
+   * @return {Line}
+   */
+  lineFromTwoPoints: function(startPoint, endPoint) {
+    var lin  = new self.Line(0, 0, 0, 0);
+    startPoint.addChild(lin);
+    endPoint.addChild(lin);
+    lin.startPoint = startPoint;
+    lin.endPoint = endPoint;
+    lin.update = function() {
+      this.x0 = this.startPoint.x;
+      this.y0 = this.startPoint.y;
+      this.x1 = this.endPoint.x;
+      this.y1 = this.endPoint.y;
+      this.updateChildren();
+    };
+    lin.update();
+    return lin;
+  },
+
+  circleFromPointAndRadius: function(centerPoint, radius) {
+    var c = new self.Circle(0, 0, radius);
+    centerPoint.addChild(c);
+    c.centerPoint = centerPoint;
+    c.update = function() {
+      this.x = this.centerPoint.x;
+      this.y = this.centerPoint.y;
+      this.updateChildren();
+    };
+    c.update();
+    return c;
+  }
+};
+
 
 
 
@@ -157,6 +263,7 @@ this.Element.prototype.setVisible = function(isVisible) {
 this.Point = function(xpos, ypos) {
 	self.Element.call(this);
 	this.pad = self;
+  this.type = self.POINT;
 	this.x = xpos;
 	this.y = ypos;
 	this.r = 5;  // for representation when visible
@@ -198,6 +305,26 @@ this.Point.prototype.move = function(xinc, yinc) {
 	this.updateChildren();
 };
 
+/**
+ * A constructor method to create a Point along certain Geometry
+ * The method discriminates valid geometric/numeric inputs, and returns the possible
+ * Point/s (if possible)
+ * @param  {Geometry} geom
+ * @param  {Number} parameter
+ * @return {Point}
+ */
+this.Point.along = function(geom, parameter) {
+  switch(geom.type) {
+    case self.LINE:
+      return self.G.pointOnLine(geom, parameter);
+    case self.CIRCLE:
+      return self.G.pointOnCircle(geom, parameter);
+    default:
+      console.error('Sketchpad: invalid arguments for Point.along');
+      return undefined;
+  };
+};
+
 
 
 // ██╗     ██╗███╗   ██╗███████╗
@@ -218,6 +345,7 @@ this.Line = function(xpos0, ypos0, xpos1, ypos1) {
   self.Element.call(this);
   self.addElement(this);
 
+  this.type = self.LINE;
   this.x0 = xpos0;
   this.y0 = ypos0;
   this.x1 = xpos1;
@@ -238,44 +366,19 @@ this.Line.prototype.render = function() {
   self.gr.stroke();
 };
 
-
-
-
-// this.Line = function(startPoint, endPoint) {
-// 	self.Element.call(this);
-
-// 	self.addElement(this);
-// 	startPoint.addChild(this);
-// 	endPoint.addChild(this);
-
-// 	this.startPoint = startPoint;
-// 	this.endPoint = endPoint;
-// 	this.x0 = 0, this.y0 = 0;
-// 	this.x1 = 0, this.y1 = 0;
-
-// 	this.update();
-// };
-// this.Line.prototype = Object.create(this.Element.prototype);
-// this.Line.prototype.constructor = this.Line;
-
-// this.Line.prototype.render = function() {
-// 	self.gr.beginPath();
-// 	self.gr.lineWidth = 1.0;
-// 	self.gr.strokeStyle = "#000"; 
-// 	self.gr.moveTo(this.x0, this.y0);
-// 	self.gr.lineTo(this.x1, this.y1);
-// 	self.gr.stroke();
-// }
-
-// this.Line.prototype.update = function() {
-// 	this.x0 = this.startPoint.x;
-// 	this.y0 = this.startPoint.y;
-// 	this.x1 = this.endPoint.x;
-// 	this.y1 = this.endPoint.y;
-// 	this.updateChildren();
-// };
-
-
+/**
+ * A constructor method to create a Line between two Geometry elements
+ * @param  {Geometry} startPoint
+ * @param  {Geometry} endPoint
+ * @return {Line}
+ */
+this.Line.between = function(startPoint, endPoint) {
+  if (startPoint.type == self.POINT && endPoint.type == self.POINT) {
+    return self.G.lineFromTwoPoints(startPoint, endPoint);
+  }
+  console.error('Sketchpad: invalid arguments for Line.between');
+  return undefined;
+};
 
 
 
@@ -296,6 +399,7 @@ this.Circle = function(xpos, ypos, radius) {
   self.Element.call(this);
   self.addElement(this);
 
+  this.type = self.CIRCLE;
   this.x = xpos;
   this.y = ypos;
   this.r = radius;
@@ -314,34 +418,19 @@ this.Circle.prototype.render = function() {
   self.gr.stroke();
 };
 
-
-// this.Circle = function(centerPoint, radius) {
-// 	self.Element.call(this);
-// 	self.addElement(this);
-
-// 	centerPoint.addChild(this);
-// 	this.centerPoint = centerPoint;
-// 	this.r = radius;
-// 	this.x = 0, this.y = 0;
-
-// 	this.update();
-// };
-// this.Circle.prototype = Object.create(this.Element.prototype);
-// this.Circle.prototype.constructor = this.Circle;
-
-// this.Circle.prototype.render = function() {
-// 	self.gr.lineWidth = 1.0;
-// 	self.gr.strokeStyle = "#000"; 
-// 	self.gr.beginPath();
-// 	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-// 	self.gr.stroke();
-// };
-
-// this.Circle.prototype.update = function() {
-// 	this.x = this.centerPoint.x;
-// 	this.y = this.centerPoint.y;
-// 	this.updateChildren();
-// };
+/**
+ * A constructor method to create a Circle from a center point and radius
+ * @param  {Point} centerPoint
+ * @param  {Number} radius
+ * @return {Circle}
+ */
+this.Circle.centerRadius = function(centerPoint, radius) {
+  if (centerPoint.type == self.POINT && typeof radius === 'number') {
+    return self.G.circleFromPointAndRadius(centerPoint, radius);
+  }
+  console.error('Sketchpad: invalid arguments for Line.centerRadius');
+  return undefined;
+};
 
 
 
