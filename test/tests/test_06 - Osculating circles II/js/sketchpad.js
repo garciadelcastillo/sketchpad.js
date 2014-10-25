@@ -34,13 +34,6 @@ this.parentDiv;
 // Public properties
 this.frameCount = 0;
 
-// State-based flags
-/**
- * If false, new geometry will not be visible
- * @type {Boolean}
- */
-this.drawVisible = true;
-
 /**
  * An 'update' function with code to run on each sketchpad loop.
  * Will be executed AFTER the render fn.
@@ -83,20 +76,6 @@ this.loop = function() {
  */
 this.addElement = function(element) {
 	self.elements.push(element);
-};
-
-/**
- * Turns on drawing visible geometry mode
- */
-this.visible = function() {
-  this.drawVisible = true;
-};
-
-/**
- * Turns off drawing visible geometry mode
- */
-this.invisible = function() {
-  this.drawVisible = false;
 };
 
 // Initialize canvas
@@ -268,14 +247,6 @@ this.Element.prototype.setVisible = function(isVisible) {
 	this.visible = isVisible;
 };
 
-/**
- * Checks pad state-based flags and sets properties accordingly
- * @return {[type]} [description]
- */
-this.Element.prototype.checkStates = function() {
-  this.visible = self.drawVisible;
-};
-
 
 
 // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
@@ -299,8 +270,6 @@ this.Point = function(xpos, ypos) {
 	this.x = xpos;
 	this.y = ypos;
 	this.r = 5;  // for representation when visible
-
-  this.checkStates();
 };
 this.Point.prototype = Object.create(this.Element.prototype);
 this.Point.prototype.constructor = this.Point;
@@ -383,8 +352,6 @@ this.Line = function(xpos0, ypos0, xpos1, ypos1) {
   this.y0 = ypos0;
   this.x1 = xpos1;
   this.y1 = ypos1;
-
-  this.checkStates();
 };
 this.Line.prototype = Object.create(this.Element.prototype);
 this.Line.prototype.constructor = this.Line;
@@ -438,8 +405,6 @@ this.Circle = function(xpos, ypos, radius) {
   this.x = xpos;
   this.y = ypos;
   this.r = radius;
-
-  this.checkStates();
 };
 this.Circle.prototype = Object.create(this.Element.prototype);
 this.Circle.prototype.constructor = this.Circle;
