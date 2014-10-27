@@ -12,6 +12,11 @@ this.POINT = 1;
 this.LINE = 2;
 this.CIRCLE = 3;
 
+this.LENGTH = 11;
+this.AREA = 12;
+this.VOLUME = 13;
+this.ANGLE = 14;
+
 
 // ██████╗  █████╗ ███████╗███████╗
 // ██╔══██╗██╔══██╗██╔════╝██╔════╝
@@ -129,7 +134,7 @@ if (this.canvas) {
 //  ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   
 
 /**
- * An library to store all independent Geometry construction functions
+ * A library to store all independent Geometry construction functions
  * @type {Object}
  */
 this.G = {
@@ -216,10 +221,25 @@ this.G = {
     };
     c.update();
     return c;
+  }, 
+
+  circleFromPointAndMeasure: function(centerPoint, measure) {
+    var c = new self.Circle(0, 0, 0);
+    centerPoint.addChild(c);
+    measure.addChild(c);
+    c.centerPoint = centerPoint;
+    c.parentMeasure = measure;
+    c.update = function() {
+      this.x = this.centerPoint.x;
+      this.y = this.centerPoint.y;
+      this.r = this.parentMeasure.value;
+      this.updateChildren();
+    };
+    c.update();
+    return c;
   }
+
 };
-
-
 
 
 
@@ -464,6 +484,8 @@ this.Circle.prototype.render = function() {
 this.Circle.centerRadius = function(centerPoint, radius) {
   if (centerPoint.type == self.POINT && typeof radius === 'number') {
     return self.G.circleFromPointAndRadius(centerPoint, radius);
+  } else if (centerPoint.type == self.POINT && radius.type == self.LENGTH) {
+    return self.G.circleFromPointAndMeasure(centerPoint, radius);
   }
   console.error('Sketchpad: invalid arguments for Line.centerRadius');
   return undefined;
@@ -508,6 +530,82 @@ this.Circle.centerRadius = function(centerPoint, radius) {
 // 	this.y0 = this.basePoint.y;
 // 	this.updateChildren();
 // };
+
+
+
+
+
+
+
+// ███╗   ███╗███████╗ █████╗ ███████╗██╗   ██╗ ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
+// ████╗ ████║██╔════╝██╔══██╗██╔════╝██║   ██║██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
+// ██╔████╔██║█████╗  ███████║███████╗██║   ██║██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
+// ██║╚██╔╝██║██╔══╝  ██╔══██║╚════██║██║   ██║██║     ██║   ██║██║╚██╗██║╚════██║   ██║   
+// ██║ ╚═╝ ██║███████╗██║  ██║███████║╚██████╔╝╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   
+// ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   
+
+/**
+ * A library to store all independent Measure construction functions
+ * @type {Object}
+ */
+this.M = {
+
+  distanceBetweenTwoPoints: function(p0, p1) {
+    var m = new self.Measure(0);
+    p0.addChild(m);
+    p1.addChild(m);
+    m.type = self.LENGTH;
+    m.startPoint = p0;
+    m.endPoint = p1;
+    m.update = function() {
+      var dx = p1.x - p0.x,
+          dy = p1.y - p0.y;
+      this.value = Math.sqrt(dx * dx + dy * dy);
+      this.updateChildren();
+    };
+    m.update();
+    return m;
+  }
+
+};
+
+
+
+
+// ███╗   ███╗███████╗ █████╗ ███████╗██╗   ██╗██████╗ ███████╗
+// ████╗ ████║██╔════╝██╔══██╗██╔════╝██║   ██║██╔══██╗██╔════╝
+// ██╔████╔██║█████╗  ███████║███████╗██║   ██║██████╔╝█████╗  
+// ██║╚██╔╝██║██╔══╝  ██╔══██║╚════██║██║   ██║██╔══██╗██╔══╝  
+// ██║ ╚═╝ ██║███████╗██║  ██║███████║╚██████╔╝██║  ██║███████╗
+// ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+
+this.Measure = function(value) {
+  self.Element.call(this);
+  self.addElement(this);
+
+  this.value = value;
+  this.visible = false;  // temp workaround to avoid rendering Measure objects
+};
+this.Measure.prototype = Object.create(this.Element.prototype);
+this.Measure.prototype.constructor = this.Measure;
+
+
+this.Measure.distance = function(element0, element1) {
+  if (element0.type == self.POINT && element1.type == self.POINT) {
+    return self.M.distanceBetweenTwoPoints(element0, element1);
+  } else {
+    console.error('Sketchpad: invalid arguments for Measure.distance');
+    return undefined; 
+  }
+};
+
+
+
+
+
+
+
 
 
 
