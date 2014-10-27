@@ -210,6 +210,12 @@ this.G = {
     return lin;
   },
 
+  /**
+   * Create a Circle from center point and radius
+   * @param  {Point} centerPoint
+   * @param  {Number} radius
+   * @return {Circle}
+   */
   circleFromPointAndRadius: function(centerPoint, radius) {
     var c = new self.Circle(0, 0, radius);
     centerPoint.addChild(c);
@@ -223,6 +229,12 @@ this.G = {
     return c;
   }, 
 
+  /**
+   * Create a Circle from center point and measure
+   * @param  {Point} centerPoint 
+   * @param  {Measure} measure     
+   * @return {Circle}             
+   */
   circleFromPointAndMeasure: function(centerPoint, measure) {
     var c = new self.Circle(0, 0, 0);
     centerPoint.addChild(c);
@@ -478,7 +490,7 @@ this.Circle.prototype.render = function() {
 /**
  * A constructor method to create a Circle from a center point and radius
  * @param  {Point} centerPoint
- * @param  {Number} radius
+ * @param  {Number || Measure} radius
  * @return {Circle}
  */
 this.Circle.centerRadius = function(centerPoint, radius) {
@@ -550,6 +562,12 @@ this.Circle.centerRadius = function(centerPoint, radius) {
  */
 this.M = {
 
+  /**
+   * Measure the linear distance between two points
+   * @param  {Point} p0 
+   * @param  {Point} p1 
+   * @return {Measure}
+   */
   distanceBetweenTwoPoints: function(p0, p1) {
     var m = new self.Measure(0);
     p0.addChild(m);
@@ -579,7 +597,10 @@ this.M = {
 // ██║ ╚═╝ ██║███████╗██║  ██║███████║╚██████╔╝██║  ██║███████╗
 // ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
 
-
+/**
+ * Base Measure class representing a numeric relation between objects
+ * @param {Number} value
+ */
 this.Measure = function(value) {
   self.Element.call(this);
   self.addElement(this);
@@ -590,14 +611,18 @@ this.Measure = function(value) {
 this.Measure.prototype = Object.create(this.Element.prototype);
 this.Measure.prototype.constructor = this.Measure;
 
-
+/**
+ * A constructor method to measure the distance between two objects
+ * @param  {Geometry} element0
+ * @param  {Geometry} element1
+ * @return {Measure}
+ */
 this.Measure.distance = function(element0, element1) {
   if (element0.type == self.POINT && element1.type == self.POINT) {
     return self.M.distanceBetweenTwoPoints(element0, element1);
-  } else {
-    console.error('Sketchpad: invalid arguments for Measure.distance');
-    return undefined; 
   }
+  console.error('Sketchpad: invalid arguments for Measure.distance');
+  return undefined; 
 };
 
 
