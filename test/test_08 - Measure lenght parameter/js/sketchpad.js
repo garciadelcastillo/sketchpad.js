@@ -488,16 +488,6 @@ this.Circle.prototype.render = function() {
 };
 
 /**
- * Sets the position of the Point
- * @param {Number} xpos 
- * @param {Number} ypos 
- */   
-this.Circle.prototype.setRadius = function(radius) {
-  this.r = radius;
-  this.updateChildren();
-};
-
-/**
  * A constructor method to create a Circle from a center point and radius
  * @param  {Point} centerPoint
  * @param  {Number || Measure} radius
@@ -634,19 +624,6 @@ this.Measure.distance = function(element0, element1) {
   console.error('Sketchpad: invalid arguments for Measure.distance');
   return undefined; 
 };
-
-/*
-More candidates:
-  . Measure.length
-  . Measure.perimeter
-  . Measure.area
-  . Measure.angle
-  . Measure.add(meas0, meas1, meas2...)  // adds several measures linearly
-  . Measure.min(measure, measure)
-  . Measure.max(measure, measure)  
-  . Measure.custom(parent0, parent1, ..., fn)  // The user passes a function with several parents, and a function to compute the result
-
-*/
 
 
 

@@ -638,14 +638,11 @@ this.Measure.distance = function(element0, element1) {
 /*
 More candidates:
   . Measure.length
-  . Measure.perimeter
   . Measure.area
   . Measure.angle
-  . Measure.add(meas0, meas1, meas2...)  // adds several measures linearly
+  . Measure.add(meas0, meas1, meas2...)
   . Measure.min(measure, measure)
   . Measure.max(measure, measure)  
-  . Measure.custom(parent0, parent1, ..., fn)  // The user passes a function with several parents, and a function to compute the result
-
 */
 
 
