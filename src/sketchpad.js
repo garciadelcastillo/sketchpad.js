@@ -104,24 +104,19 @@ this.invisible = function() {
   this.drawVisible = false;
 };
 
-// Initialize canvas
-this.canvasId = canvasId;
-this.canvas = document.getElementById(canvasId);
-if (this.canvas) {
-	this.gr = this.canvas.getContext('2d');
-	this.parentDiv = this.canvas.parentNode;
-	this.width = $(this.parentDiv).innerWidth();
-	this.height = $(this.parentDiv).innerHeight();
-	this.canvas.width = this.width;
-	this.canvas.height = this.height;
-	this.init = true;  // looping kicks in
-	this.loop();
-} else {
-	console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
-		' DOM canvas object, e.g. var pad = new Sketchpad("sketchPadCanvas")');
-	return null;
-}
+/**
+ * Sets current drawing style
+ * @param  {Style} style 
+ * @return {Style} returns current pad style
+ */
+this.currentStyle = function(style) {
+  this.style = style || new Style({});
+  return this.style;
+};
 
+this.toRadians = function(angleInDegs) {
+  return angleInDegs * Math.PI / 180.0;
+},
 
 
 
@@ -194,7 +189,7 @@ this.G = {
    * @return {Line}
    */
   lineFromTwoPoints: function(startPoint, endPoint) {
-    var lin  = new self.Line(0, 0, 0, 0);
+    var lin = new self.Line(0, 0, 0, 0);
     startPoint.addChild(lin);
     endPoint.addChild(lin);
     lin.startPoint = startPoint;
@@ -210,6 +205,55 @@ this.G = {
     return lin;
   },
 
+  /**
+   * Create a Line from starting Point and numeric length and angle
+   * @param  {Point} startPoint 
+   * @param  {Number} length     
+   * @param  {Number} angle      
+   * @return {Line}
+   */
+  lineFromPointLengthAngle: function(startPoint, length, angle) {
+    var lin = new self.Line(0, 0, 0, 0);
+    startPoint.addChild(lin);
+    lin.startPoint = startPoint;
+    lin.length = length;
+    lin.angle = angle;
+    lin.update = function() {
+      this.x0 = this.startPoint.x;
+      this.y0 = this.startPoint.y;
+      this.x1 = this.x0 + this.length * Math.cos(this.angle);
+      this.y1 = this.y0 + this.length * Math.sin(this.angle);
+      this.updateChildren();
+    };
+    lin.update();
+    return lin;
+  },
+
+  /**
+   * Create a Line from starting Point, length Measure and numeric angle
+   * @param  {Point} startPoint 
+   * @param  {Measure} lengthM    
+   * @param  {Number} angle      
+   * @return {Line}
+   */
+  lineFromPointMeasureAngle: function(startPoint, lengthM, angle) {
+    var lin = new self.Line(0, 0, 0, 0);
+    startPoint.addChild(lin);
+    lengthM.addChild(lin);
+    lin.startPoint = startPoint;
+    lin.length = lengthM;
+    lin.angle = angle;
+    lin.update = function() {
+      this.x0 = this.startPoint.x;
+      this.y0 = this.startPoint.y;
+      this.x1 = this.x0 + this.length.value * Math.cos(this.angle);
+      this.y1 = this.y0 + this.length.value * Math.sin(this.angle);
+      this.updateChildren();
+    };
+    lin.update();
+    return lin;
+  },
+    
   /**
    * Create a Circle from center point and radius
    * @param  {Point} centerPoint
@@ -272,6 +316,7 @@ this.Element = function() {
 	this.parents = [];
 	this.children = [];
 	this.visible = true;
+  this.style = self.style;  // create a style from fallback defaults
 };
 
 /**
@@ -308,6 +353,10 @@ this.Element.prototype.checkStates = function() {
   this.visible = self.drawVisible;
 };
 
+this.Element.prototype.setStyle = function(style) {
+  this.style = style;
+};
+
 
 
 // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
@@ -330,7 +379,7 @@ this.Point = function(xpos, ypos) {
   this.type = self.POINT;
 	this.x = xpos;
 	this.y = ypos;
-	this.r = 5;  // for representation when visible
+	this.r = 4;  // for representation when visible
 
   this.checkStates();
 };
@@ -341,11 +390,13 @@ this.Point.prototype.constructor = this.Point;
  * Render method
  */
 this.Point.prototype.render = function() {
-	self.gr.lineWidth = 1.0;
-	self.gr.strokeStyle = "#000";
+	self.gr.strokeStyle = this.style.stroke;
+  self.gr.lineWidth = this.style.strokeWidth;
+  self.gr.fillStyle = this.style.fill;
 	self.gr.beginPath();
 	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
 	self.gr.stroke();
+  self.gr.fill();
 };
 
 /**
@@ -425,9 +476,9 @@ this.Line.prototype.constructor = this.Line;
  * Render method
  */
 this.Line.prototype.render = function() {
+  self.gr.strokeStyle = this.style.stroke;
+  self.gr.lineWidth = this.style.strokeWidth;
   self.gr.beginPath();
-  self.gr.lineWidth = 1.0;
-  self.gr.strokeStyle = "#000"; 
   self.gr.moveTo(this.x0, this.y0);
   self.gr.lineTo(this.x1, this.y1);
   self.gr.stroke();
@@ -444,6 +495,20 @@ this.Line.between = function(startPoint, endPoint) {
     return self.G.lineFromTwoPoints(startPoint, endPoint);
   }
   console.error('Sketchpad: invalid arguments for Line.between');
+  return undefined;
+};
+
+this.Line.polar = function(startPoint, length, angle) {
+  if (startPoint.type == self.POINT
+    && typeof length === 'number'
+    && typeof angle === 'number') {
+    return self.G.lineFromPointLengthAngle(startPoint, length, angle);
+  } else if (startPoint.type == self.POINT
+    && length.type == self.LENGTH
+    && typeof angle === 'number') {
+    return self.G.lineFromPointMeasureAngle(startPoint, length, angle);
+  }
+  console.error('Sketchpad: invalid arguments for Line.polar');
   return undefined;
 };
 
@@ -480,10 +545,12 @@ this.Circle.prototype.constructor = this.Circle;
  * Render method
  */
 this.Circle.prototype.render = function() {
-  self.gr.lineWidth = 1.0;
-  self.gr.strokeStyle = "#000"; 
+  self.gr.strokeStyle = this.style.stroke;
+  self.gr.lineWidth = this.style.strokeWidth;
+  self.gr.fillStyle = this.style.fill;
   self.gr.beginPath();
   self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+  self.gr.fill();
   self.gr.stroke();
 };
 
@@ -645,7 +712,6 @@ More candidates:
   . Measure.min(measure, measure)
   . Measure.max(measure, measure)  
   . Measure.custom(parent0, parent1, ..., fn)  // The user passes a function with several parents, and a function to compute the result
-
 */
 
 
@@ -657,6 +723,26 @@ More candidates:
 
 
 
+// ███████╗████████╗██╗   ██╗██╗     ███████╗
+// ██╔════╝╚══██╔══╝╚██╗ ██╔╝██║     ██╔════╝
+// ███████╗   ██║    ╚████╔╝ ██║     █████╗  
+// ╚════██║   ██║     ╚██╔╝  ██║     ██╔══╝  
+// ███████║   ██║      ██║   ███████╗███████╗
+// ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚══════╝
+
+this.Style = function(styleObj) {
+  this.stroke = styleObj.stroke || '#000000';                  // default is black
+  this.strokeWidth = styleObj.strokeWidth || 1.0;
+  this.fill = styleObj.fill                                    // transparent by default
+    ? (styleObj.fill == 'none' ? 'rgba(0, 0, 0, 0)' : styleObj.fill) 
+    : 'rgba(0, 0, 0, 0)' ;
+};
+
+this.Style.prototype.applyTo = function(objs) {
+  for (var l = arguments.length, i = 0; i < l; i++) {
+    arguments[i].setStyle(this);
+  }
+};
 
 
 
@@ -667,6 +753,31 @@ More candidates:
 
 
 
+// ██╗███╗   ██╗██╗████████╗
+// ██║████╗  ██║██║╚══██╔══╝
+// ██║██╔██╗ ██║██║   ██║   
+// ██║██║╚██╗██║██║   ██║   
+// ██║██║ ╚████║██║   ██║   
+// ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   
+
+// Initialize canvas object
+this.canvasId = canvasId;
+this.canvas = document.getElementById(canvasId);
+if (this.canvas) {
+  this.style = new this.Style({});
+  this.gr = this.canvas.getContext('2d');
+  this.parentDiv = this.canvas.parentNode;
+  this.width = $(this.parentDiv).innerWidth();
+  this.height = $(this.parentDiv).innerHeight();
+  this.canvas.width = this.width;
+  this.canvas.height = this.height;
+  this.init = true;  // looping kicks in
+  this.loop();
+} else {
+  console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
+    ' DOM canvas object, e.g. var pad = new Sketchpad("sketchPadCanvas")');
+  return null;
+}
 
 
 
@@ -730,6 +841,16 @@ this.mouse = {
 $(this.canvas).mousedown(this.mouse.onMouseDown);
 $(this.canvas).mousemove(this.mouse.onMouseMove);
 $(this.canvas).mouseup(this.mouse.onMouseUp);
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -31,4 +31,5 @@ pad.update = function() {
 	incenter.setPosition(Ox, Oy);
 	incircle.setRadius(r);
 
+	// The geometric way to construct this would be doing the intersection of two bisectors, and radius being the distance to closest point on one line
 };	
