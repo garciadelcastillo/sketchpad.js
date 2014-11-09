@@ -234,6 +234,7 @@ this.G = {
     p.update = function() {
       var a = self.U.angleBetweenCoordinates(this.parents[1].x, this.parents[1].y,
         this.parents[0].x, this.parents[0].y);
+      console.log(a);
       this.x = this.parents[1].x + this.parents[1].r * Math.cos(a);
       this.y = this.parents[1].y + this.parents[1].r * Math.sin(a);
       this.updateChildren();
