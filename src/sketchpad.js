@@ -8,14 +8,18 @@
 Sketchpad = function(canvasId) {
 
 // Some internal constants
-this.POINT = 1;
-this.LINE = 2;
-this.CIRCLE = 3;
+this.C = {
+  POINT: 1,
+  LINE: 2,
+  CIRCLE: 3,
 
-this.LENGTH = 11;
-this.AREA = 12;
-this.VOLUME = 13;
-this.ANGLE = 14;
+  LENGTH: 11,
+  AREA: 12,
+  VOLUME: 13,
+  ANGLE: 14,
+
+  TAU: 2 * Math.PI
+};
 
 
 // ██████╗  █████╗ ███████╗███████╗
@@ -152,12 +156,12 @@ this.G = {
    */
   pointOnLine: function(line, parameter) {
     var p = new self.Point(0, 0);
+    p.addParent(line);
     line.addChild(p);
-    p.parentLine = line;
     p.parameter = parameter;
     p.update = function() {
-      this.x = this.parentLine.x0 + this.parameter * (this.parentLine.x1 - this.parentLine.x0);
-      this.y = this.parentLine.y0 + this.parameter * (this.parentLine.y1 - this.parentLine.y0);
+      this.x = this.parents[0].x0 + this.parameter * (this.parents[0].x1 - this.parents[0].x0);
+      this.y = this.parents[0].y0 + this.parameter * (this.parents[0].y1 - this.parents[0].y0);
       this.updateChildren();
     };
     p.setParameter = self.G.setParameter;
@@ -173,13 +177,13 @@ this.G = {
    */
   pointOnCircle: function(circle, parameter) {
     var p = new self.Point(0, 0);
+    p.addParent(circle);
     circle.addChild(p);
-    p.parentCircle = circle;
     p.parameter = parameter;
     p.update = function() {
-      var a = (this.parameter % 1) * 180 / Math.PI;  // does this work for negative numbers?
-      this.x = this.parentCircle.x + this.parentCircle.r * Math.cos(a);
-      this.y = this.parentCircle.y + this.parentCircle.r * Math.sin(a);
+      var a = (this.parameter % 1) * self.C.TAU;
+      this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
+      this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
       this.updateChildren();
     };
     p.setParameter = self.G.setParameter;
@@ -195,15 +199,14 @@ this.G = {
    */
   lineFromTwoPoints: function(startPoint, endPoint) {
     var lin = new self.Line(0, 0, 0, 0);
+    lin.addParent(startPoint, endPoint);
     startPoint.addChild(lin);
     endPoint.addChild(lin);
-    lin.startPoint = startPoint;
-    lin.endPoint = endPoint;
     lin.update = function() {
-      this.x0 = this.startPoint.x;
-      this.y0 = this.startPoint.y;
-      this.x1 = this.endPoint.x;
-      this.y1 = this.endPoint.y;
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.parents[1].x;
+      this.y1 = this.parents[1].y;
       this.updateChildren();
     };
     lin.update();
@@ -219,13 +222,13 @@ this.G = {
    */
   lineFromPointLengthAngle: function(startPoint, length, angle) {
     var lin = new self.Line(0, 0, 0, 0);
+    lin.addParent(startPoint);
     startPoint.addChild(lin);
-    lin.startPoint = startPoint;
     lin.length = length;
     lin.angle = angle;
     lin.update = function() {
-      this.x0 = this.startPoint.x;
-      this.y0 = this.startPoint.y;
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
       this.x1 = this.x0 + this.length * Math.cos(this.angle);
       this.y1 = this.y0 + this.length * Math.sin(this.angle);
       this.updateChildren();
@@ -243,16 +246,15 @@ this.G = {
    */
   lineFromPointMeasureAngle: function(startPoint, lengthM, angle) {
     var lin = new self.Line(0, 0, 0, 0);
+    lin.addParent(startPoint, lengthM);
     startPoint.addChild(lin);
     lengthM.addChild(lin);
-    lin.startPoint = startPoint;
-    lin.length = lengthM;
     lin.angle = angle;
     lin.update = function() {
-      this.x0 = this.startPoint.x;
-      this.y0 = this.startPoint.y;
-      this.x1 = this.x0 + this.length.value * Math.cos(this.angle);
-      this.y1 = this.y0 + this.length.value * Math.sin(this.angle);
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.x0 + this.parents[1].value * Math.cos(this.angle);
+      this.y1 = this.y0 + this.parents[1].value * Math.sin(this.angle);
       this.updateChildren();
     };
     lin.update();
@@ -267,11 +269,11 @@ this.G = {
    */
   circleFromPointAndRadius: function(centerPoint, radius) {
     var c = new self.Circle(0, 0, radius);
+    c.addParent(centerPoint);
     centerPoint.addChild(c);
-    c.centerPoint = centerPoint;
     c.update = function() {
-      this.x = this.centerPoint.x;
-      this.y = this.centerPoint.y;
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
       this.updateChildren();
     };
     c.update();
@@ -286,14 +288,13 @@ this.G = {
    */
   circleFromPointAndMeasure: function(centerPoint, measure) {
     var c = new self.Circle(0, 0, 0);
+    c.addParent(centerPoint, measure);
     centerPoint.addChild(c);
     measure.addChild(c);
-    c.centerPoint = centerPoint;
-    c.parentMeasure = measure;
     c.update = function() {
-      this.x = this.centerPoint.x;
-      this.y = this.centerPoint.y;
-      this.r = this.parentMeasure.value;
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+      this.r = this.parents[1].value;
       this.updateChildren();
     };
     c.update();
@@ -322,6 +323,25 @@ this.Element = function() {
 	this.children = [];
 	this.visible = true;
   this.style = self.style;  // create a style from fallback defaults
+};
+
+Element.prototype.FindMe=function() {
+  for(var a in window) {
+    if ((window[a]==this)) {
+      this.name=a;
+      return;
+    }
+  }
+};
+
+/**
+ * Appends any number of parent objects to this element, as a sequence of arguments
+ * @param {Elements} parents Parent objects driving this element as args
+ */
+this.Element.prototype.addParent = function() {
+  for (var l = arguments.length, i = 0; i < l; i++) {
+    this.parents.push(arguments[i]);
+  }
 };
 
 /**
@@ -381,7 +401,7 @@ this.Point = function(xpos, ypos) {
   self.addElement(this);
 
 	this.pad = self;
-  this.type = self.POINT;
+  this.type = self.C.POINT;
 	this.x = xpos;
 	this.y = ypos;
 	this.r = 4;  // for representation when visible
@@ -436,9 +456,9 @@ this.Point.prototype.move = function(xinc, yinc) {
  */
 this.Point.along = function(geom, parameter) {
   switch(geom.type) {
-    case self.LINE:
+    case self.C.LINE:
       return self.G.pointOnLine(geom, parameter);
-    case self.CIRCLE:
+    case self.C.CIRCLE:
       return self.G.pointOnCircle(geom, parameter);
     default:
       console.error('Sketchpad: invalid arguments for Point.along');
@@ -466,7 +486,7 @@ this.Line = function(xpos0, ypos0, xpos1, ypos1) {
   self.Element.call(this);
   self.addElement(this);
 
-  this.type = self.LINE;
+  this.type = self.C.LINE;
   this.x0 = xpos0;
   this.y0 = ypos0;
   this.x1 = xpos1;
@@ -496,7 +516,7 @@ this.Line.prototype.render = function() {
  * @return {Line}
  */
 this.Line.between = function(startPoint, endPoint) {
-  if (startPoint.type == self.POINT && endPoint.type == self.POINT) {
+  if (startPoint.type == self.C.POINT && endPoint.type == self.C.POINT) {
     return self.G.lineFromTwoPoints(startPoint, endPoint);
   }
   console.error('Sketchpad: invalid arguments for Line.between');
@@ -504,12 +524,12 @@ this.Line.between = function(startPoint, endPoint) {
 };
 
 this.Line.polar = function(startPoint, length, angle) {
-  if (startPoint.type == self.POINT
+  if (startPoint.type == self.C.POINT
     && typeof length === 'number'
     && typeof angle === 'number') {
     return self.G.lineFromPointLengthAngle(startPoint, length, angle);
-  } else if (startPoint.type == self.POINT
-    && length.type == self.LENGTH
+  } else if (startPoint.type == self.C.POINT
+    && length.type == self.C.LENGTH
     && typeof angle === 'number') {
     return self.G.lineFromPointMeasureAngle(startPoint, length, angle);
   }
@@ -536,7 +556,7 @@ this.Circle = function(xpos, ypos, radius) {
   self.Element.call(this);
   self.addElement(this);
 
-  this.type = self.CIRCLE;
+  this.type = self.C.CIRCLE;
   this.x = xpos;
   this.y = ypos;
   this.r = radius;
@@ -576,9 +596,9 @@ this.Circle.prototype.setRadius = function(radius) {
  * @return {Circle}
  */
 this.Circle.centerRadius = function(centerPoint, radius) {
-  if (centerPoint.type == self.POINT && typeof radius === 'number') {
+  if (centerPoint.type == self.C.POINT && typeof radius === 'number') {
     return self.G.circleFromPointAndRadius(centerPoint, radius);
-  } else if (centerPoint.type == self.POINT && radius.type == self.LENGTH) {
+  } else if (centerPoint.type == self.C.POINT && radius.type == self.C.LENGTH) {
     return self.G.circleFromPointAndMeasure(centerPoint, radius);
   }
   console.error('Sketchpad: invalid arguments for Line.centerRadius');
@@ -654,7 +674,7 @@ this.M = {
     var m = new self.Measure(0);
     p0.addChild(m);
     p1.addChild(m);
-    m.type = self.LENGTH;
+    m.type = self.C.LENGTH;
     m.startPoint = p0;
     m.endPoint = p1;
     m.update = function() {
@@ -700,7 +720,7 @@ this.Measure.prototype.constructor = this.Measure;
  * @return {Measure}
  */
 this.Measure.distance = function(element0, element1) {
-  if (element0.type == self.POINT && element1.type == self.POINT) {
+  if (element0.type == self.C.POINT && element1.type == self.C.POINT) {
     return self.M.distanceBetweenTwoPoints(element0, element1);
   }
   console.error('Sketchpad: invalid arguments for Measure.distance');
