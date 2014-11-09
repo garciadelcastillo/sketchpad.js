@@ -234,45 +234,11 @@ this.G = {
     p.update = function() {
       var a = self.U.angleBetweenCoordinates(this.parents[1].x, this.parents[1].y,
         this.parents[0].x, this.parents[0].y);
+      console.log(a);
       this.x = this.parents[1].x + this.parents[1].r * Math.cos(a);
       this.y = this.parents[1].y + this.parents[1].r * Math.sin(a);
       this.updateChildren();
     };
-    p.update();
-    return p;
-  },
-
-  /**
-   * Returns the intersection Point between two lines
-   * @param  {Line} line0 
-   * @param  {Line} line1 
-   * @return {Point}       
-   * @ref http://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-   */
-  pointIntersectionTwoLines: function(line0, line1) {
-    var p = new self.Point(0, 0);
-    p.addParent(line0, line1);
-    line0.addChild(p);
-    line1.addChild(p);
-    p.update = function() {
-      var dx0 = this.parents[0].x0 - this.parents[0].x1,
-          dy0 = this.parents[0].y0 - this.parents[0].y1,
-          dx1 = this.parents[1].x0 - this.parents[1].x1,
-          dy1 = this.parents[1].y0 - this.parents[1].y1;
-      var denom = dx0 * dy1 - dy0 * dx1;
-      if (denom == 0) {
-        this.x = 0;
-        this.y = 0;
-      } else {
-        var c0 = this.parents[0].x0 * this.parents[0].y1 
-          - this.parents[0].y0 * this.parents[0].x1;
-        var c1 = this.parents[1].x0 * this.parents[1].y1 
-          - this.parents[1].y0 * this.parents[1].x1;
-        this.x = (c0 * dx1 - dx0 * c1) / denom;
-        this.y = (c0 * dy1 - dy0 * c1) / denom;
-      }
-      this.updateChildren();
-    }; 
     p.update();
     return p;
   },
@@ -632,12 +598,7 @@ this.Point.along = function(geom, parameter) {
   };
 };
 
-/**
- * A constructor method to create a Point as the intersection of certain Geometry
- * @param  {Point} sourcePoint    
- * @param  {Geometry} targetGeometry 
- * @return {Point}
- */
+
 this.Point.projection = function(sourcePoint, targetGeometry) {
   switch(targetGeometry.type) {
     case self.C.LINE:
@@ -649,22 +610,6 @@ this.Point.projection = function(sourcePoint, targetGeometry) {
       return undefined;
   };
 };
-
-/**
- * A constructor method to create a Point as the intersection of certain Geometry
- * @param  {Geometry} geom0
- * @param  {Geometry} geom1
- * @return {Point}
- */
-this.Point.intersection = function(geom0, geom1) {
-  if (geom0.type == self.C.LINE && geom1.type == self.C.LINE) {
-    return self.G.pointIntersectionTwoLines(geom0, geom1);
-  }
-  console.error('Sketchpad: invalid arguments for Point.intersection');
-  return undefined;
-};
-
-
 
 
 
