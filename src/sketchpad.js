@@ -243,13 +243,13 @@ this.G = {
   },
 
   /**
-   * Returns the intersection Point between two lines
+   * Returns the intersection Point between two Lines
    * @param  {Line} line0 
    * @param  {Line} line1 
    * @return {Point}       
    * @ref http://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
    */
-  pointIntersectionTwoLines: function(line0, line1) {
+  pointIntersectionlLineLine: function(line0, line1) {
     var p = new self.Point(0, 0);
     p.addParent(line0, line1);
     line0.addChild(p);
@@ -261,6 +261,7 @@ this.G = {
           dy1 = this.parents[1].y0 - this.parents[1].y1;
       var denom = dx0 * dy1 - dy0 * dx1;
       if (denom == 0) {
+        console.log('Lines are parallel, no line-line intersection');
         this.x = 0;
         this.y = 0;
       } else {
@@ -273,6 +274,47 @@ this.G = {
       }
       this.updateChildren();
     }; 
+    p.update();
+    return p;
+  },
+
+  /**
+   * Returns the intersection Points of a Line and a Circle
+   * @param  {Line} line   
+   * @param  {Circle} circle 
+   * @return {Point}
+   * @ref http://stackoverflow.com/a/1084899
+   * @TODO UPDATE FUNCTION SHOULD BE OPTIMIZED
+   * @TODO THIS SHOULD RETURN AN ARRAY OF POINTS, NOT JUST THE FIRST SOLUTION
+   */
+  pointIntersectionlLineCircle: function(line, circle) {
+    var p = new self.Point(0, 0);
+    p.addParent(line, circle);
+    line.addChild(p);
+    circle.addChild(p);
+    p.update = function() {
+      var dx = this.parents[0].x1 - this.parents[0].x0,
+          dy = this.parents[0].y1 - this.parents[0].y0,
+          dcx = this.parents[0].x0 - this.parents[1].x,
+          dcy = this.parents[0].y0 - this.parents[1].y,
+          r = this.parents[1].r,
+          a = dx * dx + dy * dy,
+          b = 2 * (dx * dcx + dy * dcy),
+          c = (dcx * dcx + dcy * dcy) - r * r,
+          disc = b * b - 4 * a * c;
+      if (disc < 0) {
+        console.log('No line-circle intersection');
+        this.x = 0;
+        this.y = 0;
+      } else {
+        var sq = Math.sqrt(disc),
+            t0 = (-b - sq) / (2 * a),
+            t1 = (-b + sq) / (2 * a);
+        this.x = this.parents[0].x0 + t0 * dx;
+        this.y = this.parents[0].y0 + t0 * dy;
+        // an array of two points should be returned here...
+      }
+    };
     p.update();
     return p;
   },
@@ -400,7 +442,7 @@ this.G = {
 //  ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝ ╚═════╝
 
 /**
- * A library to store independet utility functions
+ * A library to store static utility functions
  * @type {Object}
  */
 this.U = {                                                    
@@ -415,6 +457,16 @@ this.U = {
         dy = line.y1 - line.y0;
     return Math.sqrt(dx * dx + dy * dy);
   },
+
+  // /**
+  //  * Returns the determinant of the 2x2 matrix formed by the start and 
+  //  * end points of the line
+  //  * @param  {Line} line
+  //  * @return {Number}
+  //  */
+  // lineDeterminant: function(line) {
+  //   return line.x0 * line.y1 - line.x1 * line.y0;
+  // },
 
   /**
    * Returns the distance between two points
@@ -454,7 +506,7 @@ this.U = {
   //   return Math.atan2(p1.y - p0.y, p1.x - p0.x);
   // },
 
-  // *
+  // /**
   //  * Returns the angle in radians between p1 and p2, measured from p0.
   //  * The result is inverted from regular cartesian coordinates (i.e. positive 
   //  *   angle is measured clockwise)
@@ -462,7 +514,7 @@ this.U = {
   //  * @param  {Point} p1
   //  * @param  {Point} p2
   //  * @return {Number} 
-   
+  //  */
   // angleBetween3Points: function(p0, p1, p2) {
   //   return Math.atan2(p1.y - p0.y, p1.x - p0.x) 
   //     - Math.atan2(p2.y - p0.y, p2.x - p0.x);
@@ -658,7 +710,11 @@ this.Point.projection = function(sourcePoint, targetGeometry) {
  */
 this.Point.intersection = function(geom0, geom1) {
   if (geom0.type == self.C.LINE && geom1.type == self.C.LINE) {
-    return self.G.pointIntersectionTwoLines(geom0, geom1);
+    return self.G.pointIntersectionlLineLine(geom0, geom1);
+  } else if (geom0.type == self.C.LINE && geom1.type == self.C.CIRCLE) {
+    return self.G.pointIntersectionlLineCircle(geom0, geom1);
+  } else if (geom0.type == self.C.CIRCLE && geom1.type == self.C.LINE) {
+    return self.G.pointIntersectionlLineCircle(geom1, geom0);
   }
   console.error('Sketchpad: invalid arguments for Point.intersection');
   return undefined;

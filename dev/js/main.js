@@ -21,6 +21,15 @@ var lineA = pad.Line.between(p10, p11),
 pint2 = pad.Point.intersection(lineA, lineB);
 
 
+// line-circle
+var p20 = new pad.Point(100, 500),
+	p21 = new pad.Point(400, 500);
+var line20 = pad.Line.between(p20, p21);
+var pc = new pad.Point(250, 500),
+	c = pad.Circle.centerRadius(pc, 26);
+var pint3 = pad.Point.intersection(line20, c);
+
+
 
 // PROJECTIONS
 // var p0 = new pad.Point(100, 100),
