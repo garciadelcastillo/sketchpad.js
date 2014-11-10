@@ -324,7 +324,6 @@ this.G = {
    * @param  {Circle} circle0 
    * @param  {Circle} circle1 
    * @return {Point}
-   * @ref http://www.ambrsoft.com/TrigoCalc/Circles2/Circle2.htm
    */
   pointIntersectionlCircleCircle: function(circle0, circle1) {
     var p = new self.Point(0, 0);

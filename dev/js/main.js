@@ -29,6 +29,17 @@ var pc = new pad.Point(250, 500),
 	c = pad.Circle.centerRadius(pc, 26);
 var pint3 = pad.Point.intersection(line20, c);
 
+// circle-circle
+var ppp0 = new pad.Point(250, 650),
+	ppp1 = new pad.Point(250, 650),
+	ppp2 = new pad.Point(250, 650);
+var ccc0 = pad.Circle.centerRadius(ppp0, 25),
+	ccc1 = pad.Circle.centerRadius(ppp1, 35),
+	ccc2 = pad.Circle.centerRadius(ppp2, 45);
+var pi0 = pad.Point.intersection(ccc0, ccc1),
+	pi1 = pad.Point.intersection(ccc1, ccc2),
+	pi2 = pad.Point.intersection(ccc2, ccc0);
+
 
 
 // PROJECTIONS
