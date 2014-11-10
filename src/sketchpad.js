@@ -13,6 +13,7 @@ this.C = {
   LINE: 2,
   CIRCLE: 3,
 
+  NUMBER: 10,
   LENGTH: 11,
   AREA: 12,
   VOLUME: 13,
@@ -144,9 +145,47 @@ this.toRadians = function(angleInDegs) {
  */
 this.G = {
 
-  setParameter: function(parameter) {
-    this.parameter = parameter;
-    this.update();
+  /**
+   * Create a Set as a numeric range from limits and step count
+   * @param  {Number} start
+   * @param  {Number} end  
+   * @param  {Number} steps
+   * @return {Set}      
+   */
+  setRangeFromNumbers: function(start, end, steps) {
+    var step = (end - start) / steps;
+    var values = [];
+    for (var i = start; i <= end; i+=step) {
+      values.push(i);
+    }
+    var s = new self.Set(values);
+    s.type = self.C.NUMBER;
+    s.start = start;
+    s.end = end;
+    s.steps = steps;
+    s.visible = false;  // temp workaround to avoid rendering numeric Sets
+    return s;
+  },
+
+  /**
+   * Create a Set as a numeric sequence from start, step size and number of items
+   * @param {Number} start    
+   * @param {Number} stepSize 
+   * @param {Number} count    
+   * @return {Set}
+   */
+  setSequenceFromNumbers: function(start, stepSize, count) {
+    var values = [];
+    for (var i = 0; i < count; i++) {
+      values.push(start + i * stepSize);
+    }
+    var s = new self.Set(values);
+    s.type = self.C.NUMBER;
+    s.start = start;
+    s.stepSize = stepSize;
+    s.count = count;
+    s.visible = false;  // temp workaround to avoid rendering numeric Sets
+    return s;
   },
 
   /**
@@ -168,6 +207,15 @@ this.G = {
     p.setParameter = self.G.setParameter;
     p.update();
     return p;
+  },
+
+  /**
+   * A simple setter function to be attached to certain points
+   * @param {Number} parameter
+   */
+  setParameter: function(parameter) {
+    this.parameter = parameter;
+    this.update();
   },
 
   /**
@@ -332,34 +380,6 @@ this.G = {
     circle0.addChild(p);
     circle1.addChild(p);
     p.update = function() {
-      // // Method 1, derived from the equations of the circles
-      // var x0 = this.parents[0].x,
-      //     y0 = this.parents[0].y,
-      //     r0 = this.parents[0].r,
-      //     x1 = this.parents[1].x,
-      //     y1 = this.parents[1].y,
-      //     r1 = this.parents[1].r;
-      // var u = 2 * x1 - 2 * x0,
-      //     v = 2 * y1 - 2 * y0,
-      //     w = r0 * r0 - r1 * r1 + x1 * x1 - x0 * x0 + y1 * y1 - y0 * y0;
-      // var a = v * v / (u * u) + 1,
-      //     b = -2 * (v * w / (u * u) + y0 - v * x0 / u),
-      //     c = x0 * x0 + y0 * y0 - r0 * r0 + w * w / (u * u) - 2 * w * x0 / u;
-      // var disc = b * b - 4 * a * c;
-      // if (disc < 0) {
-      //   console.log('No circle-circle intersection');
-      //   this.x = 0;
-      //   this.y = 0;
-      // } else {
-      //   var sq = Math.sqrt(disc),
-      //       t0 = (-b - sq) / (2 * a),
-      //       t1 = (-b + sq) / (2 * a);
-      //   this.x = (w - v * t0) / u;
-      //   this.y = t0;
-      //   // an array of two points should be returned here...
-      // }
-
-      // Method 2, from http://www.ambrsoft.com/TrigoCalc/Circles2/Circle2.htm
       var x0 = this.parents[0].x,
           y0 = this.parents[0].y,
           r0 = this.parents[0].r,
@@ -378,14 +398,12 @@ this.G = {
             + 2 * (y0 - y1) * delta / (D * D);
         this.y = (y0 + y1) / 2 + (y1 - y0) * (r0 * r0 - r1 * r1) / (2 * D * D)
             - 2 * (x0 - x1) * delta / (D * D);
-        // the other solution is obtained changing the plus/minus at the beginning of the carried lines
+        // the other solution comes from changing the plus/minus at the beginning of the carried lines
       }
     };
     p.update();
     return p;
   },
-
-
 
   /**
    * Create a Line from two Points
@@ -1076,6 +1094,64 @@ More candidates:
 */
 
 
+
+
+
+
+
+
+// ███████╗███████╗████████╗
+// ██╔════╝██╔════╝╚══██╔══╝
+// ███████╗█████╗     ██║   
+// ╚════██║██╔══╝     ██║   
+// ███████║███████╗   ██║   
+// ╚══════╝╚══════╝   ╚═╝   
+/**
+ * Base Set class representing a group of objects of some kind
+ * @param {Array} items
+ */
+this.Set = function(items) {
+  self.Element.call(this);
+  self.addElement(this);
+
+  this.items = items;
+};
+this.Set.prototype = Object.create(this.Element.prototype);
+this.Set.prototype.constructor = this.Set;
+
+/**
+ * A constructor to create a numeric range from limits and step count
+ * @param  {Number/Measure} start 
+ * @param  {Number/Measure} end   
+ * @param  {Number/Measure} steps 
+ * @return {Set}       
+ */
+this.Set.range = function(start, end, steps) {
+  if (typeof start === 'number'
+      && typeof end === 'number'
+      && typeof steps === 'number') {
+    return self.G.setRangeFromNumbers(start, end, steps);
+  }
+  console.error('Sketchpad: invalid arguments for Set.sequence');
+  return undefined; 
+};
+
+/**
+ * A constructor to create a numeric sequence from start, step size and count
+ * @param  {Number/Measure} start    
+ * @param  {Number/Measure} stepSize 
+ * @param  {Number/Measure} count    
+ * @return {Set}
+ */
+this.Set.sequence = function(start, stepSize, count) {
+  if (typeof start === 'number'
+      && typeof stepSize === 'number'
+      && typeof count === 'number') {
+    return self.G.setSequenceFromNumbers(start, stepSize, count);
+  }
+  console.error('Sketchpad: invalid arguments for Set.sequence');
+  return undefined; 
+};
 
 
 
