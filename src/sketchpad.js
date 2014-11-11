@@ -737,7 +737,11 @@ this.Element = function() {
   this.style = self.style;  // create a style from fallback defaults
 };
 
-Element.prototype.FindMe=function() {
+/**
+ * Pan's suggestion for name assignment
+ * @todo  IMPLEMENT!
+ */
+this.Element.prototype.FindMe=function() {
   for(var a in window) {
     if ((window[a]==this)) {
       this.name=a;
@@ -790,6 +794,10 @@ this.Element.prototype.checkStates = function() {
   this.visible = self.drawVisible;
 };
 
+/**
+ * Sets the current style of this object
+ * @param {Style} style
+ */
 this.Element.prototype.setStyle = function(style) {
   this.style = style;
 };
@@ -883,7 +891,7 @@ this.Point.along = function(geom, parameter) {
   else if (geom.type == self.C.LINE && parameter.type == self.C.SET && parameter.subtype == self.C.NUMBER) {
     return self.G.pointsOnLineFromNumberSet(geom, parameter);    
   }
-    // number set along circle
+  // number set along circle
   else if (geom.type == self.C.CIRCLE && parameter.type == self.C.SET && parameter.subtype == self.C.NUMBER) {
     return self.G.pointsOnCircleFromNumberSet(geom, parameter);    
   }
@@ -1071,11 +1079,15 @@ this.Circle.prototype.setRadius = function(radius) {
  * @return {Circle}
  */
 this.Circle.centerRadius = function(centerPoint, radius) {
+  // center point + numeric radius
   if (centerPoint.type == self.C.POINT && typeof radius === 'number') {
     return self.G.circleFromPointAndRadius(centerPoint, radius);
-  } else if (centerPoint.type == self.C.POINT && radius.type == self.C.MEASURE) {
+  } 
+  // center point + measure radius
+  else if (centerPoint.type == self.C.POINT && radius.type == self.C.MEASURE) {
     return self.G.circleFromPointAndMeasure(centerPoint, radius);
   }
+  // not cool
   console.error('Sketchpad: invalid arguments for Line.centerRadius');
   return undefined;
 };
@@ -1243,10 +1255,6 @@ this.Set.sequence = function(start, stepSize, count) {
 
 
 
-
-
-
-
 // ███████╗████████╗██╗   ██╗██╗     ███████╗
 // ██╔════╝╚══██╔══╝╚██╗ ██╔╝██║     ██╔════╝
 // ███████╗   ██║    ╚████╔╝ ██║     █████╗  
@@ -1275,10 +1283,6 @@ this.Style.prototype.applyTo = function(objs) {
     arguments[i].setStyle(this);
   }
 };
-
-
-
-
 
 
 
