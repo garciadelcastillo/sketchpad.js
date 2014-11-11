@@ -286,6 +286,7 @@ this.G = {
       items.push(new self.Point(0, 0));
     }
     var s = new self.Set(items);
+    s.subtype = self.C.POINT;
     s.addParents(line, parameterSet);
     // line.addChild(s);
     // parameterSet.addChild(s);
@@ -370,6 +371,7 @@ this.G = {
       items.push(new self.Point(0, 0));
     }
     var s = new self.Set(items);
+    s.subtype = self.C.POINT;
     s.addParents(circle, parameterSet);
     // circle.addChild(s);
     // parameterSet.addChild(s);
@@ -571,6 +573,67 @@ this.G = {
     };
     lin.update();
     return lin;
+  },
+
+  /**
+   * Create a Line Set from a Point to a Point Set
+   * @param  {Point} startPoint 
+   * @param  {Set(Point)} pointSet
+   * @return {Set(Line)} 
+   */
+  lineFromPointToPointset: function(startPoint, pointSet) {
+    var items = [];
+    for (var l = pointSet.length, i = 0; i < l; i++) {
+      items.push(new self.Line(0, 0, 0, 0));
+    }
+    var s = new self.Set(items);
+    s.subtype = self.C.LINE;
+    s.addParents(startPoint, pointSet);
+    s.update = function() {
+      for (var i = 0; i < this.length; i++) {
+        this.items[i].x0 = this.parents[0].x;
+        this.items[i].y0 = this.parents[0].y;
+        this.items[i].x1 = this.parents[1].items[i].x;
+        this.items[i].y1 = this.parents[1].items[i].y;
+      }
+      this.updateChildren();
+    };
+    s.update();
+    return s;
+  },
+
+  /**
+   * Create a Line Set from a Point Set to a Point Set
+   * @param  {Set(Point)} startPS 
+   * @param  {Set(Point)} endPS   
+   * @return {Set(Line)}         
+   */
+  lineFromPointsetToPointset: function(startPS, endPS) {
+    var items = [],
+        maxlen = startPS.length > endPS.length ? startPS.length : endPS.length;
+    for (var i = 0; i < maxlen; i++) {
+      items.push(new self.Line(0, 0, 0, 0));
+    }
+    var s = new self.Set(items);
+    s.subtype = self.C.LINE;
+    s.addParents(startPS, endPS);
+    s.update = function() {
+      var sl = this.parents[0].length,
+          el = this.parents[1].length,
+          j = 0,
+          k = 0;
+      for (var i = 0; i < this.length; i++) {
+        this.items[i].x0 = this.parents[0].items[j].x;
+        this.items[i].y0 = this.parents[0].items[j++].y;
+        this.items[i].x1 = this.parents[1].items[k].x;
+        this.items[i].y1 = this.parents[1].items[k++].y;
+        if (j >= sl) j--;
+        if (k >= el) k--;
+      }
+      this.updateChildren();
+    };
+    s.update();
+    return s;
   },
 
   /**
@@ -1109,14 +1172,27 @@ this.Line.prototype.render = function() {
 
 /**
  * A constructor method to create a Line between two Geometry elements
- * @param  {Geometry} startPoint
- * @param  {Geometry} endPoint
+ * @param  {Geometry} element0
+ * @param  {Geometry} element1
  * @return {Line}
  */
-this.Line.between = function(startPoint, endPoint) {
-  if (startPoint.type == self.C.POINT && endPoint.type == self.C.POINT) {
-    return self.G.lineFromTwoPoints(startPoint, endPoint);
+this.Line.between = function(element0, element1) {
+  // point to point
+  if (element0.type == self.C.POINT && element1.type == self.C.POINT) {
+    return self.G.lineFromTwoPoints(element0, element1);
   }
+  // point to pointSet
+  else if (element0.type == self.C.POINT 
+      && element1.type == self.C.SET 
+      && element1.subtype == self.C.POINT) {
+    return self.G.lineFromPointToPointset(element0, element1);
+  }
+  // pointSet to pointSet
+  else if (element0.type == self.C.SET && element0.subtype == self.C.POINT
+      && element1.type == self.C.SET && element1.subtype == self.C.POINT) {
+    return self.G.lineFromPointsetToPointset(element0, element1);
+  }
+  // not cool
   console.error('Sketchpad: invalid arguments for Line.between');
   return undefined;
 };

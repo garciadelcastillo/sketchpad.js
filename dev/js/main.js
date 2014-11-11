@@ -23,14 +23,14 @@ var blue = new pad.Style({
 var pp0 = new pad.Point(100, 100),
 	pp1 = new pad.Point(200, 100),
 	ll = pad.Line.between(pp0, pp1),
-	r = pad.Set.range(0, 1.0, 7),
+	r = pad.Set.range(0, 1.0, 5),
 	pps = pad.Point.along(ll, r);
 red.applyTo(pp0, pp1);
 
 var ppr0 = new pad.Point(100, 200),
 	ppr1 = new pad.Point(200, 200),
 	llr = pad.Line.between(ppr0, ppr1),
-	rr = pad.Set.random(0, 1.0, 7),
+	rr = pad.Set.random(0, 1.0, 6),
 	pppr = pad.Point.along(llr, rr);
 red.applyTo(ppr0, ppr1);
 
@@ -44,9 +44,10 @@ red.applyTo(p0, p1);
 var rr = pad.Set.sequence(0, .1, 6),
 	ppc = pad.Point.along(c, rr);
 
+var pf = new pad.Point(150, 400),
+	linesf = pad.Line.between(pf, ppc);
 
-
-
+var lines = pad.Line.between(pps, pppr);
 
 
 
