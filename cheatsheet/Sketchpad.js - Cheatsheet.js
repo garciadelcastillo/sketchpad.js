@@ -75,8 +75,9 @@ MEASURE
 SET
   CONSTRUCTORS  
     Set.range(number, number, number)  // start, end, steps
-    Set.sequence(number, number, number)  // start, stepSize, count)
-
+    Set.sequence(number, number, number)  // start, stepSize, count
+    Set.random(number, number, number)  // start, end, count
+    
   METHODS
     Set.setItems(JSArray, number)  // objects, subtype as pad.C.FOO constant
 

@@ -212,6 +212,21 @@ this.G = {
     return s;
   },
 
+  setRandomSequenceFromNumbers: function(start, end, count) {
+    var values = [],
+        d = end - start;
+    for (var i = 0; i < count; i++) {
+      values.push(start + d * Math.random());
+    }
+    var s = new self.Set(values);
+    s.subtype = self.C.NUMBER;
+    s.start = start;
+    s.end = end;
+    s.count = count;
+    s.visible = false;  // temp workaround to avoid rendering numeric Sets
+    return s;
+  },
+
   /**
    * Create a Point along a Line at the relative length 'parameter'
    * @param  {Line} line      
@@ -1399,6 +1414,26 @@ this.Set.sequence = function(start, stepSize, count) {
   console.error('Sketchpad: invalid arguments for Set.sequence');
   return undefined; 
 };
+
+/**
+ * A constructor to create a numeric sequence of 'count' random elements between
+ * 'start' and 'end'
+ * @param  {Number/Measure} start
+ * @param  {Number/Measure} end
+ * @param  {Number/Measure} count
+ * @return {Set}
+ */
+this.Set.random = function(start, end, count) {
+  // numer + number + number
+  if (typeof start === 'number'
+      && typeof end === 'number'
+      && typeof count === 'number') {
+    return self.G.setRandomSequenceFromNumbers(start, end, count);
+  }
+  // not cool
+  console.error('Sketchpad: invalid arguments for Set.random');
+  return undefined; 
+}
 
 
 
