@@ -25,6 +25,11 @@ var red = new pad.Style({
 	strokeWidth: 1.0,
 	fill: 'rgba(127, 0, 0, 0.5)'
 });
+var blue = new pad.Style({
+	stroke: '#0000ff',
+	strokeWidth: 1.0,
+	fill: 'rgba(0, 0, 127, 0.5)'
+});
 
 
 var pp0 = new pad.Point(100, 400),
@@ -44,6 +49,8 @@ red.applyTo(p0, p1);
 var rr = pad.Set.sequence(0, .1, 6),
 	ppc = pad.Point.along(c, rr);
 
+// var ppp = pad.Point.along(c, d);
+// blue.applyTo(ppp);
 
 
 

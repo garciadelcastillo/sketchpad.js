@@ -231,7 +231,7 @@ this.G = {
   },
 
   /**
-   * Create a Point along a Line at the relevant length 'parameter', 
+   * Create a Point along a Line at the relative length 'parameter', 
    * defined by a Measure object
    * @param  {Line} line    
    * @param  {Measure} measure 
@@ -253,6 +253,7 @@ this.G = {
     p.update();
     return p;
   },
+
 
   /**
    * Create a Set of Points along a Line at numeric 'parameters' defined by a 
@@ -314,7 +315,37 @@ this.G = {
     return p;
   },
 
+  /**
+   * Create a Point along a Circle at the relative length 'parameter'
+   * defined by a Measure object
+   * @param  {Circle} circle  
+   * @param  {Measure} measure 
+   * @return {Point}         
+   */
+  pointOnCircleFromMeasure: function(circle, measure) {
+    var p = new self.Point(0, 0);
+    p.addParent(circle, measure);
+    circle.addChild(p);
+    measure.addChild(p);
+    // p.parameter = measure;
+    p.update = function() {
+      var a = (this.parents[1].value % 1) * self.C.TAU;
+      this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
+      this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
+      this.updateChildren();
+    };
+    p.setParameter = self.G.setParameter;
+    p.update();
+    return p;
+  },
 
+  /**
+   * Create a Set of Points along a Circle at relative lengths defined by
+   * a numeric Set
+   * @param  {Circle} circle       
+   * @param  {Set(Number)} parameterSet 
+   * @return {Set(Point)}              
+   */
   pointsOnCircleFromNumberSet: function(circle, parameterSet) {
     var items = [];
     for (var l = parameterSet.length, i = 0; i < l; i++) {
@@ -336,7 +367,6 @@ this.G = {
     s.update();
     return s;
   },
-
 
   /**
    * Returns a Point projected on a Line
@@ -886,6 +916,10 @@ this.Point.along = function(geom, parameter) {
   // measure along line
   else if (geom.type == self.C.LINE && parameter.type == self.C.MEASURE) {
     return self.G.pointOnLineFromMeasure(geom, parameter);
+  }
+  // measure along circle
+  else if (geom.type == self.C.CIRCLE && parameter.type == self.C.MEASURE) {
+    return self.G.pointOnCircleFromMeasure(geom, parameter);
   }
   // number set along line
   else if (geom.type == self.C.LINE && parameter.type == self.C.SET && parameter.subtype == self.C.NUMBER) {

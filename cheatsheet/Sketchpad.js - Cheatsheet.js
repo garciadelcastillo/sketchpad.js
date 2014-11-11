@@ -22,7 +22,7 @@ POINT
     Point.along(line, number)
     Point.along(circle, number)
     Point.along(line, measure)
-    // Point.along(circle, measure)  --> todo
+    Point.along(circle, measure)
     Point.along(line, numericSet)
     Point.along(circle, numericSet)
     Point.projection(point, line)
