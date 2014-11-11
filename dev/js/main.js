@@ -53,8 +53,13 @@ var rr = pad.Set.sequence(0, .1, 6),
 // blue.applyTo(ppp);
 
 
+var a0 = new pad.Point(50, 50),
+	a1 = new pad.Point(100, 50),
+	a2 = new pad.Point(50, 100);
+var alpha = pad.Measure.angle(a0, a1, a2);
 
-
+var s0 = new pad.Point(150, 50),
+	ls0 = pad.Line.polar(s0, 50, alpha);
 
 pad.update = function() {
 

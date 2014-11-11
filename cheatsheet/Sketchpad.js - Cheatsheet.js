@@ -8,7 +8,8 @@ ELEMENT
 
   METHODS (most of these are internal, avoid using them!)  --> apply underscore prefixes?
     Element.addParent(element0, element1...)
-    Element.addChild(element)
+    // Element.addChild(element)  @deprecated
+    Element.isChildOf(element0, element1...)
     Element.updateChildren()
     Element.checkStates()
     Element.setVisible(boolean)
@@ -43,7 +44,8 @@ LINE
     Line.between(point, point)
     Line.polar(point, number, number)  // startPoint, length, angle
     Line.polar(point, measure, number)
-    // Line.polar(point, measure, measure)  --> todo
+    Line.polar(point, number, measure)
+    Line.polar(point, measure, measure)
 
   METHODS
     (none)
