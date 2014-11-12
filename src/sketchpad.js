@@ -478,17 +478,16 @@ this.G = {
    * Returns the intersection Points of a Line and a Circle
    * @param  {Line} line   
    * @param  {Circle} circle 
-   * @return {Point}
+   * @return {Set(Point)}
    * @ref http://stackoverflow.com/a/1084899
    * @TODO UPDATE FUNCTION SHOULD BE OPTIMIZED
    * @TODO THIS SHOULD RETURN AN ARRAY OF POINTS, NOT JUST THE FIRST SOLUTION
    */
   pointIntersectionlLineCircle: function(line, circle) {
-    var p = new self.Point(0, 0);
-    p.addParents(line, circle);
-    // line.addChild(p);
-    // circle.addChild(p);
-    p.update = function() {
+    var s = new self.Set([new self.Point(0, 0), new self.Point(0, 0)]);
+    s.subtype = self.C.POINT;
+    s.addParents(line, circle);
+    s.update = function() {
       var dx = this.parents[0].x1 - this.parents[0].x0,
           dy = this.parents[0].y1 - this.parents[0].y0,
           dcx = this.parents[0].x0 - this.parents[1].x,
@@ -499,20 +498,20 @@ this.G = {
           c = (dcx * dcx + dcy * dcy) - r * r,
           disc = b * b - 4 * a * c;
       if (disc < 0) {
-        console.log('No line-circle intersection');
-        this.x = 0;
-        this.y = 0;
+        // console.log('No line-circle intersection');
+        this.items[0].x = this.items[0].y = this.items[1].x = this.items[1].y = 0;
       } else {
         var sq = Math.sqrt(disc),
             t0 = (-b - sq) / (2 * a),
             t1 = (-b + sq) / (2 * a);
-        this.x = this.parents[0].x0 + t0 * dx;
-        this.y = this.parents[0].y0 + t0 * dy;
-        // an array of two points should be returned here...
+        this.items[0].x = this.parents[0].x0 + t0 * dx;
+        this.items[0].y = this.parents[0].y0 + t0 * dy;
+        this.items[1].x = this.parents[0].x0 + t1 * dx;
+        this.items[1].y = this.parents[0].y0 + t1 * dy;
       }
     };
-    p.update();
-    return p;
+    s.update();
+    return s;
   },
 
   /**
@@ -523,11 +522,10 @@ this.G = {
    * @ref http://www.ambrsoft.com/TrigoCalc/Circles2/Circle2.htm
    */
   pointIntersectionlCircleCircle: function(circle0, circle1) {
-    var p = new self.Point(0, 0);
-    p.addParents(circle0, circle1);
-    // circle0.addChild(p);
-    // circle1.addChild(p);
-    p.update = function() {
+    var s = new self.Set([new self.Point(0, 0), new self.Point(0, 0)]);
+    s.subtype = self.C.POINT;
+    s.addParents(circle0, circle1);
+    s.update = function() {
       var x0 = this.parents[0].x,
           y0 = this.parents[0].y,
           r0 = this.parents[0].r,
@@ -536,21 +534,27 @@ this.G = {
           r1 = this.parents[1].r;
       var D = self.U.distanceBetweenCoordinates(x0, y0, x1, y1);
       if (r0 + r1 < D || Math.abs(r0 - r1) > D) {
-        console.log('No circle-circle intersection');
-        this.x = 0;
-        this.y = 0;
+        // console.log('No circle-circle intersection');
+        this.items[0].x = this.items[0].y = this.items[1].x = this.items[1].y = 0;
       } else {
         var delta = Math.sqrt( (D + r0 + r1) * (D + r0 - r1)
             * (D - r0 + r1) * (-D + r0 + r1) ) / 4;
-        this.x = (x0 + x1) / 2 + (x1 - x0) * (r0 * r0 - r1 * r1) / (2 * D * D)
-            + 2 * (y0 - y1) * delta / (D * D);
-        this.y = (y0 + y1) / 2 + (y1 - y0) * (r0 * r0 - r1 * r1) / (2 * D * D)
-            - 2 * (x0 - x1) * delta / (D * D);
-        // the other solution comes from changing the plus/minus at the beginning of the carried lines
+        var XX = (x0 + x1) / 2 + (x1 - x0) * (r0 * r0 - r1 * r1) / (2 * D * D),
+            xx = 2 * (x0 - x1) * delta / (D * D),
+            YY = (y0 + y1) / 2 + (y1 - y0) * (r0 * r0 - r1 * r1) / (2 * D * D),
+            yy = 2 * (y0 - y1) * delta / (D * D);
+        // this.items[0].x = (x0 + x1) / 2 + (x1 - x0) * (r0 * r0 - r1 * r1) / (2 * D * D)
+        //     + 2 * (y0 - y1) * delta / (D * D);
+        // this.items[0].y = (y0 + y1) / 2 + (y1 - y0) * (r0 * r0 - r1 * r1) / (2 * D * D)
+        //     - 2 * (x0 - x1) * delta / (D * D);
+        this.items[0].x = XX + yy;
+        this.items[0].y = YY - xx;
+        this.items[1].x = XX - yy;
+        this.items[1].y = YY + xx;
       }
     };
-    p.update();
-    return p;
+    s.update();
+    return s;
   },
 
   /**

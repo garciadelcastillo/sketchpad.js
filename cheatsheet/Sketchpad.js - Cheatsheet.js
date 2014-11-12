@@ -29,7 +29,7 @@ POINT
     Point.projection(point, line)
     Point.projection(point, circle)
     Point.intersection(line, line)
-    Point.intersection(line, circle)  // and viceversa
+    Point.intersection(line, circle)  // and viceversa (must fix drawing order)
     Point.intersection(circle, circle)
 
   METHODS

@@ -20,55 +20,47 @@ var blue = new pad.Style({
 });
 
 
-var pp0 = new pad.Point(100, 100),
-	pp1 = new pad.Point(300, 100),
-	ll = pad.Line.between(pp0, pp1),
-	r = pad.Set.range(0, 1.0, 5),
-	pps = pad.Point.along(ll, r);
-red.applyTo(pp0, pp1);
 
-var ppr0 = new pad.Point(100, 200),
-	ppr1 = new pad.Point(300, 200),
-	llr = pad.Line.between(ppr0, ppr1),
-	rr = pad.Set.random(0, 1.0, 6),
-	pppr = pad.Point.along(llr, rr);
-red.applyTo(ppr0, ppr1);
+// INTERSECTIONS
+var p0 = new pad.Point(100, 100),
+	p1 = new pad.Point(400, 200),
+	p2 = new pad.Point(100, 200),
+	p3 = new pad.Point(400, 100);
 
-var lines = pad.Line.between(pps, pppr);
+var l01 = pad.Line.between(p0, p1),
+	l23 = pad.Line.between(p2, p3);
 
+var pint = pad.Point.intersection(l01, l23);
 
-var a0 = new pad.Point(400, 100),
-	a1 = new pad.Point(600, 100),
-	a2 = new pad.Point(400, 200),
-	a3 = new pad.Point(600, 200),
-	l0 = pad.Line.between(a0, a1),
-	l1 = pad.Line.between(a2, a3);
-
-var r1 = pad.Set.range(0, 1, 50),
-	r2 = pad.Set.range(0, 1, 60);
-
-var pp01 = pad.Point.along(l0, r1),
-	pp02 = pad.Point.along(l1, r2),
-	lines = pad.Line.between(pp01, pp02);
-
-red.applyTo(a0, a1, a2, a3);
-pp01.setVisible(false);  // this is not working, fix!
+// parallel test
+var p10 = new pad.Point(100, 300),
+	p11 = new pad.Point(400, 300),
+	p12 = new pad.Point(100, 400),
+	p13 = new pad.Point(400, 400);
+var lineA = pad.Line.between(p10, p11),
+	lineB = pad.Line.between(p12, p13);
+pint2 = pad.Point.intersection(lineA, lineB);
 
 
+// line-circle
+var p20 = new pad.Point(100, 500),
+	p21 = new pad.Point(400, 500);
+var line20 = pad.Line.between(p20, p21);
+var pc = new pad.Point(250, 500),
+	c = pad.Circle.centerRadius(pc, 26);
+var pint3 = pad.Point.intersection(line20, c);
 
-var p0 = new pad.Point(200, 300),
-	p1 = new pad.Point(250, 300),
-	d = pad.Measure.distance(p0, p1),
-	c = pad.Circle.centerRadius(p0, d);
-// p1.setStyle(red);
-red.applyTo(p0, p1);
+// circle-circle
+var ppp0 = new pad.Point(250, 650),
+	ppp1 = new pad.Point(250, 650),
+	ppp2 = new pad.Point(250, 650);
+var ccc0 = pad.Circle.centerRadius(ppp0, 25),
+	ccc1 = pad.Circle.centerRadius(ppp1, 35),
+	ccc2 = pad.Circle.centerRadius(ppp2, 45);
+var pi0 = pad.Point.intersection(ccc0, ccc1),
+	pi1 = pad.Point.intersection(ccc1, ccc2),
+	pi2 = pad.Point.intersection(ccc2, ccc0);
 
-var rr = pad.Set.sequence(0, .1, 6),
-	ppc = pad.Point.along(c, rr);
-
-var pf = new pad.Point(200, 400),
-	linesf = pad.Line.between(pf, ppc);
-pf.setStyle(red);
 
 
 
