@@ -42,7 +42,8 @@ LINE
   CONSTRUCTORS
     new Line(number, number, number, number)  // xy0, xy1
     Line.between(point, point)
-    Line.between(point, pointSet)
+    Line.between(point, pointSet)  // TODO: add viceversa
+    Line.between(pointSet, pointSet)
     Line.polar(point, number, number)  // startPoint, length, angle
     Line.polar(point, measure, number)
     Line.polar(point, number, measure)
