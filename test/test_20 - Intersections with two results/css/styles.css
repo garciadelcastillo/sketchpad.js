@@ -1,0 +1,28 @@
+html {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+
+#sketchpaddiv 
+{
+    background-color:#000000;
+    float: left;
+    position:absolute; 
+    width:90%; 
+    height:90%;
+    left: 5%;
+    top:5%;
+    border: 1px solid #000;
+}
+
+#sketchPadCanvas
+{
+    position:absolute;
+    left:0;
+    top:0;
+}

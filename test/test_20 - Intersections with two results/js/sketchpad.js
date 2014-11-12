@@ -174,7 +174,7 @@ this.toRadians = function(angleInDegs) {
  */
 this.findElementNames = function() {
   for (var l = this.elements.length, i = 0; i < l; i++) {
-    this.elements[i].findName();
+    this.elements[i].findMe();
   }
 };
 
@@ -955,7 +955,7 @@ this.Element.prototype.setStyle = function(style) {
  * property as object name
  * @return {boolean} Returns true if found an instance of this object
  */
-this.Element.prototype.findName = function() {
+this.Element.prototype.findMe = function() {
   for (var a in window) {
     if (window[a] == this) {
       this.name = a;
