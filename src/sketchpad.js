@@ -7,32 +7,35 @@
 
 Sketchpad = function(canvasId) {
 
+this.version = "v0.0.2";
+this.build = 1024;
+
 // Some internal constants
 this.C = {
 
-  BOOLEAN : 1,
-  NUMBER  : 2,
-  INTEGER : 3, 
-  FLOAT   : 4,
-  STRING  : 5,
+  BOOLEAN   : 1,
+  NUMBER    : 2,
+  INTEGER   : 3, 
+  FLOAT     : 4,
+  STRING    : 5,
   
-  SET     : 11,
-  MEASURE : 12, 
+  SET       : 11,
+  MEASURE   : 12, 
   
-  POINT   : 21,
-  LINE    : 22,
-  CIRCLE  : 23,
+  POINT     : 21,
+  LINE      : 22,
+  CIRCLE    : 23,
   
-  LENGTH  : 31,
-  AREA    : 32,
-  VOLUME  : 33,
-  ANGLERAD: 34,
-  ANGLEDEG: 35,
+  LENGTH    : 31,
+  AREA      : 32,
+  VOLUME    : 33,
+  ANGLE_RAD : 34,
+  ANGLE_DEG : 35,
   
-  PI      : Math.PI,
-  TAU     : 2 * Math.PI,
-  TODEGS  : 180 / Math.PI,
-  TORADS  : Math.PI / 180
+  PI        : Math.PI,
+  TAU       : 2 * Math.PI,
+  TO_DEGS   : 180 / Math.PI,
+  TO_RADS   : Math.PI / 180
 };
 
 
@@ -687,8 +690,8 @@ this.G = {
     lin.addParents(startPoint, angleM);
     lin.length = length;
     lin.update = function() {
-      var ang = this.parents[1].subtype == self.C.ANGLEDEG ?
-          this.parents[1].value * self.C.TORADS :
+      var ang = this.parents[1].subtype == self.C.ANGLE_DEG ?
+          this.parents[1].value * self.C.TO_RADS :
           this.parents[1].value;
       this.x0 = this.parents[0].x;
       this.y0 = this.parents[0].y;
@@ -710,8 +713,8 @@ this.G = {
     var lin = new self.Line(0, 0, 0, 0);
     lin.addParents(startPoint, lengthM, angleM);
     lin.update = function() {
-      var ang = this.parents[2].subtype == self.C.ANGLEDEG ?
-          this.parents[2].value * self.C.TORADS :
+      var ang = this.parents[2].subtype == self.C.ANGLE_DEG ?
+          this.parents[2].value * self.C.TO_RADS :
           this.parents[2].value;
       this.x0 = this.parents[0].x;
       this.y0 = this.parents[0].y;
@@ -957,7 +960,8 @@ this.Element.prototype.setStyle = function(style) {
  */
 this.Element.prototype.findName = function() {
   for (var a in window) {
-    if (window[a] == this) {
+    //if (window[a] == this) {    // deprecation warning
+    if (navigator[a] == this) {
       this.name = a;
       return true;
     }
@@ -1037,6 +1041,10 @@ this.Point.prototype.move = function(xinc, yinc) {
  * @return {Point}
  */
 this.Point.along = function(geom, parameter) {
+  //PAN'S COMMENTS
+  //if (!geom.along) return null;
+  //return geom.along(parameter);
+
   // number along line
   if (geom.type == self.C.LINE && typeof parameter === 'number') {
     return self.G.pointOnLine(geom, parameter);
@@ -1061,6 +1069,7 @@ this.Point.along = function(geom, parameter) {
   else if (geom.type == self.C.CIRCLE && parameter.type == self.C.SET && parameter.subtype == self.C.NUMBER) {
     return self.G.pointsOnCircleFromNumberSet(geom, parameter);    
   }
+
   // not cool
   console.error('Sketchpad: invalid arguments for Point.along');
   return undefined;
@@ -1331,7 +1340,7 @@ this.M = {
   angleBetweenThreePoints: function(p0, p1, p2) {
     var m = new self.Measure(0);
     m.addParents(p0, p1, p2);
-    m.subtype = self.C.ANGLERAD;
+    m.subtype = self.C.ANGLE_RAD;
     m.update = function() {
       this.value = self.U.angleBetween3Points(this.parents[0], this.parents[1], this.parents[2]);
     };
@@ -1558,6 +1567,7 @@ if (this.canvas) {
   this.canvas.width = this.width;
   this.canvas.height = this.height;
   this.initialized = true;  // looping kicks in
+  if (console.info) console.info("Sketchpad.js " + this.version);
   this.init();
   this.loop();
 } else {

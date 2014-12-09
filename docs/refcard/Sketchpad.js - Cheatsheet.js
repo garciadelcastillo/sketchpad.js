@@ -2,6 +2,19 @@ Sketchpad.js cheatsheet
 =======================
 
 ///////////////////////
+SKETCHPAD
+  CONSTRUCTORS
+    new Sketchpad(canvasId)
+
+  METHODS
+    update()
+    visible()
+    invisible()
+    currentStyle(style)
+    findElementNames()
+
+
+///////////////////////
 ELEMENT
   CONSTRUCTORS
     (none)
@@ -14,6 +27,7 @@ ELEMENT
     Element.checkStates()
     Element.setVisible(boolean)
     Element.setStyle(style)
+    Element.findName()
 
 
 ///////////////////////
