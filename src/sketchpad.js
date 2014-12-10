@@ -59,12 +59,16 @@ this.C = {
 var self = this;  // store this context
 this.elements = [];
 this.initialized = false;
-this.width;
-this.height;
 this.canvas;
 this.canvasId
 this.gr;
 this.parentDiv;
+this._canvasWidth;    // the numeric values
+this._canvasHeight;
+
+// Public Measure objects that update on resize!
+this.width;           
+this.height;      
 
 // Public properties
 this.frameCount = 0;
@@ -75,6 +79,12 @@ this.frameCount = 0;
  * @type {Boolean}
  */
 this.drawVisible = true;
+
+
+/**
+ * Internal start block. Will be run once before first pad.loop() interation
+ */
+this.start = function() { };
 
 
 /**
@@ -99,7 +109,7 @@ this.render = function() {
 	// clean the background
 	self.gr.globalAlpha = 1.00;
 	self.gr.fillStyle = "#ffffff";
-	self.gr.fillRect(0, 0, self.width, self.height);
+	self.gr.fillRect(0, 0, self._canvasWidth, self._canvasHeight);
 
 	// render each element
 	for (var i = 0; i < self.elements.length; i++) {
@@ -121,17 +131,11 @@ this.render = function() {
 };
 
 /**
- * Internal initialization block. Will be run once before first pad.loop() interation
- */
-this.init = function() {
-  // this.findElementNames();  // update all element names
-};
-
-/**
  * Main internal auto loop function
  */
 this.loop = function() {
 	window.requestAnimFrame(self.loop);
+  self.preupdate();
 	self.render();
 	self.update();
 	self.frameCount++;
@@ -1334,6 +1338,34 @@ this.Circle.centerRadius = function(centerPoint, radius) {
 this.M = {
 
   /**
+   * Returns a Measure object that measures the width of the canvas div
+   * @return {Measure}
+   */
+  canvasWidth: function() {
+    var m = new self.Measure(0);
+    // (no parents , update is triggered by eventhandler)
+    m.update = function() {
+      this.value = $(self.parentDiv).innerWidth();
+    };
+    m.update();
+    return m;
+  },
+
+  /**
+   * Returns a Measure object that measures the height of the canvas div
+   * @return {Measure}
+   */
+  canvasHeight: function() {
+    var m = new self.Measure(0);
+    // (no parents , update is triggered by eventhandler)
+    m.update = function() {
+      this.value = $(self.parentDiv).innerHeight();
+    };
+    m.update();
+    return m;
+  },
+
+  /**
    * Returns the Measure of linear distance between two points
    * @param  {Point} p0 
    * @param  {Point} p1 
@@ -1735,20 +1767,42 @@ this.Text.on = function(geom, text) {
 this.canvasId = canvasId;
 this.canvas = document.getElementById(canvasId);
 if (this.canvas) {
+  // init canvas
   this.style = new this.Style({});
   this.gr = this.canvas.getContext('2d');
   this.parentDiv = this.canvas.parentNode;
-  this.width = $(this.parentDiv).innerWidth();
-  this.height = $(this.parentDiv).innerHeight();
-  this.canvas.width = this.width;
-  this.canvas.height = this.height;
+  this._canvasWidth = $(this.parentDiv).innerWidth();
+  this._canvasHeight = $(this.parentDiv).innerHeight();
+  this.canvas.width = this._canvasWidth;
+  this.canvas.height = this._canvasHeight;
+
+  // create pad.width & pad.height Measure instances
+  this.width = this.M.canvasWidth();
+  this.height = this.M.canvasHeight();
+
+  // set window.on('resize') eventhandler
+  $(window).resize(function() {
+    self._canvasWidth = $(self.parentDiv).innerWidth();
+    self._canvasHeight = $(self.parentDiv).innerHeight();
+    self.canvas.width = self._canvasWidth;
+    self.canvas.height = self._canvasHeight;
+    self.width.update();
+    self.height.update();
+  })
+
+  // we are oficially initialized
   this.initialized = true;  // looping kicks in
   if (console.info) console.info("Sketchpad.js " + this.version);
-  this.init();
+
+  // run one iteration of (overriden) start()
+  this.start();
+
+  // kick off main loop() cycle
   this.loop();
+
 } else {
   console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
-    ' DOM canvas object, e.g. var pad = new Sketchpad("sketchPadCanvas")');
+    ' DOM canvas object, e.g. var pad = new Sketchpad("padCanvasId")');
   return null;
 }
 

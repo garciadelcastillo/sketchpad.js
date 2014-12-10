@@ -13,6 +13,10 @@ SKETCHPAD
     currentStyle(style)
     findElementNames()
 
+  PUBLIC PROPERTIES
+    width {Measure}
+    height {Measure}
+
 
 ///////////////////////
 ELEMENT
