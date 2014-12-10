@@ -38,6 +38,7 @@ ELEMENT
 POINT
   CONSTRUCTORS
     new Point(number, number)
+    // Point.fromMeasures(measure, measure)  // TEMP
     Point.along(line, number)
     Point.along(circle, number)
     Point.along(line, measure)
@@ -86,6 +87,8 @@ CIRCLE
 MEASURE
   CONSTRUCTORS
     Measure.distance(point, point)
+    Measure.angle(point, point, point)
+    Measure.from(measure, [measure...], function)
 
   METHODS
     (none)
