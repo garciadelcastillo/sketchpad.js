@@ -98,12 +98,22 @@ SET
     Set.setItems(JSArray, number)  // objects, subtype as pad.C.FOO constant
 
 
+///////////////////////
 STYLE
   CONSTRUCTORS  
     new Style({
       stroke: '',
-      strokeWidth: ''
-      fill: ''
+      strokeWidth: '',
+      fill: '',
+      fontFamily: '',
+      fontSize: '',
+      fontStyle: '',
+      fontCSS: '',
+      textFill: '',
+      textVAlign: '',
+      textHAlign: '',
+      textOffsetX: 0,
+      textOffsetY: 0
     })
 
   METHODS
