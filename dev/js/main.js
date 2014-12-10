@@ -8,37 +8,41 @@
 // init Sketchpad
 var pad = new Sketchpad('sketchPadCanvas');
 
-// a free Node
-var n0 = new pad.Node(100, 100);
-n0.name = 'unconstrained Node';
+var boxWidth = Slider(pad, 25, 25, 150, 0, 300, 150, { }),
+	boxHeight = Slider(pad, 25, 50, 150, 0, 300, 150, { });
 
-// a Node that can only move horizontally
-var nH = pad.Node.horizontal(250, 100);
-nH.name = 'vertically-constrained Node'
+// var halfWidth = pad.Measure.from(pad.width, function() { return pad.width.value / 2; });
+// var halfHeight = pad.Measure.from(pad.height, function() { return pad.height.value / 2; });
 
-// a Node that can only move vertically
-var nV = pad.Node.vertical(400, 100);
-nV.name = 'horizontally-contrained Node';
+var topleft = new pad.Point(200, 200),
+	topright = pad.Point.offset(topleft, boxWidth, 0),
+	bottomLeft = pad.Point.offset(topleft, 0, boxHeight),
+	bottomRight = pad.Point.offset(topleft, boxWidth, boxHeight);
 
-// a Node constrained (and clamped) to a Line
-var A = new pad.Node(100, 200),
-	B = new pad.Node(200, 300),
-	AB = pad.Line.between(A, B);
-var nAB = pad.Node.along(AB, 0.75, {clamp: true});
-nAB.name = 'line-constrained + clamped Node';
+var top = pad.Line.between(topleft, topright),
+	bottom = pad.Line.between(bottomLeft, bottomRight),
+	left = pad.Line.between(topleft, bottomLeft),
+	right = pad.Line.between(topright, bottomRight);
 
-// a Node constrained to a Circle
-var C = new pad.Node(150, 400),
-	circle = pad.Circle.centerRadius(C, 50);
-var nCircle = pad.Node.along(circle, 0.75);
-nCircle.name = 'circle-constrained Node';
+	
 
-
-
-
-
-pad.tagElementNames();
+// pad.tagElementNames();
 
 pad.update = function() {
 	
+};
+
+
+
+/**
+ * Quick test to create a Slider object out of Sketchpad's built in stuff
+ */
+function Slider(pad, x, y, width, minValue, maxValue, startValue, options) {
+	var axis = new pad.Line(x, y, x + width, y);
+	var t = (startValue - minValue) / (maxValue - minValue);
+	var handle = pad.Node.along(axis, t, {clamp: true});
+	var measure = pad.Measure.from(handle, function() {
+		return minValue +  (maxValue - minValue) * (handle.x - x) / width;  // handle gets scoped! serendipity!
+	});
+	return measure;
 };

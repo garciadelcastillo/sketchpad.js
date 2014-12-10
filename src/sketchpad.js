@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1029;
+this.build = 1030;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -46,6 +46,7 @@ this.C = {
   TAU       : 2 * Math.PI,
   TO_DEGS   : 180 / Math.PI,
   TO_RADS   : Math.PI / 180
+
 };
 
 
@@ -68,8 +69,8 @@ this._canvasWidth;    // the numeric values
 this._canvasHeight;
 
 // Public Measure objects that update on resize!
-this.width;           
-this.height;      
+this.width;
+this.height;
 
 // Public properties
 this.frameCount = 0;
@@ -307,6 +308,78 @@ this.G = {
       this.x = this.parents[0].value;
       this.y = this.parents[1].value;
     };
+    p.update();
+    return p;
+  },
+
+  /**
+   * Create a Point offset from another Point
+   * @param  {Point} point 
+   * @param  {Number} offX  
+   * @param  {Number} offY  
+   * @return {Point}       
+   */
+  pointOffsetNumberNumber: function(point, offX, offY) {
+    var p = new self.Point(0, 0);
+    p.addParents(point, offX, offY);
+    p.update = function() {
+      this.x = this.parents[0].x + this.parents[1];
+      this.y = this.parents[0].y + this.parents[2];
+    }
+    p.update();
+    return p;
+  },
+
+  /**
+   * Create a Point offset from another Point
+   * @param  {Point} point 
+   * @param  {Number} offX  
+   * @param  {Measure} offY  
+   * @return {Point}       
+   */
+  pointOffsetNumberMeasure: function(point, offX, offY) {
+    var p = new self.Point(0, 0);
+    p.addParents(point, offX, offY);
+    p.update = function() {
+      this.x = this.parents[0].x + this.parents[1];
+      this.y = this.parents[0].y + this.parents[2].value;
+    }
+    p.update();
+    return p;
+  },
+
+  /**
+   * Create a Point offset from another Point
+   * @param  {Point} point 
+   * @param  {Measure} offX  
+   * @param  {Number} offY  
+   * @return {Point}       
+   */
+  pointOffsetMeasureNumber: function(point, offX, offY) {
+    var p = new self.Point(0, 0);
+    p.addParents(point, offX, offY);
+    p.update = function() {
+      this.x = this.parents[0].x + this.parents[1].value;
+      this.y = this.parents[0].y + this.parents[2];
+    }
+    p.update();
+    return p;
+  },
+
+  /**
+   * Create a Point offset from another Point
+   * @param  {Point} point 
+   * @param  {Measure} offX  
+   * @param  {Measure} offY  
+   * @return {Point}       
+   */
+  pointOffsetMeasureMeasure: function(point, offX, offY) {
+    var p = new self.Point(0, 0);
+    p.addParents(point, offX, offY);
+    p.update = function() {
+      this.x = this.parents[0].x + this.parents[1].value;
+      this.y = this.parents[0].y + this.parents[2].value;
+    }
     p.update();
     return p;
   },
@@ -1220,6 +1293,40 @@ this.Point.intersection = function(geom0, geom1) {
   return undefined;
 };
 
+/**
+ * A constructor method to create a Point as an offset of another Point
+ * @param  {Point} point 
+ * @param  {Number/Measure} offX  
+ * @param  {Number/Measure} offY  
+ * @return {Point}       
+ */
+this.Point.offset = function(point, offX, offY) {
+
+  // POINT, NUMBER, NUMBER
+  if (point.type == self.C.POINT && self.util.isNumber(offX) && self.util.isNumber(offY)) {
+    return self.G.pointOffsetNumberNumber(point, offX, offY);
+  }
+
+  // POINT, MEASURE, NUMBER
+  else if (point.type == self.C.POINT && offX.type == self.C.MEASURE && self.util.isNumber(offY)) {
+    return self.G.pointOffsetMeasureNumber(point, offX, offY);
+  }
+
+  // POINT, NUMBER, MEASURE
+  else if (point.type == self.C.POINT && self.util.isNumber(offX) && offY.type == self.C.MEASURE) {
+    return self.G.pointOffsetNumberMeasure(point, offX, offY);
+  }
+
+  // POINT, MEASURE, MEASURE
+  else if (point.type == self.C.POINT && offX.type == self.C.MEASURE && offY.type == self.C.MEASURE) {
+    return self.G.pointOffsetMeasureMeasure(point, offX, offY);
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Point.offset');
+  return undefined;
+};
+
 
 
 
@@ -1247,7 +1354,7 @@ this.N = {
    */
   nodeOnLine: function(line, startParameter, options) {
     var n = new self.Node(0, 0);
-    var clamp = options['clamp'] || false;
+    var clamp = options ? (options['clamp'] || false) : false;
     var u = startParameter || 0.5;
     if (clamp) u = self.util.clampValue(u, 0, 1);
 
@@ -1849,12 +1956,13 @@ this.Measure.from = function(args) {
     return undefined; 
   };
 
-  for (var i = 0; i < len - 1; i++) {
-    if (a[i].type != self.C.MEASURE) {
-      console.error('Sketchpad: sorry, at the moment Measure.from only supports Measure objects as input arguments');
-      return undefined;
-    }
-  };
+  // Actually, being able to reference any field in a parent object is kind of nice
+  // for (var i = 0; i < len - 1; i++) {
+  //   if (a[i].type != self.C.MEASURE) {
+  //     console.error('Sketchpad: sorry, at the moment Measure.from only supports Measure objects as input arguments');
+  //     return undefined;
+  //   }
+  // };
 
   if (!self.util.isFunction(a[len - 1])) {
     console.error('Sketchpad: last argument at Measure.from must be a function');
