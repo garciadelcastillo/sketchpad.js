@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1028;
+this.build = 1029;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -29,8 +29,9 @@ this.C = {
   MEASURE   : 12, 
   
   POINT     : 21,
-  LINE      : 22,
-  CIRCLE    : 23,
+  NODE      : 22,
+  LINE      : 23,
+  CIRCLE    : 24,
   
   LENGTH    : 31,
   AREA      : 32,
@@ -38,8 +39,8 @@ this.C = {
   ANGLE_RAD : 34,
   ANGLE_DEG : 35,
   
-  STYLE     : 40, 
-  TEXT      : 41,
+  STYLE     : 41, 
+  TEXT      : 42,
   
   PI        : Math.PI,
   TAU       : 2 * Math.PI,
@@ -109,7 +110,11 @@ this.render = function() {
 	// clean the background
 	self.gr.globalAlpha = 1.00;
 	self.gr.fillStyle = "#ffffff";
-	self.gr.fillRect(0, 0, self._canvasWidth, self._canvasHeight);
+  self.gr.clearRect(0, 0, self._canvasWidth, self._canvasHeight);
+  self.gr.fillRect(0, 0, self._canvasWidth, self._canvasHeight);
+  
+  // gross workaround to the 1px line aliasing problem: http://stackoverflow.com/a/3279863/1934487
+  self.gr.translate(0.5, 0.5);
 
 	// render each element
 	for (var i = 0; i < self.elements.length; i++) {
@@ -123,11 +128,15 @@ this.render = function() {
       //   self.elements[i].items[j].render(self.gr);
       // }
     }
+
     // or individual elements
     else {
   	  self.elements[i].render(self.gr);
     }
 	}
+
+  // revert the translation
+  self.gr.translate(-0.5, -0.5);  
 };
 
 /**
@@ -927,7 +936,7 @@ this.U = {
 this.Element = function() {
 	this.parents = [];
 	this.children = [];
-	this.visible = true;
+	this.visible = undefined;
   this.name = undefined;
   this.style = self.style;  // apply a style from fallback defaults
 };
@@ -1009,10 +1018,12 @@ this.Element.prototype.setVisible = function(isVisible) {
 
 /**
  * Checks pad state-based flags and sets properties accordingly
- * @return {[type]} [description]
  */
 this.Element.prototype.checkStates = function() {
-  this.visible = self.drawVisible;
+  // if nothing changed the visible flag, set it to the global default
+  if (this.visible == undefined) {    
+    this.visible = self.drawVisible;
+  }
 };
 
 /**
@@ -1060,7 +1071,8 @@ this.Point = function(xpos, ypos) {
   this.type = self.C.POINT;
 	this.x = xpos;
 	this.y = ypos;
-	this.r = 4;  // for representation when visible
+	this.r = 1;                // for representation when visible
+  this.visible = false;      // points won't be renderable by default
 
   this.checkStates();
 };
@@ -1207,6 +1219,283 @@ this.Point.intersection = function(geom0, geom1) {
   console.error('Sketchpad: invalid arguments for Point.intersection');
   return undefined;
 };
+
+
+
+
+
+
+
+// ███╗   ██╗ ██████╗ ██████╗ ███████╗ ██████╗ █████╗ ██╗      ██████╗
+// ████╗  ██║██╔═══██╗██╔══██╗██╔════╝██╔════╝██╔══██╗██║     ██╔════╝
+// ██╔██╗ ██║██║   ██║██║  ██║█████╗  ██║     ███████║██║     ██║     
+// ██║╚██╗██║██║   ██║██║  ██║██╔══╝  ██║     ██╔══██║██║     ██║     
+// ██║ ╚████║╚██████╔╝██████╔╝███████╗╚██████╗██║  ██║███████╗╚██████╗
+// ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚══════╝ ╚═════╝
+
+/**
+ * A library to store all independent Node construction functions
+ * @type {Object}
+ */
+this.N = {
+
+  /**
+   * Creates a Node constrained to a Line object
+   * @param  {Line} line           
+   * @param  {number} startParameter 
+   * @return {Node}                
+   */
+  nodeOnLine: function(line, startParameter, options) {
+    var n = new self.Node(0, 0);
+    var clamp = options['clamp'] || false;
+    var u = startParameter || 0.5;
+    if (clamp) u = self.util.clampValue(u, 0, 1);
+
+    n.addParents(line, u, clamp);
+    n.update = function() {
+      this.x = this.parents[0].x0 + this.parents[1] * (this.parents[0].x1 - this.parents[0].x0);
+      this.y = this.parents[0].y0 + this.parents[1] * (this.parents[0].y1 - this.parents[0].y0);
+    };
+    n.setPosition = function(xpos, ypos) {
+      // from given x y posisitons, calculated constrained parameter along line by projection
+      // TODO: merge this somehow with the projectPointOnLine method?
+      var dlx = this.parents[0].x1 - this.parents[0].x0,
+          dly = this.parents[0].y1 - this.parents[0].y0,
+          dpx = xpos - this.parents[0].x0,
+          dpy = ypos - this.parents[0].y0,
+          l = self.U.lineLength(this.parents[0]);
+      this.parents[1] = (dlx * dpx + dly * dpy) / (l * l);
+      if (this.parents[2]) {
+        this.parents[1] = self.util.clampValue(this.parents[1], 0, 1);
+      } 
+      this.update();
+    };
+    n.update();
+    return n;
+  },
+
+  /**
+   * Creates a Node constrained to a Circle object
+   * @param  {Circle} circle         
+   * @param  {number} startParameter 
+   * @return {Node}                
+   */
+  nodeOnCircle: function(circle, startParameter, options) {
+    var n = new self.Node(0, 0);
+    var u = startParameter || 0;
+    n.addParents(circle, u);
+    n.update = function() {
+      var a = (this.parents[1] % 1) * self.C.TAU;
+      this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
+      this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
+    };
+    n.setPosition = function (xpos, ypos) {
+      var a = self.U.angleBetweenCoordinates(this.parents[0].x, this.parents[0].y, xpos, ypos);
+      this.parents[1] = a / self.C.TAU;
+      this.update();
+    };
+    n.update();
+    return n;
+  },
+
+  /**
+   * Creates a Node constrained to X movement
+   * @param  {Number} startX 
+   * @param  {Number} fixY   
+   * @return {Node}        
+   */
+  nodeHorizontalMovementFromNumber: function(startX, fixY) {
+    var n = new self.Node(0, 0);
+    n.addParents(startX, fixY);
+    n.update = function() {
+      this.x = this.parents[0];
+      this.y = this.parents[1];
+    };
+    n.setPosition = function(x, y) {
+      this.parents[0] = x;
+      this.update();
+    };
+    n.update();
+    return n;
+  },
+
+  /**
+   * Creates a Node constrained to X movement
+   * @param  {Number} startX 
+   * @param  {Measure} fixY   
+   * @return {Node}        
+   */
+  nodeHorizontalMovementFromMeasure: function(startX, fixY) {
+    var n = new self.Node(0, 0);
+    n.addParents(startX, fixY);
+    n.update = function() {
+      this.x = this.parents[0];
+      this.y = this.parents[1].value;
+    };
+    n.setPosition = function(x, y) {
+      this.parents[0] = x;
+      this.update();
+    };
+    n.update();
+    return n;
+  },
+
+  /**
+   * Creates a Node constrained to Y movement
+   * @param  {Number} fixX   
+   * @param  {Number} startY 
+   * @return {Node}        
+   */
+  nodeVerticalMovementFromNumber: function(fixX, startY) {
+    var n = new self.Node(0, 0);
+    n.addParents(fixX, startY);
+    n.update = function() {
+      this.x = this.parents[0];
+      this.y = this.parents[1];
+    };
+    n.setPosition = function(x, y) {
+      this.parents[1] = y;
+      this.update();
+    };
+    n.update();
+    return n;
+  },
+
+  /**
+   * Creates a Node constrained to Y movement
+   * @param  {Number} fixX   
+   * @param  {Measure} startY 
+   * @return {Node}        
+   */
+  nodeVerticalMovementFromMeasure: function(fixX, startY) {
+    var n = new self.Node(0, 0);
+    n.addParents(fixX, startY);
+    n.update = function() {
+      this.x = this.parents[0].value;
+      this.y = this.parents[1];
+    };
+    n.setPosition = function(x, y) {
+      this.parents[1] = y;
+      this.update();
+    };
+    n.update();
+    return n;
+  }
+
+};
+ 
+
+
+
+
+// ███╗   ██╗ ██████╗ ██████╗ ███████╗
+// ████╗  ██║██╔═══██╗██╔══██╗██╔════╝
+// ██╔██╗ ██║██║   ██║██║  ██║█████╗  
+// ██║╚██╗██║██║   ██║██║  ██║██╔══╝  
+// ██║ ╚████║╚██████╔╝██████╔╝███████╗
+// ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝
+/**
+ * Base Node class, represents a Point object that can be dragged under its free constrains
+ * @param {Number} xpos 
+ * @param {Number} ypos 
+ */
+this.Node = function(xpos, ypos) {
+  self.Point.call(this, xpos, ypos);
+
+  // this.type = self.C.NODE;   // keep POINT type to be processed by other methods   
+  this.visible = true;
+  this.r = 4;  // for representation when visible
+
+  // this.checkStates();
+};
+this.Node.prototype = Object.create(this.Point.prototype);
+this.Node.prototype.constructor = this.Node;
+
+/**
+ * A constructor method to create a Node along certain Geometry, keeping the Node's movement
+ * constrained to that geometry
+ * @param  {Geometry} geom
+ * @param  {Number} parameter
+ * @return {Point}
+ */
+this.Node.along = function(geom, startParameter, options) {
+
+  // shim Measure inputs
+  if (startParameter.type == self.C.MEASURE) {
+    console.warn('Sketchpad: setting a Measure for Node.along would allow no degrees of freedom in this Node, using Measure.value instead');
+    startParameter = startParameter.value;
+  }
+
+  // along a line
+  if (geom.type == self.C.LINE && self.util.isNumber(startParameter)) {
+    return self.N.nodeOnLine(geom, startParameter, options);
+  }
+
+  // along circle
+  else if (geom.type == self.C.CIRCLE && self.util.isNumber(startParameter)) {
+    return self.N.nodeOnCircle(geom, startParameter, options);
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Node.along');
+  return undefined;
+};
+
+
+/**
+ * A constructor method to create a Node that can only move horizontally
+ * @param  {Number} startX The starting X position of the Node
+ * @param  {Number/Measure} fixY The constrained Height
+ * @return {Node}
+ */
+this.Node.horizontal = function(startX, fixY) {
+
+  // shim Measure inputs
+  if (startX.type == self.C.MEASURE) {
+    console.warn('Sketchpad: setting a Measure for startX in Node.horizontal would allow no degrees of freedom in this Node, using Measure.value instead');
+    startX = startX.value;
+  };
+
+  // defined by two numeric value
+  if (self.util.isNumber(startX) && self.util.isNumber(fixY)) {
+    return self.N.nodeHorizontalMovementFromNumber(startX, fixY);
+  }
+
+  // defined by a Number and a Measure
+  else if (self.util.isNumber(startX) && fixY.type == self.C.MEASURE) {
+    return self.N.nodeHorizontalMovementFromMeasure(startX, fixY);
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Node.horizontal');
+  return undefined;
+}
+
+
+this.Node.vertical = function(fixX, startY) {
+
+  // shim Measure inputs
+  if (startY.type == self.C.MEASURE) {
+    console.warn('Sketchpad: setting a Measure for startY in Node.horizontal would allow no degrees of freedom in this Node, using Measure.value instead');
+    startY = startY.value;
+  };
+
+  // defined by two numeric value
+  if (self.util.isNumber(fixX) && self.util.isNumber(startY)) {
+    return self.N.nodeVerticalMovementFromNumber(fixX, startY);
+  }
+
+  // defined by a Number and a Measure
+  else if (fixX.type == self.C.MEASURE && self.util.isNumber(startY)) {
+    return self.N.nodeVerticalMovementFromMeasure(fixX, startY);
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Node.horizontal');
+  return undefined;
+}
+
+
 
 
 
@@ -1706,7 +1995,7 @@ this.Style = function(styleObj) {
                       : 'rgba(0, 0, 0, 0)' ;
   
   this.fontFamily  = styleObj.fontFamily || 'Times New Roman';
-  this.fontSize    = styleObj.fontSize || '10pt';
+  this.fontSize    = styleObj.fontSize || '8pt';
   this.fontStyle   = styleObj.fontStyle || 'italic';
   this.fontCSS     = styleObj.fontCSS || this.fontStyle + ' ' + this.fontSize + ' ' + this.fontFamily;
 
@@ -1842,7 +2131,7 @@ this.Text.prototype.render = function() {
 this.Text.on = function(geom, text) {
 
   // text tag on a Point
-  if (geom.type == self.C.POINT) {
+  if (geom.type == self.C.POINT || geom.type == self.C.NODE) {
     return self.T.textOnPoint(geom, text);
   }
 
@@ -1856,7 +2145,8 @@ this.Text.on = function(geom, text) {
     return self.T.textOnCircle(geom, text);
   }
 
-  else if (geom.type == self.C.TEXT) {
+  // do not process these guys
+  else if (geom.type == self.C.TEXT || geom.type == self.C.MEASURE) {
     return undefined;
   }
 
@@ -1867,11 +2157,6 @@ this.Text.on = function(geom, text) {
 
 
  
-
-
-
-
-
 
 
 // ██╗███╗   ██╗██╗████████╗
@@ -1908,7 +2193,7 @@ if (this.canvas) {
     self.width.updateChildren();
     self.height.update();
     self.height.updateChildren();
-  })
+  });
 
   // we are oficially initialized
   this.initialized = true;  // looping kicks in
@@ -1948,15 +2233,16 @@ this.mouse = {
 	downY: 0,
 	dragObject: null,
 
-	dist2ToPoint: function (x, y, point) {
-		return (point.x - x) * (point.x - x) + (point.y - y) * (point.y - y);
+	dist2ToNode: function (x, y, node) {
+		return (node.x - x) * (node.x - x) + (node.y - y) * (node.y - y);
 	},
 
-	searchPointToDrag: function (x, y) {
-		for (var len = self.elements.length, i = 0; i < len; i++) {
+	searchNodeToDrag: function (x, y) {
+		// for (var len = self.elements.length, i = 0; i < len; i++) {
+    for (var i = self.elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
 			var elem = self.elements[i];
-			if (elem.constructor != self.Point) continue;
-			if (this.dist2ToPoint(x, y, elem) < 25) return elem;		// <--- SUPER DIRTY, NEEDS IMPROV
+			if (elem.constructor != self.Node) continue;
+			if (this.dist2ToNode(x, y, elem) < 25) return elem;		// <--- SUPER DIRTY, NEEDS IMPROV
 		}
 		return null;
 	},
@@ -1965,7 +2251,7 @@ this.mouse = {
 		self.mouse.down = true;
 		self.mouse.downX = self.mouse.x;
 		self.mouse.downY = self.mouse.y;
-		self.mouse.dragObject = self.mouse.searchPointToDrag(self.mouse.downX, self.mouse.downY);
+		self.mouse.dragObject = self.mouse.searchNodeToDrag(self.mouse.downX, self.mouse.downY);
 	},
 
 	onMouseMove: function (e) {
@@ -1973,8 +2259,9 @@ this.mouse = {
 		self.mouse.x = e.pageX - offset.left;
 		self.mouse.y = e.pageY - offset.top;
 		if (self.mouse.dragObject) {
-			self.mouse.dragObject.x = self.mouse.x;
-			self.mouse.dragObject.y = self.mouse.y;
+      self.mouse.dragObject.setPosition(self.mouse.x, self.mouse.y);
+			// self.mouse.dragObject.x = self.mouse.x;
+			// self.mouse.dragObject.y = self.mouse.y;
 			self.mouse.dragObject.updateChildren();
 		}
 	},
@@ -2008,9 +2295,18 @@ $(this.canvas).mouseup(this.mouse.onMouseUp);
 this.util = {
 
   /**
+   * Underscore's implementation of _.isNumber
+   * @param  {Object}  obj
+   * @return {Boolean}
+   */
+  isNumber: function(obj) {
+    return toString.call(obj) === '[object Number]';
+  },
+
+  /**
    * Underscore's implementation of _.isFunction
    * @param {Object}
-   * @return {bool}
+   * @return {Boolean}
    */
   isFunction: function(obj) {
     return toString.call(obj) === '[object Function]';
@@ -2019,7 +2315,7 @@ this.util = {
   /**
    * Underscore's implementation of _.isArray
    * @param {Object}
-   * @return {bool}
+   * @return {Boolean}
    */
   isArray: function(obj) {
     // first try ECMAScript 5 native
@@ -2027,6 +2323,18 @@ this.util = {
 
     // else compare array
     return toString.call(obj) === '[object Array]';
+  },
+
+  /**
+   * Clamps a numeric value between two limit extremes
+   * @param  {Number} value
+   * @param  {Number} min
+   * @param  {Number} max
+   * @ref http://stackoverflow.com/a/11409944/1934487
+   * @return {Number}
+   */
+  clampValue: function(value, min, max) {
+    return Math.max(min, Math.min(value, max));
   }
 
 };

@@ -8,23 +8,36 @@
 // init Sketchpad
 var pad = new Sketchpad('sketchPadCanvas');
 
-var halfWidth = pad.Measure.from(pad.width, function(parents) { 
-	return parents[0].value / 2;
-});
+// a free Node
+var n0 = new pad.Node(100, 100);
+n0.name = 'unconstrained Node';
 
-var halfHeight = pad.Measure.from(pad.height, function(parents) { 
-	return parents[0].value / 2;
-});
+// a Node that can only move horizontally
+var nH = pad.Node.horizontal(250, 100);
+nH.name = 'vertically-constrained Node'
 
-var center = pad.Point.fromMeasures(halfWidth, halfHeight);
+// a Node that can only move vertically
+var nV = pad.Node.vertical(400, 100);
+nV.name = 'horizontally-contrained Node';
 
-var margin = 25;
-var radius = pad.Measure.from(halfWidth, halfHeight, function(pp) {
-	return Math.min(pp[0].value, pp[1].value) - margin;
-})
+// a Node constrained (and clamped) to a Line
+var A = new pad.Node(100, 200),
+	B = new pad.Node(200, 300),
+	AB = pad.Line.between(A, B);
+var nAB = pad.Node.along(AB, 0.75, {clamp: true});
+nAB.name = 'line-constrained + clamped Node';
 
-var circle = pad.Circle.centerRadius(center, radius);
+// a Node constrained to a Circle
+var C = new pad.Node(150, 400),
+	circle = pad.Circle.centerRadius(C, 50);
+var nCircle = pad.Node.along(circle, 0.75);
+nCircle.name = 'circle-constrained Node';
 
+
+
+
+
+pad.tagElementNames();
 
 pad.update = function() {
 	
