@@ -38,7 +38,7 @@ ELEMENT
 POINT
   CONSTRUCTORS
     new Point(number, number)
-    // Point.fromMeasures(measure, measure)  // TEMP
+    // Point.fromMeasures(measure, measure)  // TEMP, to merge into base constructor
     Point.along(line, number)
     Point.along(circle, number)
     Point.along(line, measure)
@@ -54,6 +54,21 @@ POINT
   METHODS
     Point.setPosition(number, number)
     Point.move(number, number)
+
+
+///////////////////////
+NODE
+  CONSTRUCTORS
+    new Node(number, number)
+    Node.along(line, number)
+    Node.along(circle, number)
+    Node.horizontal(number, number)
+    Node.horizontal(number, measure)
+    Node.vertical(number, number)
+    Node.vertical(measure, number)
+
+  METHODS
+    (none)
 
 
 ///////////////////////
