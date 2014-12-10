@@ -5,37 +5,66 @@
 // ██████╔╝███████╗ ╚████╔╝ 
 // ╚═════╝ ╚══════╝  ╚═══╝  
 
+// init Sketchpad
 var pad = new Sketchpad('sketchPadCanvas');
 
-// STYLES
-var red = new pad.Style({
-	stroke: '#ff0000',
-	strokeWidth: 1.0,
-	fill: 'rgba(127, 0, 0, 0.5)'
+// create a new style with text specifications
+var heading = new pad.Style({
+	stroke: 'black',
+	fontFamily: 'Times New Roman',
+	fontSize: '14pt',
+	fontStyle: 'italic', 
+
+	textVAlign: 'bottom',
+	textHAlign: 'center',
+	textOffsetX: 0,
+	textOffsetY: 0
 });
-var blue = new pad.Style({
-	stroke: '#0000ff',
-	strokeWidth: 1.0,
-	fill: 'rgba(0, 0, 127, 0.5)'
-});
 
-var pc0 = new pad.Point(200, 100),
-	pc1 = new pad.Point(200, 150),
-	pc2 = new pad.Point(200, 200),
-	c0 = pad.Circle.centerRadius(pc0, 80),
-	c1 = pad.Circle.centerRadius(pc1, 90),
-	c2 = pad.Circle.centerRadius(pc2, 100);
-red.applyTo(pc0, pc1, pc2);
+// create a Text tag and apply style
+var title = new pad.Text('Dynamic text tags', 200, 50);
+title.setStyle(heading);  // this won't affect the default global style
 
-var int01 = pad.Point.intersection(c0, c1),
-	int12 = pad.Point.intersection(c1, c2),
-	int02 = pad.Point.intersection(c0, c2);
 
-var ll0 = pad.Line.between(int01, int12),
-	ll1 = pad.Line.between(int01, int02),
-	ll2 = pad.Line.between(int02, int12);
+// draw some geometry
+var A = new pad.Point(100, 100),
+	B = new pad.Point(300, 100),
+	C = new pad.Point(300, 400);
 
+var AB = pad.Line.between(A, B),
+	AC = pad.Line.between(A, C);
+
+// assign default var names to all objects
 pad.findElementNames();
+
+// create tags for each object
+pad.tagElementNames();
+
+
+// create a new style with text specifications
+var redText = new pad.Style({
+	stroke: 'red',
+	fontFamily: 'Times New Roman',
+	fontSize: '8pt',
+	fontStyle: 'normal', 
+
+	textVAlign: 'middle',
+	textHAlign: 'left',
+	textOffsetX: 30,
+	textOffsetY: 0
+});
+
+// create a circle over the line
+var p = pad.Point.along(AC, 0.75);
+p.setVisible(false);
+var ACcircle = pad.Circle.centerRadius(p, 26);
+
+// change name and create a styled Text tag 
+ACcircle.name = '0.75*AC CIRCLE';
+var circleTag = pad.Text.on(ACcircle);
+circleTag.setStyle(redText);
+
+
 
 
 pad.update = function() {

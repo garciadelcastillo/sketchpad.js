@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1024;
+this.build = 1025;
 
 // Some internal constants
 this.C = {
@@ -31,6 +31,9 @@ this.C = {
   VOLUME    : 33,
   ANGLE_RAD : 34,
   ANGLE_DEG : 35,
+  
+  STYLE     : 40, 
+  TEXT      : 41,
   
   PI        : Math.PI,
   TAU       : 2 * Math.PI,
@@ -176,11 +179,21 @@ this.toRadians = function(angleInDegs) {
  * elements, and assigns names correspondingly
  */
 this.findElementNames = function() {
-  for (var l = this.elements.length, i = 0; i < l; i++) {
-    this.elements[i].findName();
-  }
+  this.elements.forEach(function(e) {
+    if (!e.name) e.findName();
+  })
 };
 
+/**
+ * For all elements in this pad, generate a Text tag with its name
+ * If no name is available, try to fallback on the element's window wariable name 
+ */
+this.tagElementNames = function() {
+  this.elements.forEach(function(e) {
+    if (!e.name) e.findName();      // if there was no previous name, try to fallback on window var name
+    if (e.name) this.Text.on(e);    // create a Text tag if some name was found
+  }, this);  // pass current context as 'this' object inside forEach 
+};
 
 
 
@@ -264,6 +277,7 @@ this.G = {
   pointOnLine: function(line, parameter) {
     var p = new self.Point(0, 0);
     p.addParents(line, parameter);
+    // p.addParents(line);
     p.update = function() {
       this.x = this.parents[0].x0 + this.parents[1] * (this.parents[0].x1 - this.parents[0].x0);
       this.y = this.parents[0].y0 + this.parents[1] * (this.parents[0].y1 - this.parents[0].y0);
@@ -881,7 +895,8 @@ this.Element = function() {
 	this.parents = [];
 	this.children = [];
 	this.visible = true;
-  this.style = self.style;  // create a style from fallback defaults
+  this.name = undefined;
+  this.style = self.style;  // apply a style from fallback defaults
 };
 
 /**
@@ -892,7 +907,9 @@ this.Element = function() {
 this.Element.prototype.addParents = function() {
   for (var l = arguments.length, i = 0; i < l; i++) {
     this.parents.push(arguments[i]);
-    arguments[i].children.push(this);  // add this object as child to parent
+    if (arguments[i].children) {         // if this object has children (i.e. is not a number or an array...)
+      arguments[i].children.push(this);  // add this object as child to parent
+    } 
   }
 };
 
@@ -960,10 +977,10 @@ this.Element.prototype.setStyle = function(style) {
  */
 this.Element.prototype.findName = function() {
   for (var a in window) {
-    //if (window[a] == this) {    // deprecation warning
-    if (navigator[a] == this) {
+    if (window[a] == this) {    // deprecation warning ?!
+    // if (navigator[a] == this) {
       this.name = a;
-      return true;
+      return a;
     }
   }
   return false;
@@ -1526,11 +1543,23 @@ this.Set.random = function(start, end, count) {
  * @param {object} styleObj An object literal with processing-style properties defining style
  */
 this.Style = function(styleObj) {
-  this.stroke = styleObj.stroke || '#000000';                  // default is black
+  this.stroke      = styleObj.stroke || '#000000';                  // default is black
   this.strokeWidth = styleObj.strokeWidth || 1.0;
-  this.fill = styleObj.fill                                    // transparent by default
-    ? (styleObj.fill == 'none' ? 'rgba(0, 0, 0, 0)' : styleObj.fill) 
-    : 'rgba(0, 0, 0, 0)' ;
+  this.fill        = styleObj.fill                                    // transparent by default
+                      ? (styleObj.fill == 'none' ? 'rgba(0, 0, 0, 0)' : styleObj.fill) 
+                      : 'rgba(0, 0, 0, 0)' ;
+  
+  this.fontFamily  = styleObj.fontFamily || 'Times New Roman';
+  this.fontSize    = styleObj.fontSize || '10pt';
+  this.fontStyle   = styleObj.fontStyle || 'italic';
+  this.fontCSS     = styleObj.fontCSS || this.fontStyle + ' ' + this.fontSize + ' ' + this.fontFamily;
+
+  this.textFill    = styleObj.textFill || this.stroke;
+  this.textVAlign  = styleObj.textVAlign || 'bottom';
+  this.textHAlign  = styleObj.textHAlign || 'center';
+  this.textOffsetX = styleObj.textOffsetX || 0;
+  this.textOffsetY = styleObj.textOffsetY || -5;
+
 };
 
 /**
@@ -1542,6 +1571,147 @@ this.Style.prototype.applyTo = function(objs) {
     arguments[i].setStyle(this);
   }
 };
+
+
+
+
+
+
+// ████████╗███████╗██╗  ██╗████████╗ ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
+// ╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
+//    ██║   █████╗   ╚███╔╝    ██║   ██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
+//    ██║   ██╔══╝   ██╔██╗    ██║   ██║     ██║   ██║██║╚██╗██║╚════██║   ██║   
+//    ██║   ███████╗██╔╝ ██╗   ██║   ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   
+//    ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   
+/**
+ * A library to store all independent Text construction functions
+ * @type {Object}
+ */
+this.T = {
+  
+  /**
+   * Returns a Text tag linked to a Point
+   * @param  {Point} point 
+   * @param  {String} text   
+   * @return {Text}
+   */
+  textOnPoint: function(point, text) {
+    var str = text || point.name || point.findName();
+    var t = new self.Text(str, 0, 0);
+    t.addParents(point);
+    t.update = function() {
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+    };
+    t.update();
+    return t;
+  },
+
+  /**
+   * Returns a Text tag linked to a Line
+   * @param  {Line} line 
+   * @param  {String} text   
+   * @return {Text}
+   */
+  textOnLine: function(line, text) {
+    var str = text || line.name || line.findName();
+    var p = self.G.pointOnLine(line, 0.5);
+    p.setVisible(false);
+    return self.T.textOnPoint(p, str);
+  },
+
+  /**
+   * Returns a Text tag linked to a Circle
+   * @param  {Circle} circle
+   * @param  {String} text   
+   * @return {Text}
+   */
+  textOnCircle: function(circle, text) {
+    var str = text || circle.name || circle.findName();
+    var t = new self.Text(str, 0, 0);
+    t.addParents(circle);
+    t.update = function() {
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+    };
+    t.update();
+    return t;
+  }
+
+};
+
+
+
+
+// ████████╗███████╗██╗  ██╗████████╗
+// ╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
+//    ██║   █████╗   ╚███╔╝    ██║   
+//    ██║   ██╔══╝   ██╔██╗    ██║   
+//    ██║   ███████╗██╔╝ ██╗   ██║   
+//    ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝   
+/**
+ * A basic Text class representing a text element
+ */
+this.Text = function(text, xpos, ypos) {
+  self.Element.call(this);
+  self.addElement(this);
+
+  this.type = self.C.TEXT;
+  this.x = xpos;
+  this.y = ypos;
+  this.text = text;
+
+  this.checkStates();
+};
+this.Text.prototype = Object.create(this.Element.prototype);
+this.Text.prototype.constructor = this.Text;
+
+/**
+ * Render method
+ */
+this.Text.prototype.render = function() {
+  self.gr.fillStyle = this.style.textFill;
+  self.gr.textAlign = this.style.textHAlign;
+  self.gr.textBaseline = this.style.textVAlign;
+  self.gr.font = this.style.fontCSS;
+  self.gr.fillText(this.text, this.x + this.style.textOffsetX, this.y + this.style.textOffsetY);
+};
+
+/**
+ * A constructor method to create a Text tag linked to a Geometry object
+ * @param  {Geometry} geom
+ * @param  {String} text
+ * @return {Text}
+ */
+this.Text.on = function(geom, text) {
+
+  // text tag on a Point
+  if (geom.type == self.C.POINT) {
+    return self.T.textOnPoint(geom, text);
+  }
+
+  // text tag on a Line (midpoint)
+  else if (geom.type == self.C.LINE) {
+    return self.T.textOnLine(geom, text);
+  }
+
+  // text tag on a Circle (center)
+  else if (geom.type == self.C.CIRCLE) {
+    return self.T.textOnCircle(geom, text);
+  }
+
+  else if (geom.type == self.C.TEXT) {
+    return undefined;
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Text.on');
+  return undefined;
+}
+
+
+ 
+
 
 
 
