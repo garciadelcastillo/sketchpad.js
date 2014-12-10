@@ -8,7 +8,13 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1025;
+this.build = 1026;
+
+// jQuery detection
+if (!window.jQuery) {
+  console.error('Sketchpad.js depends on jQuery. Please add it to current window context.');
+  return undefined;
+}
 
 // Some internal constants
 this.C = {
@@ -102,7 +108,7 @@ this.render = function() {
     // render sets: this should be a nested function of some sort (sets of sets?)
     if (self.elements[i].type == self.C.SET && self.elements[i].subtype != self.C.NUMBER) {
       // since elements were added to the parents list anyway, they are rendered
-      // so no need to render them again
+      // so no need to render them again (?)
       // for (var j = 0; j < self.elements[i].length; j++) {
       //   self.elements[i].items[j].render(self.gr);
       // }
@@ -1821,3 +1827,23 @@ $(this.canvas).mouseup(this.mouse.onMouseUp);
 
 };
 
+
+
+
+
+
+
+/**
+ * Provides requestAnimationFrame in a cross browser way.
+ * @ref webgl-utils.js
+ */
+window.requestAnimFrame = (function() {
+  return window.requestAnimationFrame ||
+         window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame ||
+         window.oRequestAnimationFrame ||
+         window.msRequestAnimationFrame ||
+         function(callback, element) {
+           return window.setTimeout(callback, 1000/60);
+         };
+})();
