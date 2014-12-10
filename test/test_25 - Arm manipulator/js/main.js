@@ -1,10 +1,3 @@
-// ██████╗ ███████╗██╗   ██╗
-// ██╔══██╗██╔════╝██║   ██║
-// ██║  ██║█████╗  ██║   ██║
-// ██║  ██║██╔══╝  ╚██╗ ██╔╝
-// ██████╔╝███████╗ ╚████╔╝ 
-// ╚═════╝ ╚══════╝  ╚═══╝  
-
 // init Sketchpad
 var pad = new Sketchpad('sketchPadCanvas');
 
@@ -60,12 +53,6 @@ jointStyle.applyTo(j1c, j2c, j3c);
 
 
 
-
-// pad.tagElementNames();
-
-pad.update = function() {
-	
-};
 
 
 

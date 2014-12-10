@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1031;
+this.build = 1030;
 
 // jQuery detection
 if (!window.jQuery) {

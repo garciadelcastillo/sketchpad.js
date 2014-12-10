@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1031;
+this.build = 1030;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -380,78 +380,6 @@ this.G = {
       this.x = this.parents[0].x + this.parents[1].value;
       this.y = this.parents[0].y + this.parents[2].value;
     }
-    p.update();
-    return p;
-  },
-
-  /**
-   * Create a Point offset polar coordinates from another Point
-   * @param  {Point} point
-   * @param  {Number} length
-   * @param  {Number} angle
-   * @return {Point}
-   */
-  pointOffsetPolarNumberNumber: function(point, length, angle) {
-    var p = new self.Point(0, 0);
-    p.addParents(point, length, angle);
-    p.update = function() {
-      this.x = this.parents[0].x + this.parents[1] * Math.cos(this.parents[2]);
-      this.y = this.parents[0].y + this.parents[1] * Math.sin(this.parents[2]);
-    };
-    p.update();
-    return p;
-  },
-
-  /**
-   * Create a Point offset polar coordinates from another Point
-   * @param  {Point} point
-   * @param  {Number} length
-   * @param  {Measure} angle
-   * @return {Point}
-   */
-  pointOffsetPolarNumberMeasure: function(point, length, angle) {
-    var p = new self.Point(0, 0);
-    p.addParents(point, length, angle);
-    p.update = function() {
-      this.x = this.parents[0].x + this.parents[1] * Math.cos(this.parents[2].value);
-      this.y = this.parents[0].y + this.parents[1] * Math.sin(this.parents[2].value);
-    };
-    p.update();
-    return p;
-  },
-
-  /**
-   * Create a Point offset polar coordinates from another Point
-   * @param  {Point} point
-   * @param  {Measure} length
-   * @param  {Number} angle
-   * @return {Point}
-   */
-  pointOffsetPolarMeasureNumber: function(point, length, angle) {
-    var p = new self.Point(0, 0);
-    p.addParents(point, length, angle);
-    p.update = function() {
-      this.x = this.parents[0].x + this.parents[1].value * Math.cos(this.parents[2]);
-      this.y = this.parents[0].y + this.parents[1].value * Math.sin(this.parents[2]);
-    };
-    p.update();
-    return p;
-  },
-
-  /**
-   * Create a Point offset polar coordinates from another Point
-   * @param  {Point} point
-   * @param  {Measure} length
-   * @param  {Measure} angle
-   * @return {Point}
-   */
-  pointOffsetPolarMeasureMeasure: function(point, length, angle) {
-    var p = new self.Point(0, 0);
-    p.addParents(point, length, angle);
-    p.update = function() {
-      this.x = this.parents[0].x + this.parents[1].value * Math.cos(this.parents[2].value);
-      this.y = this.parents[0].y + this.parents[1].value * Math.sin(this.parents[2].value);
-    };
     p.update();
     return p;
   },
@@ -1036,17 +964,17 @@ this.U = {
     return Math.atan2(y1 - y0, x1 - x0);
   },
 
-  /**
-   * Returns the angle in radians between p0 and p1.
-   * The result is inverted from regular cartesian coordinates (i.e. positive 
-   *   angle is measured clockwise)
-   * @param  {Point} p0
-   * @param  {Point} p1
-   * @return {Number}
-   */
-  angleBetween2Points: function(p0, p1) {
-    return Math.atan2(p1.y - p0.y, p1.x - p0.x);
-  },
+  // /**
+  //  * Returns the angle in radians between p0 and p1.
+  //  * The result is inverted from regular cartesian coordinates (i.e. positive 
+  //  *   angle is measured clockwise)
+  //  * @param  {Point} p0
+  //  * @param  {Point} p1
+  //  * @return {Number}
+  //  */
+  // angleBetween2Points: function(p0, p1) {
+  //   return Math.atan2(p1.y - p0.y, p1.x - p0.x);
+  // },
 
   /**
    * Returns the angle in radians between p1 and p2, measured from p0.
@@ -1399,38 +1327,7 @@ this.Point.offset = function(point, offX, offY) {
   return undefined;
 };
 
-/**
- * A constructor method to create a Point as an offset with polar coordinates of another Point
- * @param  {Point} point
- * @param  {Number/Measure} length
- * @param  {Number/Measure} angle
- * @return {Point}
- */
-this.Point.offsetPolar = function(point, length, angle) {
-  // POINT, NUMBER, NUMBER
-  if (point.type == self.C.POINT && self.util.isNumber(length) && self.util.isNumber(angle)) {
-    return self.G.pointOffsetPolarNumberNumber(point, length, angle);
-  }
 
-  // POINT, MEASURE, NUMBER
-  else if (point.type == self.C.POINT && length.type == self.C.MEASURE && self.util.isNumber(angle)) {
-    return self.G.pointOffsetPolarMeasureNumber(point, length, angle);
-  }
-
-  // POINT, NUMBER, MEASURE
-  else if (point.type == self.C.POINT && self.util.isNumber(length) && angle.type == self.C.MEASURE) {
-    return self.G.pointOffsetPolarNumberMeasure(point, length, angle);
-  }
-
-  // POINT, MEASURE, MEASURE
-  else if (point.type == self.C.POINT && length.type == self.C.MEASURE && angle.type == self.C.MEASURE) {
-    return self.G.pointOffsetPolarMeasureMeasure(point, length, angle);
-  }
-
-  // not cool
-  console.error('Sketchpad: invalid arguments for Point.offset');
-  return undefined;
-}
 
 
 

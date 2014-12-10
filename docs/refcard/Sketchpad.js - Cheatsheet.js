@@ -50,6 +50,8 @@ POINT
     Point.intersection(line, line)
     Point.intersection(line, circle)  // and viceversa (must fix drawing order)
     Point.intersection(circle, circle)
+    Point.offset(point, number/measure, numer/measure)
+    Point.offsetPolar(point, number/measure, number/measure)
 
   METHODS
     Point.setPosition(number, number)
