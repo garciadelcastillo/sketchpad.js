@@ -118,3 +118,12 @@ STYLE
 
   METHODS
     Style.applyTo(element0, element1...)
+
+///////////////////////
+TEXT
+  CONSTRUCTORS  
+    new Text(string, number, number)  // text, xpos, ypos
+    Text.on(point, [text])
+
+  METHODS
+    (none)
