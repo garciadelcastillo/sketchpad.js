@@ -100,8 +100,13 @@ Check out the [annotated walkthrough](https://github.com/garciadelcastillo/sketc
 
 A very handy **cheatsheet** can be found in the [docs folder](https://github.com/garciadelcastillo/sketchpad.js/tree/master/docs). And of course, you can always check the documentation for the full list of features.
 
+Acknowledgments
+---------------
+
+Thanks to [Panagiotis Michalatos](http://sawapan.eu) for his gidance and contribution to this project.
+
+Sketchpad.js is a rendition to [Ivan Sutherland's PhD Thesis](https://www.youtube.com/watch?v=495nCzxM9PI).
+
 License
 -------
 See [license](https://github.com/garciadelcastillo/sketchpad.js/tree/master/LICENSE.md).
-
-Sketchpad.js is a rendition to [Ivan Sutherland's PhD Thesis](https://www.youtube.com/watch?v=495nCzxM9PI).
