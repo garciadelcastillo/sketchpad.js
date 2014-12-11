@@ -1,3 +1,4 @@
+
 // init Sketchpad
 var pad = new Sketchpad('sketchPadCanvas');
 
@@ -14,12 +15,12 @@ var R1 = Knob(pad, 100, 60, 21, 0, TAU, 3 * TAU / 4, { }),
 
 // Concatenate rotations
 var r1 = R1,
-	r2 = pad.Measure.from(R1, R2, function() { return R1.value + R2.value }),
-	r3 = pad.Measure.from(r2, R3, function() { return r2.value + R3.value });
+	r2 = pad.Measure.compose(R1, R2, function() { return R1.value + R2.value }),
+	r3 = pad.Measure.compose(r2, R3, function() { return r2.value + R3.value });
 
 // Anchor base joint on screen center
-var J1X = pad.Measure.from(pad.width, function() { return pad.width.value / 2; }),
-	J1Y = pad.Measure.from(pad.height, function() { return pad.height.value / 2; }),
+var J1X = pad.Measure.compose(pad.width, function() { return pad.width.value / 2; }),
+	J1Y = pad.Measure.compose(pad.height, function() { return pad.height.value / 2; }),
 	J1 = pad.Point.fromMeasures(J1X, J1Y);
 
 // Concatenate other joints and links
@@ -63,9 +64,11 @@ function Slider(pad, x, y, width, minValue, maxValue, startValue, options) {
 	var axis = new pad.Line(x, y, x + width, y);
 	var t = (startValue - minValue) / (maxValue - minValue);
 	var handle = pad.Node.along(axis, t, {clamp: true});
-	var measure = pad.Measure.from(handle, function() {
+	var measure = pad.Measure.compose(handle, function() {
 		return minValue + (maxValue - minValue) * (handle.x - x) / width;  // handle gets scoped! serendipity!
 	});
+	var label = pad.Label.from(measure, {round: true}),
+		tag = new pad.Tag.on(handle, label);
 	return measure;
 };
 
@@ -73,7 +76,8 @@ function Slider(pad, x, y, width, minValue, maxValue, startValue, options) {
  * Quick prototype test for a Knob class
  */
 function Knob(pad, x, y, radius, minValue, maxValue, startValue, options) {
-	var TAU = 2 * Math.PI;
+	var TAU = 2 * Math.PI,
+		TO_DEG = 360 / TAU;
 
 	var center = new pad.Point(x, y),
 		base = pad.Point.offset(center, radius, 0),
@@ -83,10 +87,15 @@ function Knob(pad, x, y, radius, minValue, maxValue, startValue, options) {
 	var t = (startValue - minValue) / (maxValue - minValue),
 		handle = pad.Node.along(circle, t);
 
-	var measure = pad.Measure.from(center, handle, function() {
+	var measure = pad.Measure.compose(center, handle, function() {
 		var tangle = pad.U.angleBetween2Points(handle, center) / TAU + 0.5;
 		return minValue + tangle * (maxValue - minValue);
 	});
+
+	var measureDeg = pad.Measure.compose(measure, function() { return measure.value * TO_DEG; });
+	var label = pad.Label.from(measureDeg, {round: true}),
+		tagAnchor = pad.Point.offset(center, 0, 2.5 * radius),
+		tag = pad.Tag.on(tagAnchor, label);
 
 	return measure;
 };

@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1033;
+this.build = 1034;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -2508,6 +2508,23 @@ this.Label.compose = function(args) {
 
   return self.L.composeLabel(inputs, trans);
 };
+
+/**
+ * Prototype for a function that returns a Label object from an Element using some default formatting, options and best guesses
+ * @param  {Element} element
+ * @return {Label}
+ */
+this.Label.from = function(element, options) {
+  if (element.type == self.C.MEASURE) {
+    return (options && options.round)
+      ? self.Label.compose(element, function() { return Math.round(element.value); })
+      : self.Label.compose(element, function() { return element.value; });
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Label.from');
+  return undefined;
+}
 
 this.L = {
 

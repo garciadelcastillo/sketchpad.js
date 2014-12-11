@@ -34,8 +34,10 @@ function Slider(pad, x, y, width, minValue, maxValue, startValue, options) {
 	var axis = new pad.Line(x, y, x + width, y);
 	var t = (startValue - minValue) / (maxValue - minValue);
 	var handle = pad.Node.along(axis, t, {clamp: true});
-	var measure = pad.Measure.from(handle, function() {
-		return minValue +  (maxValue - minValue) * (handle.x - x) / width;  // handle gets scoped! serendipity!
+	var measure = pad.Measure.compose(handle, function() {
+		return minValue + (maxValue - minValue) * (handle.x - x) / width;  // handle gets scoped! serendipity!
 	});
+	var label = pad.Label.from(measure, {round: true}),
+		tag = new pad.Tag.on(handle, label);
 	return measure;
 };

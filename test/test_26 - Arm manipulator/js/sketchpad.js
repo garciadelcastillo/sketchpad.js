@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1030;
+this.build = 1034;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -40,7 +40,8 @@ this.C = {
   ANGLE_DEG : 35,
   
   STYLE     : 41, 
-  TEXT      : 42,
+  LABEL     : 42,
+  TAG       : 43,
   
   PI        : Math.PI,
   TAU       : 2 * Math.PI,
@@ -1099,7 +1100,7 @@ this.Element.prototype.addParents = function() {
       
       // if empty array
       if (arguments[i].length == 0) {
-        return;
+        // return;
 
       // if multiple objects in array
       } else {
@@ -1107,15 +1108,18 @@ this.Element.prototype.addParents = function() {
         arguments[i].forEach(function(element) {
           this.addParents(element);
         }, this)
-        return;
+        // return;
       }
     }
 
     // if it is not an array of objects
-    this.parents.push(arguments[i]);
-    if (arguments[i].children) {         // if this object has children (i.e. is not a number or an array...)
-      arguments[i].children.push(this);  // add this object as child to parent
-    } 
+    else {
+      this.parents.push(arguments[i]);
+      if (arguments[i].children) {         // if this object has children (i.e. is not a number or an array...)
+        arguments[i].children.push(this);  // add this object as child to parent
+      } 
+    }
+
   }
   return;
 };
@@ -2042,20 +2046,27 @@ this.Measure.angle = function(elements) {
   return undefined; 
 };
 
+
 /**
- * A constructor method to compose a Measure derived from a set of parent Measures and a transform function that relates their value
- * The function is in the form of Measure.from(measure0, [measure1, measure2 ...], transformFunction)
- * The transform function gets passed an array with all the parent measures, must reference parent measures' VALUE property, and return the computed value from these sources. Example:
- * var area = Measure.from(width, height, function(measures) { return measures[0].value * measures[1].value; });
- * @param {Measure... Function} args
+ * A constructor method to compose a Measure derived from a set of parent Objects
+ *   and a transform function that relates them. 
+ * The function is in the form of 
+ *   Measure.compose(obj0, [obj1, obj2 ...], transformFunction)
+ * The transform function gets passed an array with all the parent Objects, 
+ *   and can reference their properties of by accessing the passed array:
+ *   var area = Measure.compose(width, height, function(elems) { 
+ *     return width.value * height.value; 
+ *     // return elems[0].value - elems[1].value;  // alternatively
+ *   });
+ * @param {Object... Function} args
  * @return {Measure}
  */
-this.Measure.from = function(args) {
+this.Measure.compose = function(args) {
   var a = arguments,
       len = a.length;
 
   if (len < 2) {
-    console.error('Sketchpad: invalid amount of arguments for Measure.from, must contain at least one Measure and one transform function');
+    console.error('Sketchpad: invalid amount of arguments for Measure.compose, must contain at least one Measure and one transform function');
     return undefined; 
   };
 
@@ -2068,7 +2079,7 @@ this.Measure.from = function(args) {
   // };
 
   if (!self.util.isFunction(a[len - 1])) {
-    console.error('Sketchpad: last argument at Measure.from must be a function');
+    console.error('Sketchpad: last argument at Measure.compose must be a function');
     return undefined;
   };
 
@@ -2206,7 +2217,7 @@ this.Style = function(styleObj) {
                       : 'rgba(0, 0, 0, 0)' ;
   
   this.fontFamily  = styleObj.fontFamily || 'Times New Roman';
-  this.fontSize    = styleObj.fontSize || '8pt';
+  this.fontSize    = styleObj.fontSize || '9pt';
   this.fontStyle   = styleObj.fontStyle || 'italic';
   this.fontCSS     = styleObj.fontCSS || this.fontStyle + ' ' + this.fontSize + ' ' + this.fontFamily;
 
@@ -2233,28 +2244,30 @@ this.Style.prototype.applyTo = function(objs) {
 
 
 
-// ████████╗███████╗██╗  ██╗████████╗ ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
-// ╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
-//    ██║   █████╗   ╚███╔╝    ██║   ██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
-//    ██║   ██╔══╝   ██╔██╗    ██║   ██║     ██║   ██║██║╚██╗██║╚════██║   ██║   
-//    ██║   ███████╗██╔╝ ██╗   ██║   ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   
-//    ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   
+
+
+// ████████╗ █████╗  ██████╗  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
+// ╚══██╔══╝██╔══██╗██╔════╝ ██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
+//    ██║   ███████║██║  ███╗██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
+//    ██║   ██╔══██║██║   ██║██║     ██║   ██║██║╚██╗██║╚════██║   ██║   
+//    ██║   ██║  ██║╚██████╔╝╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   
+//    ╚═╝   ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   
 /**
- * A library to store all independent Text construction functions
+ * A library to store all independent Tag construction functions
  * @type {Object}
  */
 this.T = {
   
   /**
-   * Returns a Text tag linked to a Point
+   * Returns a Tag from a string linked to a Point
    * @param  {Point} point 
    * @param  {String} text   
-   * @return {Text}
+   * @return {Tag}
    */
-  textOnPoint: function(point, text) {
-    var str = text || point.name || point.findName();
-    var t = new self.Text(str, 0, 0);
-    t.addParents(point);
+  tagOnPointFromString: function(point, str) {
+    var s = str || point.name || point.findName();
+    var t = new self.Tag(s, 0, 0);
+    t.addParents(point, s);
     t.update = function() {
       this.x = this.parents[0].x;
       this.y = this.parents[0].y;
@@ -2264,31 +2277,78 @@ this.T = {
   },
 
   /**
-   * Returns a Text tag linked to a Line
+   * Returns a Tag from a string linked to a Line
    * @param  {Line} line 
    * @param  {String} text   
-   * @return {Text}
+   * @return {Tag}
    */
-  textOnLine: function(line, text) {
-    var str = text || line.name || line.findName();
+  tagOnLineFromString: function(line, str) {
+    var s = str || line.name || line.findName();
     var p = self.G.pointOnLine(line, 0.5);
-    p.setVisible(false);
-    return self.T.textOnPoint(p, str);
+    return self.T.tagOnPointFromString(p, s);
   },
 
   /**
-   * Returns a Text tag linked to a Circle
+   * Returns a Tag from a string linked to a Circle
    * @param  {Circle} circle
    * @param  {String} text   
-   * @return {Text}
+   * @return {Tag}
    */
-  textOnCircle: function(circle, text) {
-    var str = text || circle.name || circle.findName();
-    var t = new self.Text(str, 0, 0);
-    t.addParents(circle);
+  tagOnCircleFromString: function(circle, str) {
+    var s = str || circle.name || circle.findName();
+    var t = new self.Tag(s, 0, 0);
+    t.addParents(circle, s);
     t.update = function() {
       this.x = this.parents[0].x;
       this.y = this.parents[0].y;
+    };
+    t.update();
+    return t;
+  },
+
+  /**
+   * Returns a Tag from a Label linked to a Point
+   * @param  {Point} point 
+   * @param  {Label} label 
+   * @return {Tag}       
+   */
+  tagOnPointFromLabel: function (point, label) {
+    var t = new self.Tag('', 0, 0);
+    t.addParents(point, label);
+    t.update = function() {
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+      this.text = this.parents[1].text;
+    };
+    t.update();
+    return t;
+  },
+
+  /**
+   * Returns a Tag from a Label linked to a Line
+   * @param  {Line} line  
+   * @param  {Label} label 
+   * @return {Tag}       
+   */ 
+  tagOnLineFromLabel: function(line, label) {
+    var t = new self.Tag('', 0, 0);
+    var p = self.G.pointOnLine(line, 0.5);
+    return self.T.tagOnPointFromLabel(p, label);
+  },
+
+  /**
+   * Returns a Tag from a Label linked to a Circle
+   * @param  {Circle} circle
+   * @param  {Label} label
+   * @return {Tag}
+   */
+  tagOnCircleFromLabel: function(circle, label) {
+    var t = new self.Tag('', 0, 0);
+    t.addParents(circle, label);
+    t.update = function() {
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+      this.text = this.parents[1].text;
     };
     t.update();
     return t;
@@ -2299,16 +2359,18 @@ this.T = {
 
 
 
-// ████████╗███████╗██╗  ██╗████████╗
-// ╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
-//    ██║   █████╗   ╚███╔╝    ██║   
-//    ██║   ██╔══╝   ██╔██╗    ██║   
-//    ██║   ███████╗██╔╝ ██╗   ██║   
-//    ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝   
+
+
+// ████████╗ █████╗  ██████╗ 
+// ╚══██╔══╝██╔══██╗██╔════╝ 
+//    ██║   ███████║██║  ███╗
+//    ██║   ██╔══██║██║   ██║
+//    ██║   ██║  ██║╚██████╔╝
+//    ╚═╝   ╚═╝  ╚═╝ ╚═════╝ 
 /**
- * A basic Text class representing a text element
+ * A basic Tag class representing a text element with visual rendering with optional link to a Geometry object
  */
-this.Text = function(text, xpos, ypos) {
+this.Tag = function(text, xpos, ypos) {
   self.Element.call(this);
   self.addElement(this);
 
@@ -2319,13 +2381,13 @@ this.Text = function(text, xpos, ypos) {
 
   this.checkStates();
 };
-this.Text.prototype = Object.create(this.Element.prototype);
-this.Text.prototype.constructor = this.Text;
+this.Tag.prototype = Object.create(this.Element.prototype);
+this.Tag.prototype.constructor = this.Tag;
 
 /**
  * Render method
  */
-this.Text.prototype.render = function() {
+this.Tag.prototype.render = function() {
   self.gr.fillStyle = this.style.textFill;
   self.gr.textAlign = this.style.textHAlign;
   self.gr.textBaseline = this.style.textVAlign;
@@ -2334,30 +2396,47 @@ this.Text.prototype.render = function() {
 };
 
 /**
- * A constructor method to create a Text tag linked to a Geometry object
+ * A constructor method to create a text Tag linked to a Geometry object
  * @param  {Geometry} geom
  * @param  {String} text
- * @return {Text}
+ * @return {Tag}
  */
-this.Text.on = function(geom, text) {
+this.Tag.on = function(geom, text) {
 
   // text tag on a Point
-  if (geom.type == self.C.POINT || geom.type == self.C.NODE) {
-    return self.T.textOnPoint(geom, text);
+  if ( (geom.type == self.C.POINT || geom.type == self.C.NODE) && self.util.isString(text) ) {
+    return self.T.tagOnPointFromString(geom, text);
   }
 
   // text tag on a Line (midpoint)
-  else if (geom.type == self.C.LINE) {
-    return self.T.textOnLine(geom, text);
+  else if (geom.type == self.C.LINE && self.util.isString(text)) {
+    return self.T.tagOnLineFromString(geom, text);
   }
 
   // text tag on a Circle (center)
-  else if (geom.type == self.C.CIRCLE) {
-    return self.T.textOnCircle(geom, text);
+  else if (geom.type == self.C.CIRCLE && self.util.isString(text)) {
+    return self.T.tagOnCircleFromString(geom, text);
   }
 
   // do not process these guys
-  else if (geom.type == self.C.TEXT || geom.type == self.C.MEASURE) {
+  else if ( (geom.type == self.C.TAG || geom.type == self.C.MEASURE) && self.util.isString(text) ) {
+    return undefined;
+  }
+
+
+  else if ( (geom.type == self.C.POINT || geom.type == self.C.NODE) && text.type == self.C.LABEL ) {
+    return self.T.tagOnPointFromLabel(geom, text);
+  }
+
+  else if (geom.type == self.C.LINE && text.type == self.C.LABEL) {
+    return self.T.tagOnLineFromLabel(geom, text);
+  }
+
+  else if (geom.type == self.C.CIRCLE && text.type == self.C.LABEL) {
+    return self.T.tagOnCircleFromLabel(geom, text);
+  }
+
+  else if ( (geom.type == self.C.TAG || geom.type == self.C.MEASURE) && text.type == self.C.LABEL ) {
     return undefined;
   }
 
@@ -2367,7 +2446,101 @@ this.Text.on = function(geom, text) {
 }
 
 
- 
+
+
+
+
+
+// ██╗      █████╗ ██████╗ ███████╗██╗     
+// ██║     ██╔══██╗██╔══██╗██╔════╝██║     
+// ██║     ███████║██████╔╝█████╗  ██║     
+// ██║     ██╔══██║██╔══██╗██╔══╝  ██║     
+// ███████╗██║  ██║██████╔╝███████╗███████╗
+// ╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝
+/**
+ * A basic Label class representing a text element linked to other Elements
+ */
+this.Label = function(text) {
+  self.Element.call(this);
+  self.addElement(this);
+
+  this.type = self.C.LABEL;
+  this.text = text;
+
+};
+this.Label.prototype = Object.create(this.Element.prototype);
+this.Label.prototype.constructor = this.Label;
+
+/**
+ * A constructor method to compose a Label derived from a set of parent Objects
+ *   and a transform function that relates them. 
+ * The function is in the form of 
+ *   Label.compose(obj0, [obj1, obj2 ...], transformFunction)
+ * The transform function gets passed an array with all the parent Objects, 
+ *   and can reference their properties of by accessing the passed array:
+ *   var hDist = Label.compose(A, B, function(elems) { 
+ *     return "Horizontal distance: " + (B.x - A.x) + " px"; 
+ *     // return "Horizontal distance: " + (elems[1].x - elems[0].x) + " px";  // alternatively
+ *   });
+ * @param {Object... Function} args
+ * @return {Label}
+ */
+this.Label.compose = function(args) {
+  var a = arguments,
+      len = a.length;
+
+  if (len < 2) {
+    console.error('Sketchpad: invalid amount of arguments for Label.compose, must contain at least one Object and one transform function');
+    return undefined; 
+  };
+
+  if (!self.util.isFunction(a[len - 1])) {
+    console.error('Sketchpad: last argument at Label.compose must be a function');
+    return undefined;
+  };
+
+  // arguments should not be sliced: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
+  var inputs = [];
+  for (var i = 0; i < len - 1; i++) {
+    inputs.push(a[i]);
+  };
+  var trans = a[len - 1];
+
+  return self.L.composeLabel(inputs, trans);
+};
+
+/**
+ * Prototype for a function that returns a Label object from an Element using some default formatting, options and best guesses
+ * @param  {Element} element
+ * @return {Label}
+ */
+this.Label.from = function(element, options) {
+  if (element.type == self.C.MEASURE) {
+    return (options && options.round)
+      ? self.Label.compose(element, function() { return Math.round(element.value); })
+      : self.Label.compose(element, function() { return element.value; });
+  }
+
+  // not cool
+  console.error('Sketchpad: invalid arguments for Label.from');
+  return undefined;
+}
+
+this.L = {
+
+  composeLabel: function(paramArray, transFunc) {
+    var l = new self.Label('');
+    l.addParents(paramArray, transFunc);
+    l.update = function() {
+      this.text = this.parents[this.parents.length - 1](this.parents);
+    };
+    l.update();
+    return l;
+  }
+};
+
+
+
 
 
 // ██╗███╗   ██╗██╗████████╗
@@ -2408,7 +2581,7 @@ if (this.canvas) {
 
   // we are oficially initialized
   this.initialized = true;  // looping kicks in
-  if (console.info) console.info("Sketchpad.js " + this.version);
+  if (console.info) console.info("Sketchpad.js " + this.version + ' - Build ' + this.build + '');
 
   // run one iteration of (overriden) start()
   this.start();
@@ -2537,6 +2710,15 @@ this.util = {
   },
 
   /**
+   * Underscore's implementation of _.isString
+   * @param  {Object}  obj 
+   * @return {Boolean}
+   */
+  isString: function(obj) {
+    return toString.call(obj) === '[object String]';
+  },
+
+  /**
    * Clamps a numeric value between two limit extremes
    * @param  {Number} value
    * @param  {Number} min
@@ -2579,3 +2761,13 @@ window.requestAnimFrame = (function() {
            return window.setTimeout(callback, 1000/60);
          };
 })();
+
+
+
+
+//   ██╗██████╗ 
+//  ██╔╝╚════██╗
+// ██╔╝  █████╔╝
+// ╚██╗  ╚═══██╗
+//  ╚██╗██████╔╝
+//   ╚═╝╚═════╝ 
