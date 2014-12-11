@@ -1,6 +1,6 @@
-sketchpad.js
+Sketchpad.js
 ============
 
-sketchpad.js, an open source graphics library for constructive geometry drawing.
+*Sketchpad.js* is an open source JavaScript graphics library for *constructive vector drawing*.
 
 
