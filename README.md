@@ -91,14 +91,16 @@ sp.tagElementNames();                        // add variable name Tags to all el
 ![Line between two Nodes](http://www.garciadelcastillo.es/sketchpad/linenodes.gif "Line between two Nodes")
 
 
-Examples
---------
+Examples & Documentation
+------------------------
 
+In the [wiki](https://github.com/garciadelcastillo/sketchpad.js/wiki) you will find:
+* Annotated [walkthrough](https://github.com/garciadelcastillo/sketchpad.js/wiki/Walkthrough) of Sketchpad's main features
+* A list of [examples](https://github.com/garciadelcastillo/sketchpad.js/wiki/Examples)
 
+A very handy **cheatsheet** can be found in the [docs folder](https://github.com/garciadelcastillo/sketchpad.js/tree/master/docs)
 
-Documentation
--------------
-
+You can also check the documentation.
 
 License
 -------
