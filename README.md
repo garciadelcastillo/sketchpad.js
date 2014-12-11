@@ -8,6 +8,7 @@ Hello world
 
 Let's start by creating a simple HTML scaffolding with some basic styling for a full-screen canvas element:
 
+```html
     <!DOCTYPE html>
     <meta charset="utf-8">
     <html>
@@ -36,10 +37,12 @@ Let's start by creating a simple HTML scaffolding with some basic styling for a 
         <script type="text/javascript" src="jquery-2.1.1.min.js"></script>
         <script type="text/javascript" src="sketchpad.js"></script>
         <script>
-          // Sketchpad code
+
+          // Sketchpad code goes here
+
         </script>
     </html>
-
+```
 
 
 
