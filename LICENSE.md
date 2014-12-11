@@ -1,8 +1,8 @@
 License
 =======
 
-Copyright (c) 2014, Jose Luis Garcia del Castillo y Lopez
-http://garciadelcastillo.es
+Copyright (c) 2014, Jose Luis Garcia del Castillo y Lopez 
+http://garciadelcastillo.es 
 All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
