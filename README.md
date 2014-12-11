@@ -103,3 +103,5 @@ A very handy **cheatsheet** can be found in the [docs folder](https://github.com
 License
 -------
 See [license](https://github.com/garciadelcastillo/sketchpad.js/tree/master/LICENSE.md).
+
+Sketchpad.js is a rendition to [Ivan Sutherland's PhD Thesis](https://www.youtube.com/watch?v=495nCzxM9PI).
