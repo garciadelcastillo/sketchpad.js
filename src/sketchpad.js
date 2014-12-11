@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1034;
+this.build = 1035;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -212,7 +212,7 @@ this.findElementNames = function() {
 this.tagElementNames = function() {
   this.elements.forEach(function(e) {
     if (!e.name) e.findName();      // if there was no previous name, try to fallback on window var name
-    if (e.name) this.Text.on(e);    // create a Text tag if some name was found
+    if (e.name) this.Tag.on(e, e.name);    // create a Text tag if some name was found
   }, this);  // pass current context as 'this' object inside forEach 
 };
 
@@ -2441,7 +2441,7 @@ this.Tag.on = function(geom, text) {
   }
 
   // not cool
-  console.error('Sketchpad: invalid arguments for Text.on');
+  console.error('Sketchpad: invalid arguments for Tag.on');
   return undefined;
 }
 

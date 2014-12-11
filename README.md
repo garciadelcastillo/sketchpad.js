@@ -6,7 +6,7 @@ Sketchpad.js
 Hello world
 -----------
 
-Let's start by creating a simple HTML scaffolding with some basic styling for a full-screen canvas element:
+Let's start by creating a simple HTML scaffolding with some basic styling for a full-screen canvas element. You can find the latest stable version in the [project's dist folder](https://github.com/garciadelcastillo/sketchpad.js/tree/master/dist). Sketchpad currently depends on [jQuery](http://jquery.com/) for DOM manipulation, so make sure to reference it as well.
 
 ```html
 <!DOCTYPE html>
@@ -46,5 +46,12 @@ Let's start by creating a simple HTML scaffolding with some basic styling for a 
 </html>
 ```
 
+We are now ready for some action. 
+
+
+
+
+
+![Line between two Nodes](http://www.garciadelcastillo.es/sketchpad/linenodes.gif "Line between two Nodes")
 
 
