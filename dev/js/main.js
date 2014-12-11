@@ -8,57 +8,35 @@
 // init Sketchpad
 var pad = new Sketchpad('sketchPadCanvas');
 
-// Create LINK LENGTH sliders
-var L1 = Slider(pad, 25, 25, 150, 0, 300, 150, { }),
-	L2 = Slider(pad, 200, 25, 150, 0, 300, 100, { }),
-	L3 = Slider(pad, 375, 25, 150, 0, 300, 25, { });
-
-// Create JOINT ANGLE knobs
-var TAU = 2 * Math.PI;
-var R1 = Knob(pad, 100, 60, 21, 0, TAU, 3 * TAU / 4, { }),
-	R2 = Knob(pad, 275, 60, 21, 0, TAU, TAU / 4, { }),
-	R3 = Knob(pad, 450, 60, 21, 0, TAU, TAU / 4, { });
-
-// Concatenate rotations
-var r1 = R1,
-	r2 = pad.Measure.from(R1, R2, function() { return R1.value + R2.value }),
-	r3 = pad.Measure.from(r2, R3, function() { return r2.value + R3.value });
-
-// Anchor base joint on screen center
-var J1X = pad.Measure.from(pad.width, function() { return pad.width.value / 2; }),
-	J1Y = pad.Measure.from(pad.height, function() { return pad.height.value / 2; }),
-	J1 = pad.Point.fromMeasures(J1X, J1Y);
-
-// Concatenate other joints and links
-var J2 = pad.Point.offsetPolar(J1, L1, r1),
-	link1 = pad.Line.between(J1, J2);
-
-var J3 = pad.Point.offsetPolar(J2, L2, r2),
-	link2 = pad.Line.between(J2, J3);
-
-var J4 = pad.Point.offsetPolar(J3, L3, r3),
-	link3 = pad.Line.between(J3, J4);
-
-// Some visual flavor
-var j1c = pad.Circle.centerRadius(J1, 5),
-	j2c = pad.Circle.centerRadius(J2, 5),
-	j3c = pad.Circle.centerRadius(J3, 5);
-
-var linkStyle = new pad.Style({
-	stroke: '#ED5C13',
-	strokeWidth: '3'
-});
-linkStyle.applyTo(link1, link2, link3);
-
-var jointStyle = new pad.Style({
-	stroke: '#000000',
-	fill: '#ED5C13'
-});
-jointStyle.applyTo(j1c, j2c, j3c);
+var A = new pad.Node(100, 100),
+	B = new pad.Node(300, 100),
+	AB = pad.Line.between(A, B);
+	D = pad.Measure.distance(A, B);
 
 
+var labelA = pad.Label.compose(A, function() {
+		return '[' + Math.round(A.x) + ',' + Math.round(A.y) + ']';
+	}),
+	tagA = pad.Text.on(A, labelA);
+
+var labelB = pad.Label.compose(B, function() {
+		return '[' + Math.round(B.x) + ',' + Math.round(B.y) + ']';
+	}),
+	tagB = pad.Text.on(B, labelB);
+
+var labelAB = pad.Label.compose(D, function() {
+		return "L = " + Math.round(D.value) + " px";
+	}),
+	tagAB = pad.Text.on(AB, labelAB);
 
 
+var C = new pad.Node(400, 400),
+	circle = pad.Circle.centerRadius(C, 50);
+
+var labelC = pad.Label.compose(C, function() {
+		return '[' + Math.round(C.x) + ',' + Math.round(C.y) + ']';
+	}),
+	tagC = pad.Text.on(circle, labelC);
 
 
 // pad.tagElementNames();
@@ -66,6 +44,7 @@ jointStyle.applyTo(j1c, j2c, j3c);
 pad.update = function() {
 	
 };
+
 
 
 
@@ -79,27 +58,5 @@ function Slider(pad, x, y, width, minValue, maxValue, startValue, options) {
 	var measure = pad.Measure.from(handle, function() {
 		return minValue + (maxValue - minValue) * (handle.x - x) / width;  // handle gets scoped! serendipity!
 	});
-	return measure;
-};
-
-/**
- * Quick prototype test for a Knob class
- */
-function Knob(pad, x, y, radius, minValue, maxValue, startValue, options) {
-	var TAU = 2 * Math.PI;
-
-	var center = new pad.Point(x, y),
-		base = pad.Point.offset(center, radius, 0),
-		marker = pad.Line.between(center, base),		
-		circle = pad.Circle.centerRadius(center, radius);
-
-	var t = (startValue - minValue) / (maxValue - minValue),
-		handle = pad.Node.along(circle, t);
-
-	var measure = pad.Measure.from(center, handle, function() {
-		var tangle = pad.U.angleBetween2Points(handle, center) / TAU + 0.5;
-		return minValue + tangle * (maxValue - minValue);
-	});
-
 	return measure;
 };

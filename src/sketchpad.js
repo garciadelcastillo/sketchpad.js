@@ -8,7 +8,7 @@
 Sketchpad = function(canvasId) {
 
 this.version = "v0.0.2";
-this.build = 1031;
+this.build = 1032;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -41,6 +41,7 @@ this.C = {
   
   STYLE     : 41, 
   TEXT      : 42,
+  LABEL     : 43,
   
   PI        : Math.PI,
   TAU       : 2 * Math.PI,
@@ -1099,7 +1100,7 @@ this.Element.prototype.addParents = function() {
       
       // if empty array
       if (arguments[i].length == 0) {
-        return;
+        // return;
 
       // if multiple objects in array
       } else {
@@ -1107,15 +1108,18 @@ this.Element.prototype.addParents = function() {
         arguments[i].forEach(function(element) {
           this.addParents(element);
         }, this)
-        return;
+        // return;
       }
     }
 
     // if it is not an array of objects
-    this.parents.push(arguments[i]);
-    if (arguments[i].children) {         // if this object has children (i.e. is not a number or an array...)
-      arguments[i].children.push(this);  // add this object as child to parent
-    } 
+    else {
+      this.parents.push(arguments[i]);
+      if (arguments[i].children) {         // if this object has children (i.e. is not a number or an array...)
+        arguments[i].children.push(this);  // add this object as child to parent
+      } 
+    }
+
   }
   return;
 };
@@ -2050,12 +2054,12 @@ this.Measure.angle = function(elements) {
  * @param {Measure... Function} args
  * @return {Measure}
  */
-this.Measure.from = function(args) {
+this.Measure.compose = function(args) {
   var a = arguments,
       len = a.length;
 
   if (len < 2) {
-    console.error('Sketchpad: invalid amount of arguments for Measure.from, must contain at least one Measure and one transform function');
+    console.error('Sketchpad: invalid amount of arguments for Measure.compose, must contain at least one Measure and one transform function');
     return undefined; 
   };
 
@@ -2068,7 +2072,7 @@ this.Measure.from = function(args) {
   // };
 
   if (!self.util.isFunction(a[len - 1])) {
-    console.error('Sketchpad: last argument at Measure.from must be a function');
+    console.error('Sketchpad: last argument at Measure.compose must be a function');
     return undefined;
   };
 
@@ -2206,7 +2210,7 @@ this.Style = function(styleObj) {
                       : 'rgba(0, 0, 0, 0)' ;
   
   this.fontFamily  = styleObj.fontFamily || 'Times New Roman';
-  this.fontSize    = styleObj.fontSize || '8pt';
+  this.fontSize    = styleObj.fontSize || '9pt';
   this.fontStyle   = styleObj.fontStyle || 'italic';
   this.fontCSS     = styleObj.fontCSS || this.fontStyle + ' ' + this.fontSize + ' ' + this.fontFamily;
 
@@ -2292,6 +2296,36 @@ this.T = {
     };
     t.update();
     return t;
+  },
+  
+  labelOnPoint: function (point, label) {
+    var t = new self.Text('', 0, 0);
+    t.addParents(point, label);
+    t.update = function() {
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+      this.text = this.parents[1].text;
+    };
+    t.update();
+    return t;
+  },
+
+  labelOnLine: function(line, label) {
+    var t = new self.Text('', 0, 0);
+    var p = self.G.pointOnLine(line, 0.5);
+    return self.T.labelOnPoint(p, label);
+  },
+
+  labelOnCircle: function(circle, label) {
+    var t = new self.Text('', 0, 0);
+    t.addParents(circle, label);
+    t.update = function() {
+      this.x = this.parents[0].x;
+      this.y = this.parents[0].y;
+      this.text = this.parents[1].text;
+    };
+    t.update();
+    return t;
   }
 
 };
@@ -2342,24 +2376,43 @@ this.Text.prototype.render = function() {
 this.Text.on = function(geom, text) {
 
   // text tag on a Point
-  if (geom.type == self.C.POINT || geom.type == self.C.NODE) {
+  if ( (geom.type == self.C.POINT || geom.type == self.C.NODE) && self.util.isString(text) ) {
     return self.T.textOnPoint(geom, text);
   }
 
   // text tag on a Line (midpoint)
-  else if (geom.type == self.C.LINE) {
+  else if (geom.type == self.C.LINE && self.util.isString(text)) {
     return self.T.textOnLine(geom, text);
   }
 
   // text tag on a Circle (center)
-  else if (geom.type == self.C.CIRCLE) {
+  else if (geom.type == self.C.CIRCLE && self.util.isString(text)) {
     return self.T.textOnCircle(geom, text);
   }
 
   // do not process these guys
-  else if (geom.type == self.C.TEXT || geom.type == self.C.MEASURE) {
+  else if ( (geom.type == self.C.TEXT || geom.type == self.C.MEASURE) && self.util.isString(text) ) {
     return undefined;
   }
+
+
+  else if ( (geom.type == self.C.POINT || geom.type == self.C.NODE) && text.type == self.C.LABEL ) {
+    return self.T.labelOnPoint(geom, text);
+  }
+
+  else if (geom.type == self.C.LINE && text.type == self.C.LABEL) {
+    return self.T.labelOnLine(geom, text);
+  }
+
+  else if (geom.type == self.C.CIRCLE && text.type == self.C.LABEL) {
+    return self.T.labelOnCircle(geom, text);
+  }
+
+  else if ( (geom.type == self.C.TEXT || geom.type == self.C.MEASURE) && text.type == self.C.LABEL ) {
+    return undefined;
+  }
+
+
 
   // not cool
   console.error('Sketchpad: invalid arguments for Text.on');
@@ -2367,7 +2420,57 @@ this.Text.on = function(geom, text) {
 }
 
 
- 
+this.Label = function(text) {
+  self.Element.call(this);
+  self.addElement(this);
+
+  this.type = self.C.LABEL;
+  this.text = text;
+
+};
+this.Label.prototype = Object.create(this.Element.prototype);
+this.Label.prototype.constructor = this.Label;
+
+
+this.Label.compose = function(args) {
+  var a = arguments,
+      len = a.length;
+
+  if (len < 2) {
+    console.error('Sketchpad: invalid amount of arguments for Label.compose, must contain at least one Object and one transform function');
+    return undefined; 
+  };
+
+  if (!self.util.isFunction(a[len - 1])) {
+    console.error('Sketchpad: last argument at Label.compose must be a function');
+    return undefined;
+  };
+
+  // arguments should not be sliced: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
+  var inputs = [];
+  for (var i = 0; i < len - 1; i++) {
+    inputs.push(a[i]);
+  };
+  var trans = a[len - 1];
+
+  return self.L.composeLabel(inputs, trans);
+};
+
+this.L = {
+
+  composeLabel: function(paramArray, transFunc) {
+    var l = new self.Label('');
+    l.addParents(paramArray, transFunc);
+    l.update = function() {
+      this.text = this.parents[this.parents.length - 1](this.parents);
+    };
+    l.update();
+    return l;
+  }
+};
+
+
+
 
 
 // ██╗███╗   ██╗██╗████████╗
@@ -2537,6 +2640,15 @@ this.util = {
   },
 
   /**
+   * Underscore's implementation of _.isString
+   * @param  {Object}  obj 
+   * @return {Boolean}
+   */
+  isString: function(obj) {
+    return toString.call(obj) === '[object String]';
+  },
+
+  /**
    * Clamps a numeric value between two limit extremes
    * @param  {Number} value
    * @param  {Number} min
@@ -2579,3 +2691,13 @@ window.requestAnimFrame = (function() {
            return window.setTimeout(callback, 1000/60);
          };
 })();
+
+
+
+
+//   ██╗██████╗ 
+//  ██╔╝╚════██╗
+// ██╔╝  █████╔╝
+// ╚██╗  ╚═══██╗
+//  ╚██╗██████╔╝
+//   ╚═╝╚═════╝ 
