@@ -17,26 +17,18 @@ var A = new pad.Node(100, 100),
 var labelA = pad.Label.compose(A, function() {
 		return '[' + Math.round(A.x) + ',' + Math.round(A.y) + ']';
 	}),
-	tagA = pad.Text.on(A, labelA);
+	tagA = pad.Tag.on(A, labelA);
 
 var labelB = pad.Label.compose(B, function() {
 		return '[' + Math.round(B.x) + ',' + Math.round(B.y) + ']';
 	}),
-	tagB = pad.Text.on(B, labelB);
+	tagB = pad.Tag.on(B, labelB);
 
 var labelAB = pad.Label.compose(D, function() {
 		return "L = " + Math.round(D.value) + " px";
 	}),
-	tagAB = pad.Text.on(AB, labelAB);
+	tagAB = pad.Tag.on(AB, labelAB);
 
-
-var C = new pad.Node(400, 400),
-	circle = pad.Circle.centerRadius(C, 50);
-
-var labelC = pad.Label.compose(C, function() {
-		return '[' + Math.round(C.x) + ',' + Math.round(C.y) + ']';
-	}),
-	tagC = pad.Text.on(circle, labelC);
 
 
 // pad.tagElementNames();
