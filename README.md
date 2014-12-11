@@ -9,39 +9,41 @@ Hello world
 Let's start by creating a simple HTML scaffolding with some basic styling for a full-screen canvas element:
 
 ```html
-    <!DOCTYPE html>
-    <meta charset="utf-8">
-    <html>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-        }
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  </head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-        #sketchpadDiv {
-            position: absolute; 
-            width: 100%; 
-            height: 100%;
-        }
+    #sketchpadDiv {
+      position: absolute; 
+      width: 100%; 
+      height: 100%;
+    }
 
-        #sketchpadCanvas {
-            position: absolute;
-        }
+    #sketchpadCanvas {
+      position: absolute;
+    }
 
-      </style>
-      <body>
-          <div id="sketchpadDiv">
-              <canvas id="sketchpadCanvas"></canvas>       
-          </div>
-      </body>
-        <script type="text/javascript" src="jquery-2.1.1.min.js"></script>
-        <script type="text/javascript" src="sketchpad.js"></script>
-        <script>
+  </style>
+  <body>
+    <div id="sketchpadDiv">
+      <canvas id="sketchpadCanvas"></canvas>       
+    </div>
+  </body>
+  <script type="text/javascript" src="jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="sketchpad.js"></script>
+  <script>
 
-          // Sketchpad code goes here
+    // Sketchpad code goes here
 
-        </script>
-    </html>
+  </script>
+</html>
 ```
 
 
