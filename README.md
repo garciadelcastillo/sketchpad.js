@@ -3,7 +3,7 @@ Sketchpad.js
 
 **Sketchpad.js** is an open source JavaScript graphics library for **constructive vector drawing**. It provides an object model for common vector geometry under HTML5 Canvas graphics, while offering an intuitive constructive geometry API and **dynamically maintaining parent-children relations** for you.
 
-Basic setup
+Basic Setup
 -----------
 
 Let's start by creating a simple HTML scaffolding with some basic styling for a full-screen canvas element. You can find the latest stable version in the [project's dist folder](https://github.com/garciadelcastillo/sketchpad.js/tree/master/dist). Sketchpad currently depends on [jQuery](http://jquery.com/) for DOM manipulation, so make sure to reference it as well.
@@ -46,46 +46,46 @@ Let's start by creating a simple HTML scaffolding with some basic styling for a 
 </html>
 ```
 
-Hello world
+Hello World
 -----------
 
 We are now ready for some action. First, create a new instance of a Sketchpad, passing the id of the canvas element:
 
 ```html
-var sp = new Sketchpad('sketchpadCanvas');
+var pad = new Sketchpad('sketchpadCanvas');
 ```
 
 Now, create two Nodes at custom XY coordinates. Think of Nodes just as Points that have some degree of freedom, and that you can drag and move around.
 
 ```html
-var A = new sp.Point(100, 100),
-    B = new sp.Point(300, 100);
+var A = new pad.Point(100, 100),
+    B = new pad.Point(300, 100);
 ```
 
 Create a new Line between them by using the static method Line.between(Point, Point):
 
 ```html
-var AB = sp.Line.between(A, B);
+var AB = pad.Line.between(A, B);
 ```
 
 Optionally, add Tags to each element with their var name:
 
 ```html
-sp.tagElementNames();
+pad.tagElementNames();
 ```
 
 That's it! Now you can move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly!
 
 ```html
 <script>
-var sp = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on the canvas
+var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on the canvas
 
-var A = new sp.Point(100, 100),              // create two free draggable Nodes
-    B = new sp.Point(300, 100);
+var A = new pad.Point(100, 100),              // create two free draggable Nodes
+    B = new pad.Point(300, 100);
 
-var AB = sp.Line.between(A, B);              // construct a Line between the Nodes
+var AB = pad.Line.between(A, B);              // construct a Line between the Nodes
 
-sp.tagElementNames();                        // add variable name Tags to all elements
+pad.tagElementNames();                        // add variable name Tags to all elements
 </script>
 ```
 ![Line between two Nodes](http://www.garciadelcastillo.es/sketchpad/linenodes.gif "Line between two Nodes")
@@ -103,9 +103,9 @@ A very handy **cheatsheet** can be found in the [docs folder](https://github.com
 Acknowledgments
 ---------------
 
-Thanks to [Panagiotis Michalatos](http://sawapan.eu) for his gidance and contribution to this project.
+Thanks to [Prof. Panagiotis Michalatos](http://sawapan.eu) for his guidance and contribution to this project.
 
-Sketchpad.js is a rendition to [Ivan Sutherland's PhD Thesis](https://www.youtube.com/watch?v=495nCzxM9PI).
+Sketchpad.js is a rendition to [Prof. Ivan Sutherland's PhD Thesis](https://www.youtube.com/watch?v=495nCzxM9PI).
 
 License
 -------
