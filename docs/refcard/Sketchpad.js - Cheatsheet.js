@@ -24,7 +24,7 @@ ELEMENT
     (none)
 
   METHODS (most of these are internal, avoid using them!)  --> apply underscore prefixes?
-    Element.addParent(element0, element1...)
+    Element.addParents(element0, element1...)
     // Element.addChild(element)  @deprecated
     Element.isChildOf(element0, element1...)
     Element.updateChildren()
@@ -105,7 +105,7 @@ MEASURE
   CONSTRUCTORS
     Measure.distance(point, point)
     Measure.angle(point, point, point)
-    Measure.from(measure, [measure...], function)
+    Measure.compose(object, [object...], function)
 
   METHODS
     (none)
@@ -144,10 +144,21 @@ STYLE
     Style.applyTo(element0, element1...)
 
 ///////////////////////
-TEXT
+TAG
   CONSTRUCTORS  
     new Text(string, number, number)  // text, xpos, ypos
     Text.on(point, [text])
+
+  METHODS
+    (none)
+
+
+///////////////////////
+LABEL
+  CONSTRUCTORS  
+    new Label(string)  // text
+    Label.compose(object, [object...], function)
+    Label.from(object)
 
   METHODS
     (none)
