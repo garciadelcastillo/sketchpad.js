@@ -46,12 +46,43 @@ Let's start by creating a simple HTML scaffolding with some basic styling for a 
 </html>
 ```
 
-We are now ready for some action. 
+We are now ready for some action. First, create a new instance of a Sketchpad, passing the id of the canvas element:
 
+```html
+var sp = new Sketchpad('sketchpadCanvas');
+```
 
+Now, create two Nodes at custom X Y coordinates. Think of Nodes just as Points that have some degree of freedom, and that you can drag and move around.
 
+```html
+var A = new sp.Point(100, 100),
+    B = new sp.Point(300, 100);
+```
 
+Create a new Line between them by using the static method Line.between(Point, Point):
 
+```html
+var AB = sp.Line.between(A, B);
+```
+
+Optionally, add Tags to each element with their var name:
+
+```html
+sp.tagElementNames();
+```
+
+That's it! Now you can move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly!
+
+```html
+var sp = new Sketchpad('sketchpadCanvas');      // instantiate a new Sketchpad object
+
+var A = new sp.Point(100, 100),                 // create two free draggable Nodes
+    B = new sp.Point(300, 100);
+
+var AB = sp.Line.between(A, B);                 // construct a Line between the Nodes
+
+sp.tagElementNames();                           // add variable name Tags to all elements
+```
 ![Line between two Nodes](http://www.garciadelcastillo.es/sketchpad/linenodes.gif "Line between two Nodes")
 
 
