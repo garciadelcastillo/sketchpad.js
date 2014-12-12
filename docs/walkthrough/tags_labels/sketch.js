@@ -5,8 +5,9 @@ var pad = new Sketchpad('sketchpadCanvas');
 var title = new pad.Tag('This is a fixed Tag', 320, 40);
 
 // Create a text Label linked to Node P
-// Note how Label.compose takes any number of arguments
-// plus a callback function returning the Label text string
+// Note how Label.compose takes as arguments all the elements
+// the Label is child to, plus a callback function 
+// returning the Label text string
 var P = new pad.Node(320, 200);
 var posLabel = pad.Label.compose(P, function() {
     return '[' + Math.round(P.x) + ', ' + Math.round(P.y) + ']';
