@@ -71,7 +71,7 @@ var AB = pad.Line.between(A, B);
 That's it! Now you can move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly!
 
 ```javascript
-var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on the canvas
+var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on canvas
 
 var A = new pad.Point(100, 100),              // create two free draggable Nodes
     B = new pad.Point(300, 100);
