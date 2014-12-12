@@ -51,33 +51,32 @@ Hello World
 
 We are now ready for some action. First, create a new instance of a Sketchpad, passing the id of the canvas element:
 
-```html
+```javascript
 var pad = new Sketchpad('sketchpadCanvas');
 ```
 
 Now, create two Nodes at custom XY coordinates. Think of Nodes just as Points that have some degree of freedom, and that you can drag and move around.
 
-```html
+```javascript
 var A = new pad.Point(100, 100),
     B = new pad.Point(300, 100);
 ```
 
 Create a new Line between them by using the static method Line.between(Point, Point):
 
-```html
+```javascript
 var AB = pad.Line.between(A, B);
 ```
 
 Optionally, add Tags to each element with their var name:
 
-```html
+```javascript
 pad.tagElementNames();
 ```
 
 That's it! Now you can move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly!
 
-```html
-<script>
+```javascript
 var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on the canvas
 
 var A = new pad.Point(100, 100),              // create two free draggable Nodes
@@ -86,7 +85,6 @@ var A = new pad.Point(100, 100),              // create two free draggable Nodes
 var AB = pad.Line.between(A, B);              // construct a Line between the Nodes
 
 pad.tagElementNames();                        // add variable name Tags to all elements
-</script>
 ```
 ![Line between two Nodes](https://github.com/garciadelcastillo/sketchpad.js/blob/master/docs/readme/linenodes.gif "Line between two Nodes")
 

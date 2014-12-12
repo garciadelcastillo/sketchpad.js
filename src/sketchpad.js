@@ -230,8 +230,8 @@ this.findElementNames = function() {
 };
 
 /**
- * For all elements in this pad, generate a Text tag with its name
- * If no name is available, try to fallback on the element's window wariable name 
+ * For all elements in this pad, generate a Tag with its name.
+ * If no name property is available, try to fallback on the Element's window variable name. 
  */
 this.tagElementNames = function() {
   this.elements.forEach(function(e) {
@@ -240,6 +240,17 @@ this.tagElementNames = function() {
   }, this);  // pass current context as 'this' object inside forEach 
 };
 
+/**
+ * For all Nodes in this pad, generate a Tag with its name.
+ * If no name property is available, try to fallback on the Element's window variable name.
+ */
+this.tagNodes = function() {
+  this.elements.forEach(function(e) {
+    if (e.subtype != self.C.NODE) return;
+    if (!e.name) e.findName();
+    if (e.name) this.Tag.on(e, e.name)
+  }, this);
+};
 
 
 //  ██████╗ ███████╗ ██████╗  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
@@ -1641,6 +1652,7 @@ this.Node = function(xpos, ypos) {
   self.Point.call(this, xpos, ypos);
 
   // this.type = self.C.NODE;   // keep POINT type to be processed by other methods   
+  this.subtype = self.C.NODE;
   this.visible = true;
   this.r = 4;  // for representation when visible
 
