@@ -88,7 +88,7 @@ var AB = pad.Line.between(A, B);              // construct a Line between the No
 pad.tagElementNames();                        // add variable name Tags to all elements
 </script>
 ```
-![Line between two Nodes](http://www.garciadelcastillo.es/sketchpad/linenodes.gif "Line between two Nodes")
+![Line between two Nodes](https://github.com/garciadelcastillo/sketchpad.js/blob/master/docs/readme/linenodes.gif "Line between two Nodes")
 
 
 Examples & Documentation
