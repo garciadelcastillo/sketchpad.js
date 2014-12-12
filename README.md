@@ -58,8 +58,8 @@ var pad = new Sketchpad('sketchpadCanvas');
 Now, create two Nodes at custom XY coordinates. Think of Nodes just as Points that have some degree of freedom, and that you can drag and move around.
 
 ```javascript
-var A = new pad.Point(100, 100),
-    B = new pad.Point(300, 100);
+var A = new pad.Node(100, 100),
+    B = new pad.Node(300, 100);
 ```
 
 Create a new Line between them by using the static method Line.between(Point, Point):
@@ -73,8 +73,8 @@ That's it! Now you can move the Nodes around, and Sketchpad will take care of up
 ```javascript
 var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on canvas
 
-var A = new pad.Point(100, 100),              // create two free draggable Nodes
-    B = new pad.Point(300, 100);
+var A = new pad.Node(100, 100),              // create two free draggable Nodes
+    B = new pad.Node(300, 100);
 
 var AB = pad.Line.between(A, B);              // construct a Line between the Nodes
 
