@@ -2193,7 +2193,7 @@ this.Set.prototype.setItems = function(items, subtype) {
   this.length = items.length;
   this.subtype = subtype;
   for (var l = this.items.length, i = 0; i < l; i ++) {
-    this.items[i].parents[0] = this;
+    if (this.items[i].parents) this.items[i].parents[0] = this;
   }
 };
 
