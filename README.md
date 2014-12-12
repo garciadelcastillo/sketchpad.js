@@ -68,12 +68,6 @@ Create a new Line between them by using the static method Line.between(Point, Po
 var AB = pad.Line.between(A, B);
 ```
 
-Optionally, add Tags to each element with their var name:
-
-```javascript
-pad.tagElementNames();
-```
-
 That's it! Now you can move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly!
 
 ```javascript
