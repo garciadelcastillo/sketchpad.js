@@ -31,8 +31,8 @@
 
 Sketchpad = function(canvasId) {
 
-this.version = "v0.0.2";
-this.build = 1035;
+this.version = "v0.0.3";
+this.build = 1100;
 
 // jQuery detection
 if (!window.jQuery) {
@@ -734,7 +734,6 @@ this.G = {
    * @return {Set(Point)}
    * @ref http://stackoverflow.com/a/1084899
    * @TODO UPDATE FUNCTION SHOULD BE OPTIMIZED
-   * @TODO THIS SHOULD RETURN AN ARRAY OF POINTS, NOT JUST THE FIRST SOLUTION
    */
   pointIntersectionlLineCircle: function(line, circle) {
     var s = new self.Set([new self.Point(0, 0), new self.Point(0, 0)]);
@@ -1958,7 +1957,7 @@ this.M = {
    */
   canvasWidth: function() {
     var m = new self.Measure(0);
-    // (no parents , update is triggered by eventhandler)
+    // (no parents, update is triggered by eventhandler)
     m.update = function() {
       this.value = $(self.parentDiv).innerWidth();
     };
@@ -1972,7 +1971,7 @@ this.M = {
    */
   canvasHeight: function() {
     var m = new self.Measure(0);
-    // (no parents , update is triggered by eventhandler)
+    // (no parents, update is triggered by eventhandler)
     m.update = function() {
       this.value = $(self.parentDiv).innerHeight();
     };
@@ -2789,16 +2788,7 @@ this.util = {
 };
 
 
-
-
-
-
-
-
-};
-
-
-
+};  // END OF SKETCHPAD
 
 
 

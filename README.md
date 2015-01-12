@@ -68,7 +68,7 @@ Create a new Line between them by using the static method Line.between(Point, Po
 var AB = pad.Line.between(A, B);
 ```
 
-That's it! Now you can move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly!
+That's it! Now you can drag and move the Nodes around, and Sketchpad will take care of updating the Line and Tags accordingly. No need to implement update cycles or dependency event triggers: everything is taken care for you.
 
 ```javascript
 var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on canvas
