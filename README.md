@@ -1,12 +1,12 @@
 Sketchpad.js
 ============
 
-**Sketchpad.js** is an open source JavaScript graphics library for **constructive vector drawing**. It provides an object model for common vector geometry under HTML5 Canvas graphics, while offering an intuitive constructive geometry API and **dynamically maintaining parent-children relations** for you.
+**Sketchpad.js** is an open source JavaScript graphics library for **constructive vector drawing**. It provides an object model for common vector graphics under HTML5 Canvas, while offering an intuitive constructive geometry API and **dynamically maintaining parent-children relations** for you.
 
 Basic Setup
 -----------
 
-Let's start by creating a simple HTML scaffolding with some basic styling for a full-screen canvas element. You can find the latest stable version in the [project's dist folder](https://github.com/garciadelcastillo/sketchpad.js/tree/master/dist). Sketchpad currently depends on [jQuery](http://jquery.com/) for DOM manipulation, so make sure to reference it as well.
+Let's start by creating a simple HTML scaffolding with some basic styling for a full-page canvas element. You can find the latest stable version of Sketchpad.js in the [project's dist folder](https://github.com/garciadelcastillo/sketchpad.js/tree/master/dist). Sketchpad currently depends on [jQuery](http://jquery.com/) for DOM manipulation, so make sure to reference it as well.
 
 ```html
 <!DOCTYPE html>
@@ -73,7 +73,7 @@ That's it! Now you can move the Nodes around, and Sketchpad will take care of up
 ```javascript
 var pad = new Sketchpad('sketchpadCanvas');   // instantiate a new Sketchpad on canvas
 
-var A = new pad.Node(100, 100),              // create two free draggable Nodes
+var A = new pad.Node(100, 100),               // create two free draggable Nodes
     B = new pad.Node(300, 100);
 
 var AB = pad.Line.between(A, B);              // construct a Line between the Nodes
