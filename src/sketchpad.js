@@ -542,7 +542,7 @@ this.G = {
       this.x = this.parents[0].x0 + this.parents[1].value * (this.parents[0].x1 - this.parents[0].x0);
       this.y = this.parents[0].y0 + this.parents[1].value * (this.parents[0].y1 - this.parents[0].y0);
     };
-    p.setParameter = self.G.setParameter;
+    // p.setParameter = self.G.setParameter;  // can't do, the parameter is linked to a measure
     p.update();
     return p;
   },
@@ -569,7 +569,7 @@ this.G = {
         this.items[i].y = this.parents[0].y0 + this.parents[1].items[i] * (this.parents[0].y1 - this.parents[0].y0);
       }
     };
-    s.setParameter = self.G.setParameter;
+    // s.setParameter = self.G.setParameter;
     s.update();
     return s;
   },
@@ -581,6 +581,7 @@ this.G = {
   setParameter: function(parameter) {
     this.parents[1] = parameter;
     this.update();
+    this.updateChildren();
   },
 
   /**
@@ -591,10 +592,10 @@ this.G = {
    */
   pointOnCircle: function(circle, parameter) {
     var p = new self.Point(0, 0);
-    p.addParents(circle);
-    p.parameter = parameter;
+    p.addParents(circle, parameter);
+    // p.parameter = parameter;
     p.update = function() {
-      var a = (this.parameter % 1) * self.C.TAU;
+      var a = (this.parents[1] % 1) * self.C.TAU;
       this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
       this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
     };
@@ -618,7 +619,7 @@ this.G = {
       this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
       this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
     };
-    p.setParameter = self.G.setParameter;
+    // p.setParameter = self.G.setParameter;
     p.update();
     return p;
   },
@@ -645,7 +646,7 @@ this.G = {
         this.items[i].y = this.parents[0].y + this.parents[0].r * Math.sin(a);
       }
     };
-    s.setParameter = self.G.setParameter;
+    // s.setParameter = self.G.setParameter;
     s.update();
     return s;
   },

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #sketchpadDiv {
+        position: absolute; 
+        width: 100%; 
+        height: 100%;
+        border: 1px solid #000;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+
+      #sketchpadCanvas {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sketchpadDiv">
+      <canvas id="sketchpadCanvas"></canvas>       
+    </div>
+  </body>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="http://www.garciadelcastillo.es/sketchpad/sketchpad-0.0.2.js"></script>
+  
+  <script>
+    // OSCULLATING CIRCLES
+    // Define some sketch variables
+    var count = 30,  // number of osculating circles
+        shrinkFactor = 0.95,  // size ratio between them
+        intialSpeed = 750;  // starting speed of main circle
+
+    // Initialize Sketchpad
+    var pad = new Sketchpad('sketchpadCanvas');
+
+    // Define some styles
+    var blackFill = new pad.Style({
+            stroke: 'rgba(0, 0, 0, 0)',  // aka none
+            fill: '#000'
+          }),
+        whiteFill = new pad.Style({
+            stroke: 'rgba(0, 0, 0, 0)',
+            fill: '#FFF'
+          });
+
+    // Link radius to sketch dimensions
+    var r = pad.Measure.compose(pad.width, pad.height, function() {
+      return pad.width.value > pad.height.value ? 0.45 * pad.height.value : 0.45 * pad.width.value;
+    });
+
+    // Initialize collections
+    var points = [],
+        circles = [],
+        circlesAux = [];
+
+    // Base elements
+    points.push(new pad.Node(0.5 * pad.width.value, 0.5 * pad.height.value));
+    circles.push(pad.Circle.centerRadius(points[0], r));
+    blackFill.applyTo(circles[0]);
+
+    // More elements
+    for (var i = 1; i < count; i++) {
+      // Create elements
+      var caux = pad.Circle.centerRadius(points[i - 1], (1 - shrinkFactor) * circles[i - 1].r)
+          p = pad.Point.along(caux, 0.0),
+          c = pad.Circle.centerRadius(p, shrinkFactor * circles[i - 1].r);
+
+      // Apply some styling
+      caux.setVisible(false);
+      if (i % 2 == 0) {
+        blackFill.applyTo(c);
+      } else {
+        whiteFill.applyTo(c);
+      }
+
+      // Add them to collection
+      circlesAux.push(caux);
+      points.push(p);
+      circles.push(c);
+    };
+
+
+    // Now override pad.update to set some changes to happen at every frame
+    pad.update = function() {
+      for (var i = 1; i < count; i++) {
+        points[i].setParameter(pad.frameCount / (intialSpeed / i));
+      }
+    };
+
+    
+  </script>
+
+</html>
