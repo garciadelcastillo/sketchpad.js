@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #sketchpadDiv {
+        position: absolute; 
+        width: 100%; 
+        height: 100%;
+        border: 1px solid #000;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+
+      #sketchpadCanvas {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sketchpadDiv">
+      <canvas id="sketchpadCanvas"></canvas>       
+    </div>
+  </body>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="http://www.garciadelcastillo.es/sketchpad/sketchpad-0.0.2.js"></script>
+  
+  <script>
+    /**
+     * CONSTRUCTION OF REGULAR PENTAGON INSCRIBED IN CIRCLE
+     * Inspired by http://www.mathopenref.com/printinpentagon.html
+     */
+
+    // Initialize Sketchpad
+    var pad = new Sketchpad('sketchpadCanvas');
+
+    // Define some styles
+    var grayNode = new pad.Style({
+      fill: 'rgba(127, 127, 127, 0.3)'
+    });
+    var thick = new pad.Style({
+        strokeWidth: 3.0
+    });
+
+    // Step 0: Draw circle
+    var O = new pad.Node(pad.width.value / 2, pad.height.value / 2),
+      M = new pad.Node(pad.width.value / 2, pad.height.value / 2 + 200),
+      pentagonRadius = pad.Measure.distance(O, M),
+      circle = pad.Circle.centerRadius(O, pentagonRadius);
+    grayNode.applyTo(O, M);
+
+    // Step 1: Draw diameter
+    var OM = pad.Line.between(M, O),
+      interOM = pad.Point.intersection(OM, circle),
+      C = interOM.items[1],
+      MC = pad.Line.between(M, C);
+
+    // Step 2: Construct a perpendicular
+    var doubleRadius = pad.Measure.compose(pentagonRadius, function() { 
+        return 2 * pentagonRadius.value; 
+      }),
+      circleM = pad.Circle.centerRadius(M, doubleRadius),
+      circleC = pad.Circle.centerRadius(C, doubleRadius),
+      interMC = pad.Point.intersection(circleM, circleC),
+      A1 = interMC.items[1],
+      perpendicular = pad.Line.between(O, A1);  
+      
+    // Step 3: Point crossing the circle
+    var interA1O = pad.Point.intersection(perpendicular, circle),
+      S = interA1O.items[1];
+
+    // Step 4: Find the midpoint
+    var SO = pad.Line.between(S, O),
+      L = pad.Point.along(SO, 0.5);
+
+    // Step 5: Draw a circle
+    var halfRadius = pad.Measure.compose(pentagonRadius, function() {
+        return 0.5 * pentagonRadius.value;
+      }),
+      circleL = pad.Circle.centerRadius(L, halfRadius);
+
+    // Step 6: Find ints from M
+    var ML = pad.Line.between(M, L),
+      interMLcircleL = pad.Point.intersection(ML, circleL),
+      P = interMLcircleL.items[0],
+      N = interMLcircleL.items[1];
+
+    // Step 7: Measure MP
+    var MPdist = pad.Measure.distance(M, P);
+
+    // Step 8: Find intersections with MP circle
+    var circleMP = pad.Circle.centerRadius(M, MPdist),
+      interAE = pad.Point.intersection(circleMP, circle),
+      A = interAE.items[1],
+      E = interAE.items[0];
+
+    // Step 9: Measure MN
+    var MNdist = pad.Measure.distance(M, N);
+
+    // Step 10: Find ints with MN circle
+    var circleMN = pad.Circle.centerRadius(M, MNdist),
+      interBD = pad.Point.intersection(circleMN, circle),
+      B = interBD.items[1],
+      D = interBD.items[0];
+
+    // Draw the pentagon
+    pad.currentStyle(thick);
+
+    var AB = pad.Line.between(A, B),
+      BC = pad.Line.between(B, C),
+      CD = pad.Line.between(C, D),
+      DE = pad.Line.between(D, E),
+      EA = pad.Line.between(E, A);
+
+    pad.showPoints();
+    pad.tagPoints();
+
+
+    pad.update = function() {
+      // do nothing
+    };
+
+  </script>
+
+</html>
