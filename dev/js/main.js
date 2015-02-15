@@ -7,7 +7,7 @@
 
 var pad = new Sketchpad('sketchPadCanvas');
 
-var R = slider(pad, 10, 10, 100, 0, 50, 26);
+var R = slider(pad, 10, 20, 100, 0, 50, 26);
 
 var circleStatic = pad.circle(100, 100, 26), 
 	circleParametric = pad.circle(100, 200, R);
@@ -17,6 +17,8 @@ var A = new pad.Node(100, 300),
 
 var B = new pad.Node(100, 400),
     circleB = pad.circle(B, R);
+
+pad.tagElementNames();
 
 
 /**
