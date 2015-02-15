@@ -44,9 +44,13 @@
     var grayNode = new pad.Style({
       fill: 'rgba(127, 127, 127, 0.3)'
     });
+    var thin = new pad.Style({
+        strokeWidth: 0.5
+    });
     var thick = new pad.Style({
         strokeWidth: 3.0
     });
+    pad.currentStyle(thin);
 
     // Step 0: Draw circle
     var O = new pad.Node(pad.width.value / 2, pad.height.value / 2),

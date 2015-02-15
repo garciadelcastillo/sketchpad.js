@@ -44,9 +44,13 @@
     var node = new pad.Style({
       fill: 'rgba(127, 127, 127, 0.3)'
     });
+    var thin = new pad.Style({
+        strokeWidth: 0.5
+    });
     var thick = new pad.Style({
         strokeWidth: 3.0
     });
+    pad.currentStyle(thin);
 
     // Slider to control pentagon's radius
     var pentagonRadius = Slider(pad, 25, 25, 150, 0, 400, 200);  // see below
@@ -54,11 +58,13 @@
     // Step 0: Draw circle
     var O = new pad.Node(pad.width.value / 2, pad.height.value / 2),
       circle = pad.Circle.centerRadius(O, pentagonRadius);
-    O.style = node;
+      M = pad.Node.along(circle, 0.25),
+    node.applyTo(O, M);
 
     // Step 1: Draw diameter
-    var M = pad.Point.along(circle, 0.25),
-      C = pad.Point.along(circle, 0.75),
+    var OM = pad.Line.between(M, O),
+      interOM = pad.Point.intersection(OM, circle),
+      C = interOM.items[1],
       MC = pad.Line.between(M, C);
 
     // Step 2: Construct a perpendicular

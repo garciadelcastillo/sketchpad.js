@@ -40,8 +40,8 @@ if (!window.jQuery) {
   return undefined;
 }
 
-// Some internal constants
-this.C = {
+// Some private internal constants
+var C = {
 
   BOOLEAN   : 1,
   NUMBER    : 2,
@@ -83,7 +83,8 @@ this.C = {
 // ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
 	
 // Private properties
-var self = this;  // store this context
+// var self = this;  // store this context ---> @DEPRECATED, use S intead
+var S = this;
 this.elements = [];
 this.initialized = false;
 this.canvas;
@@ -134,46 +135,46 @@ this.preupdate = function() { };
  */
 this.render = function() {
 	// clean the background
-	self.gr.globalAlpha = 1.00;
-	self.gr.fillStyle = "#ffffff";
-  self.gr.clearRect(0, 0, self._canvasWidth, self._canvasHeight);
-  self.gr.fillRect(0, 0, self._canvasWidth, self._canvasHeight);
+	S.gr.globalAlpha = 1.00;
+	S.gr.fillStyle = "#ffffff";
+  S.gr.clearRect(0, 0, S._canvasWidth, S._canvasHeight);
+  S.gr.fillRect(0, 0, S._canvasWidth, S._canvasHeight);
   
   // gross workaround to the 1px line aliasing problem: http://stackoverflow.com/a/3279863/1934487
-  self.gr.translate(0.5, 0.5);
+  S.gr.translate(0.5, 0.5);
 
 	// render each element
-	for (var i = 0; i < self.elements.length; i++) {
-	  if (!self.elements[i].visible) continue;
+	for (var i = 0; i < S.elements.length; i++) {
+	  if (!S.elements[i].visible) continue;
 
     // render sets: this should be a nested function of some sort (sets of sets?)
-    if (self.elements[i].type == self.C.SET && self.elements[i].subtype != self.C.NUMBER) {
+    if (S.elements[i].type == C.SET && S.elements[i].subtype != C.NUMBER) {
       // since elements were added to the parents list anyway, they are rendered
       // so no need to render them again (?)
-      // for (var j = 0; j < self.elements[i].length; j++) {
-      //   self.elements[i].items[j].render(self.gr);
+      // for (var j = 0; j < S.elements[i].length; j++) {
+      //   S.elements[i].items[j].render(S.gr);
       // }
     }
 
     // or individual elements
     else {
-  	  self.elements[i].render(self.gr);
+  	  S.elements[i].render(S.gr);
     }
 	}
 
   // revert the translation
-  self.gr.translate(-0.5, -0.5);  
+  S.gr.translate(-0.5, -0.5);  
 };
 
 /**
  * Main internal auto loop function
  */
 this.loop = function() {
-	window.requestAnimFrame(self.loop);
-  self.preupdate();
-	self.render();
-	self.update();
-	self.frameCount++;
+	window.requestAnimFrame(S.loop);
+  S.preupdate();
+	S.render();
+	S.update();
+	S.frameCount++;
 };
 
 /**
@@ -181,7 +182,7 @@ this.loop = function() {
  * @param {Element} element 
  */
 this.addElement = function(element) {
-	self.elements.push(element);
+	S.elements.push(element);
 };
 
 /**
@@ -246,7 +247,7 @@ this.tagElementNames = function() {
  */
 this.tagNodes = function() {
   this.elements.forEach(function(e) {
-    if (e.subtype != self.C.NODE) return;
+    if (e.subtype != C.NODE) return;
     if (!e.name) e.findName();
     if (e.name) this.Tag.on(e, e.name);
   }, this);
@@ -254,7 +255,7 @@ this.tagNodes = function() {
 
 this.tagPoints = function() {
   this.elements.forEach(function(e) {
-    if (e.type != self.C.POINT && e.subtype != self.C.NODE) return;
+    if (e.type != C.POINT && e.subtype != C.NODE) return;
     if (!e.name) e.findName();
     if (e.name) {
       this.Tag.on(e, e.name);
@@ -265,7 +266,7 @@ this.tagPoints = function() {
 
 this.showPoints = function() {
   this.elements.forEach(function(e) {
-    if (e.type == self.C.POINT) e.setVisible(true);
+    if (e.type == C.POINT) e.setVisible(true);
   });
 };  
 
@@ -281,7 +282,7 @@ this.showPoints = function() {
  * A library to store all independent Geometry construction functions
  * @type {Object}
  */
-this.G = {
+var G = {
 
   /**
    * Create a Set as a numeric range from limits and step count
@@ -296,8 +297,8 @@ this.G = {
     for (var i = start; i <= end; i+=step) {
       values.push(i);
     }
-    var s = new self.Set(values);
-    s.subtype = self.C.NUMBER;
+    var s = new S.Set(values);
+    s.subtype = C.NUMBER;
     s.start = start;
     s.end = end;
     s.steps = steps;
@@ -317,8 +318,8 @@ this.G = {
     for (var i = 0; i < count; i++) {
       values.push(start + i * stepSize);
     }
-    var s = new self.Set(values);
-    s.subtype = self.C.NUMBER;
+    var s = new S.Set(values);
+    s.subtype = C.NUMBER;
     s.start = start;
     s.stepSize = stepSize;
     s.count = count;
@@ -339,8 +340,8 @@ this.G = {
     for (var i = 0; i < count; i++) {
       values.push(start + d * Math.random());
     }
-    var s = new self.Set(values);
-    s.subtype = self.C.NUMBER;
+    var s = new S.Set(values);
+    s.subtype = C.NUMBER;
     s.start = start;
     s.end = end;
     s.count = count;
@@ -355,7 +356,7 @@ this.G = {
    * @return {Point} 
    */
   pointFromTwoMeasures: function(measureX, measureY) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(measureX, measureY);
     p.update = function() {
       this.x = this.parents[0].value;
@@ -373,7 +374,7 @@ this.G = {
    * @return {Point}       
    */
   pointOffsetNumberNumber: function(point, offX, offY) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, offX, offY);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1];
@@ -391,7 +392,7 @@ this.G = {
    * @return {Point}       
    */
   pointOffsetNumberMeasure: function(point, offX, offY) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, offX, offY);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1];
@@ -409,7 +410,7 @@ this.G = {
    * @return {Point}       
    */
   pointOffsetMeasureNumber: function(point, offX, offY) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, offX, offY);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1].value;
@@ -427,7 +428,7 @@ this.G = {
    * @return {Point}       
    */
   pointOffsetMeasureMeasure: function(point, offX, offY) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, offX, offY);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1].value;
@@ -445,7 +446,7 @@ this.G = {
    * @return {Point}
    */
   pointOffsetPolarNumberNumber: function(point, length, angle) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, length, angle);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1] * Math.cos(this.parents[2]);
@@ -463,7 +464,7 @@ this.G = {
    * @return {Point}
    */
   pointOffsetPolarNumberMeasure: function(point, length, angle) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, length, angle);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1] * Math.cos(this.parents[2].value);
@@ -481,7 +482,7 @@ this.G = {
    * @return {Point}
    */
   pointOffsetPolarMeasureNumber: function(point, length, angle) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, length, angle);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1].value * Math.cos(this.parents[2]);
@@ -499,7 +500,7 @@ this.G = {
    * @return {Point}
    */
   pointOffsetPolarMeasureMeasure: function(point, length, angle) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(point, length, angle);
     p.update = function() {
       this.x = this.parents[0].x + this.parents[1].value * Math.cos(this.parents[2].value);
@@ -516,13 +517,13 @@ this.G = {
    * @return {Point}           
    */
   pointOnLine: function(line, parameter) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(line, parameter);
     p.update = function() {
       this.x = this.parents[0].x0 + this.parents[1] * (this.parents[0].x1 - this.parents[0].x0);
       this.y = this.parents[0].y0 + this.parents[1] * (this.parents[0].y1 - this.parents[0].y0);
     };
-    p.setParameter = self.G.setParameter;
+    p.setParameter = G.setParameter;
     p.update();
     return p;
   },
@@ -536,13 +537,13 @@ this.G = {
    * @todo Find a way to merge this with G.PointOnLine, they are so similar...
    */
   pointOnLineFromMeasure: function(line, measure) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(line, measure);
     p.update = function() {
       this.x = this.parents[0].x0 + this.parents[1].value * (this.parents[0].x1 - this.parents[0].x0);
       this.y = this.parents[0].y0 + this.parents[1].value * (this.parents[0].y1 - this.parents[0].y0);
     };
-    // p.setParameter = self.G.setParameter;  // can't do, the parameter is linked to a measure
+    // p.setParameter = G.setParameter;  // can't do, the parameter is linked to a measure
     p.update();
     return p;
   },
@@ -558,10 +559,10 @@ this.G = {
   pointsOnLineFromNumberSet: function(line, parameterSet) {
     var items = [];
     for (var l = parameterSet.length, i = 0; i < l; i++) {
-      items.push(new self.Point(0, 0));
+      items.push(new S.Point(0, 0));
     }
-    var s = new self.Set(items);
-    s.subtype = self.C.POINT;
+    var s = new S.Set(items);
+    s.subtype = C.POINT;
     s.addParents(line, parameterSet);
     s.update = function() {
       for (var i = 0; i < this.length; i++) {
@@ -569,7 +570,7 @@ this.G = {
         this.items[i].y = this.parents[0].y0 + this.parents[1].items[i] * (this.parents[0].y1 - this.parents[0].y0);
       }
     };
-    // s.setParameter = self.G.setParameter;
+    // s.setParameter = G.setParameter;
     s.update();
     return s;
   },
@@ -591,15 +592,15 @@ this.G = {
    * @return {Point}
    */
   pointOnCircle: function(circle, parameter) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(circle, parameter);
     // p.parameter = parameter;
     p.update = function() {
-      var a = (this.parents[1] % 1) * self.C.TAU;
+      var a = (this.parents[1] % 1) * C.TAU;
       this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
       this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
     };
-    p.setParameter = self.G.setParameter;
+    p.setParameter = G.setParameter;
     p.update();
     return p;
   },
@@ -612,14 +613,14 @@ this.G = {
    * @return {Point}         
    */
   pointOnCircleFromMeasure: function(circle, measure) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(circle, measure);
     p.update = function() {
-      var a = (this.parents[1].value % 1) * self.C.TAU;
+      var a = (this.parents[1].value % 1) * C.TAU;
       this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
       this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
     };
-    // p.setParameter = self.G.setParameter;
+    // p.setParameter = G.setParameter;
     p.update();
     return p;
   },
@@ -634,19 +635,19 @@ this.G = {
   pointsOnCircleFromNumberSet: function(circle, parameterSet) {
     var items = [];
     for (var l = parameterSet.length, i = 0; i < l; i++) {
-      items.push(new self.Point(0, 0));
+      items.push(new S.Point(0, 0));
     }
-    var s = new self.Set(items);
-    s.subtype = self.C.POINT;
+    var s = new S.Set(items);
+    s.subtype = C.POINT;
     s.addParents(circle, parameterSet);
     s.update = function() {
       for (var i = 0; i < this.length; i++) {
-        var a = (this.parents[1].items[i] % 1) * self.C.TAU;
+        var a = (this.parents[1].items[i] % 1) * C.TAU;
         this.items[i].x = this.parents[0].x + this.parents[0].r * Math.cos(a);
         this.items[i].y = this.parents[0].y + this.parents[0].r * Math.sin(a);
       }
     };
-    // s.setParameter = self.G.setParameter;
+    // s.setParameter = G.setParameter;
     s.update();
     return s;
   },
@@ -659,7 +660,7 @@ this.G = {
    * @TODO UPDATE FUNCTION SHOULD BE OPTIMIZED
    */
   pointProjectionOnLine: function(sourcePoint, targetLine) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(sourcePoint, targetLine);
     p.update = function() {
       // 
@@ -667,7 +668,7 @@ this.G = {
           dy = this.parents[1].y1 - this.parents[1].y0,
           dpx = this.parents[0].x - this.parents[1].x0,
           dpy = this.parents[0].y - this.parents[1].y0,
-          l = self.U.lineLength(this.parents[1]),
+          l = S.U.lineLength(this.parents[1]),
           pl = (dx * dpx + dy * dpy) / l;
       this.x = this.parents[1].x0 + pl * dx / l;
       this.y = this.parents[1].y0 + pl * dy / l;
@@ -683,10 +684,10 @@ this.G = {
    * @return {Point}              
    */
   pointProjectionOnCircle: function(sourcePoint, targetCircle) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(sourcePoint, targetCircle);
     p.update = function() {
-      var a = self.U.angleBetweenCoordinates(this.parents[1].x, this.parents[1].y,
+      var a = S.U.angleBetweenCoordinates(this.parents[1].x, this.parents[1].y,
         this.parents[0].x, this.parents[0].y);
       this.x = this.parents[1].x + this.parents[1].r * Math.cos(a);
       this.y = this.parents[1].y + this.parents[1].r * Math.sin(a);
@@ -703,7 +704,7 @@ this.G = {
    * @ref http://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
    */
   pointIntersectionlLineLine: function(line0, line1) {
-    var p = new self.Point(0, 0);
+    var p = new S.Point(0, 0);
     p.addParents(line0, line1);
     p.update = function() {
       var dx0 = this.parents[0].x0 - this.parents[0].x1,
@@ -737,8 +738,8 @@ this.G = {
    * @TODO UPDATE FUNCTION SHOULD BE OPTIMIZED
    */
   pointIntersectionlLineCircle: function(line, circle) {
-    var s = new self.Set([new self.Point(0, 0), new self.Point(0, 0)]);
-    s.subtype = self.C.POINT;
+    var s = new S.Set([new S.Point(0, 0), new S.Point(0, 0)]);
+    s.subtype = C.POINT;
     s.addParents(line, circle);
     s.update = function() {
       var dx = this.parents[0].x1 - this.parents[0].x0,
@@ -775,8 +776,8 @@ this.G = {
    * @ref http://www.ambrsoft.com/TrigoCalc/Circles2/Circle2.htm
    */
   pointIntersectionlCircleCircle: function(circle0, circle1) {
-    var s = new self.Set([new self.Point(0, 0), new self.Point(0, 0)]);
-    s.subtype = self.C.POINT;
+    var s = new S.Set([new S.Point(0, 0), new S.Point(0, 0)]);
+    s.subtype = C.POINT;
     s.addParents(circle0, circle1);
     s.update = function() {
       var x0 = this.parents[0].x,
@@ -785,7 +786,7 @@ this.G = {
           x1 = this.parents[1].x,
           y1 = this.parents[1].y,
           r1 = this.parents[1].r;
-      var D = self.U.distanceBetweenCoordinates(x0, y0, x1, y1);
+      var D = S.U.distanceBetweenCoordinates(x0, y0, x1, y1);
       if (r0 + r1 < D || Math.abs(r0 - r1) > D) {
         // console.log('No circle-circle intersection');
         this.items[0].x = this.items[0].y = this.items[1].x = this.items[1].y = 0;
@@ -810,174 +811,174 @@ this.G = {
     return s;
   },
 
-  /**
-   * Create a Line from two Points
-   * @param  {Point} startPoint 
-   * @param  {Point} endPoint   
-   * @return {Line}
-   */
-  lineFromTwoPoints: function(startPoint, endPoint) {
-    var lin = new self.Line(0, 0, 0, 0);
-    lin.addParents(startPoint, endPoint);
-    lin.update = function() {
-      this.x0 = this.parents[0].x;
-      this.y0 = this.parents[0].y;
-      this.x1 = this.parents[1].x;
-      this.y1 = this.parents[1].y;
-    };
-    lin.update();
-    return lin;
-  },
+  // /**
+  //  * Create a Line from two Points
+  //  * @param  {Point} startPoint 
+  //  * @param  {Point} endPoint   
+  //  * @return {Line}
+  //  */
+  // lineFromTwoPoints: function(startPoint, endPoint) {
+  //   var lin = new Line(0, 0, 0, 0);
+  //   lin.addParents(startPoint, endPoint);
+  //   lin.update = function() {
+  //     this.x0 = this.parents[0].x;
+  //     this.y0 = this.parents[0].y;
+  //     this.x1 = this.parents[1].x;
+  //     this.y1 = this.parents[1].y;
+  //   };
+  //   lin.update();
+  //   return lin;
+  // },
 
-  /**
-   * Create a Line Set from a Point to a Point Set
-   * @param  {Point} startPoint 
-   * @param  {Set(Point)} pointSet
-   * @return {Set(Line)} 
-   */
-  lineFromPointToPointset: function(startPoint, pointSet) {
-    var items = [];
-    for (var l = pointSet.length, i = 0; i < l; i++) {
-      items.push(new self.Line(0, 0, 0, 0));
-    }
-    var s = new self.Set(items);
-    s.subtype = self.C.LINE;
-    s.addParents(startPoint, pointSet);
-    s.update = function() {
-      for (var i = 0; i < this.length; i++) {
-        this.items[i].x0 = this.parents[0].x;
-        this.items[i].y0 = this.parents[0].y;
-        this.items[i].x1 = this.parents[1].items[i].x;
-        this.items[i].y1 = this.parents[1].items[i].y;
-      }
-    };
-    s.update();
-    return s;
-  },
+  // /**
+  //  * Create a Line Set from a Point to a Point Set
+  //  * @param  {Point} startPoint 
+  //  * @param  {Set(Point)} pointSet
+  //  * @return {Set(Line)} 
+  //  */
+  // lineFromPointToPointset: function(startPoint, pointSet) {
+  //   var items = [];
+  //   for (var l = pointSet.length, i = 0; i < l; i++) {
+  //     items.push(new Line(0, 0, 0, 0));
+  //   }
+  //   var s = new S.Set(items);
+  //   s.subtype = C.LINE;
+  //   s.addParents(startPoint, pointSet);
+  //   s.update = function() {
+  //     for (var i = 0; i < this.length; i++) {
+  //       this.items[i].x0 = this.parents[0].x;
+  //       this.items[i].y0 = this.parents[0].y;
+  //       this.items[i].x1 = this.parents[1].items[i].x;
+  //       this.items[i].y1 = this.parents[1].items[i].y;
+  //     }
+  //   };
+  //   s.update();
+  //   return s;
+  // },
 
-  /**
-   * Create a Line Set from a Point Set to a Point Set
-   * @param  {Set(Point)} startPS 
-   * @param  {Set(Point)} endPS   
-   * @return {Set(Line)}         
-   * @todo The update function looks like it was barfed...
-   */
-  lineFromPointsetToPointset: function(startPS, endPS) {
-    var items = [],
-        maxlen = startPS.length > endPS.length ? startPS.length : endPS.length;
-    for (var i = 0; i < maxlen; i++) {
-      items.push(new self.Line(0, 0, 0, 0));
-    }
-    var s = new self.Set(items);
-    s.subtype = self.C.LINE;
-    s.addParents(startPS, endPS);
-    s.update = function() {
-      var sl = this.parents[0].length,
-          el = this.parents[1].length,
-          j = 0,
-          k = 0;
-      for (var i = 0; i < this.length; i++) {
-        this.items[i].x0 = this.parents[0].items[j].x;
-        this.items[i].y0 = this.parents[0].items[j++].y;
-        this.items[i].x1 = this.parents[1].items[k].x;
-        this.items[i].y1 = this.parents[1].items[k++].y;
-        if (j >= sl) j--;
-        if (k >= el) k--;
-      }
-    };
-    s.update();
-    return s;
-  },
+  // /**
+  //  * Create a Line Set from a Point Set to a Point Set
+  //  * @param  {Set(Point)} startPS 
+  //  * @param  {Set(Point)} endPS   
+  //  * @return {Set(Line)}         
+  //  * @todo The update function looks like it was barfed...
+  //  */
+  // lineFromPointsetToPointset: function(startPS, endPS) {
+  //   var items = [],
+  //       maxlen = startPS.length > endPS.length ? startPS.length : endPS.length;
+  //   for (var i = 0; i < maxlen; i++) {
+  //     items.push(new Line(0, 0, 0, 0));
+  //   }
+  //   var s = new S.Set(items);
+  //   s.subtype = C.LINE;
+  //   s.addParents(startPS, endPS);
+  //   s.update = function() {
+  //     var sl = this.parents[0].length,
+  //         el = this.parents[1].length,
+  //         j = 0,
+  //         k = 0;
+  //     for (var i = 0; i < this.length; i++) {
+  //       this.items[i].x0 = this.parents[0].items[j].x;
+  //       this.items[i].y0 = this.parents[0].items[j++].y;
+  //       this.items[i].x1 = this.parents[1].items[k].x;
+  //       this.items[i].y1 = this.parents[1].items[k++].y;
+  //       if (j >= sl) j--;
+  //       if (k >= el) k--;
+  //     }
+  //   };
+  //   s.update();
+  //   return s;
+  // },
 
-  /**
-   * Create a Line from starting Point and numeric length and angle
-   * @param  {Point} startPoint 
-   * @param  {Number} length     
-   * @param  {Number} angle      
-   * @return {Line}
-   */
-  lineFromPointLengthAngle: function(startPoint, length, angle) {
-    var lin = new self.Line(0, 0, 0, 0);
-    lin.addParents(startPoint);
-    lin.length = length;
-    lin.angle = angle;
-    lin.update = function() {
-      this.x0 = this.parents[0].x;
-      this.y0 = this.parents[0].y;
-      this.x1 = this.x0 + this.length * Math.cos(this.angle);
-      this.y1 = this.y0 + this.length * Math.sin(this.angle);
-    };
-    lin.update();
-    return lin;
-  },
+  // /**
+  //  * Create a Line from starting Point and numeric length and angle
+  //  * @param  {Point} startPoint 
+  //  * @param  {Number} length     
+  //  * @param  {Number} angle      
+  //  * @return {Line}
+  //  */
+  // lineFromPointLengthAngle: function(startPoint, length, angle) {
+  //   var lin = new Line(0, 0, 0, 0);
+  //   lin.addParents(startPoint);
+  //   lin.length = length;
+  //   lin.angle = angle;
+  //   lin.update = function() {
+  //     this.x0 = this.parents[0].x;
+  //     this.y0 = this.parents[0].y;
+  //     this.x1 = this.x0 + this.length * Math.cos(this.angle);
+  //     this.y1 = this.y0 + this.length * Math.sin(this.angle);
+  //   };
+  //   lin.update();
+  //   return lin;
+  // },
 
-  /**
-   * Create a Line from starting Point, length Measure and numeric angle
-   * @param  {Point} startPoint 
-   * @param  {Measure} lengthM    
-   * @param  {Number} angle      
-   * @return {Line}
-   */
-  lineFromPointMeasureAngle: function(startPoint, lengthM, angle) {
-    var lin = new self.Line(0, 0, 0, 0);
-    lin.addParents(startPoint, lengthM);
-    lin.angle = angle;
-    lin.update = function() {
-      this.x0 = this.parents[0].x;
-      this.y0 = this.parents[0].y;
-      this.x1 = this.x0 + this.parents[1].value * Math.cos(this.angle);
-      this.y1 = this.y0 + this.parents[1].value * Math.sin(this.angle);
-    };
-    lin.update();
-    return lin;
-  },
+  // /**
+  //  * Create a Line from starting Point, length Measure and numeric angle
+  //  * @param  {Point} startPoint 
+  //  * @param  {Measure} lengthM    
+  //  * @param  {Number} angle      
+  //  * @return {Line}
+  //  */
+  // lineFromPointMeasureAngle: function(startPoint, lengthM, angle) {
+  //   var lin = new Line(0, 0, 0, 0);
+  //   lin.addParents(startPoint, lengthM);
+  //   lin.angle = angle;
+  //   lin.update = function() {
+  //     this.x0 = this.parents[0].x;
+  //     this.y0 = this.parents[0].y;
+  //     this.x1 = this.x0 + this.parents[1].value * Math.cos(this.angle);
+  //     this.y1 = this.y0 + this.parents[1].value * Math.sin(this.angle);
+  //   };
+  //   lin.update();
+  //   return lin;
+  // },
 
-  /**
-   * Create a Line from starting Point, numeric length and Measure angle
-   * @param  {Point} startPoint 
-   * @param  {Number} length     
-   * @param  {Measure} angleM     
-   * @return {Line}            
-   */
-  lineFromPointLengthMeasure: function(startPoint, length, angleM) {
-    var lin = new self.Line(0, 0, 0, 0);
-    lin.addParents(startPoint, angleM);
-    lin.length = length;
-    lin.update = function() {
-      var ang = this.parents[1].subtype == self.C.ANGLE_DEG ?
-          this.parents[1].value * self.C.TO_RADS :
-          this.parents[1].value;
-      this.x0 = this.parents[0].x;
-      this.y0 = this.parents[0].y;
-      this.x1 = this.x0 + this.length * Math.cos(ang);
-      this.y1 = this.y0 + this.length * Math.sin(ang);
-    };
-    lin.update();
-    return lin;
-  },
+  // /**
+  //  * Create a Line from starting Point, numeric length and Measure angle
+  //  * @param  {Point} startPoint 
+  //  * @param  {Number} length     
+  //  * @param  {Measure} angleM     
+  //  * @return {Line}            
+  //  */
+  // lineFromPointLengthMeasure: function(startPoint, length, angleM) {
+  //   var lin = new Line(0, 0, 0, 0);
+  //   lin.addParents(startPoint, angleM);
+  //   lin.length = length;
+  //   lin.update = function() {
+  //     var ang = this.parents[1].subtype == C.ANGLE_DEG ?
+  //         this.parents[1].value * C.TO_RADS :
+  //         this.parents[1].value;
+  //     this.x0 = this.parents[0].x;
+  //     this.y0 = this.parents[0].y;
+  //     this.x1 = this.x0 + this.length * Math.cos(ang);
+  //     this.y1 = this.y0 + this.length * Math.sin(ang);
+  //   };
+  //   lin.update();
+  //   return lin;
+  // },
 
-  /**
-   * Create a Line from a starting Point, Measure length and Measure angle
-   * @param  {Point} startPoint 
-   * @param  {Measure} length     
-   * @param  {Measure} angleM     
-   * @return {Line}     
-   */
-  lineFromPointMeasureMeasure: function(startPoint, lengthM, angleM) {
-    var lin = new self.Line(0, 0, 0, 0);
-    lin.addParents(startPoint, lengthM, angleM);
-    lin.update = function() {
-      var ang = this.parents[2].subtype == self.C.ANGLE_DEG ?
-          this.parents[2].value * self.C.TO_RADS :
-          this.parents[2].value;
-      this.x0 = this.parents[0].x;
-      this.y0 = this.parents[0].y;
-      this.x1 = this.x0 + this.parents[1].value * Math.cos(ang);
-      this.y1 = this.y0 + this.parents[1].value * Math.sin(ang);
-    };
-    lin.update();
-    return lin;
-  },
+  // /**
+  //  * Create a Line from a starting Point, Measure length and Measure angle
+  //  * @param  {Point} startPoint 
+  //  * @param  {Measure} length     
+  //  * @param  {Measure} angleM     
+  //  * @return {Line}     
+  //  */
+  // lineFromPointMeasureMeasure: function(startPoint, lengthM, angleM) {
+  //   var lin = new Line(0, 0, 0, 0);
+  //   lin.addParents(startPoint, lengthM, angleM);
+  //   lin.update = function() {
+  //     var ang = this.parents[2].subtype == C.ANGLE_DEG ?
+  //         this.parents[2].value * C.TO_RADS :
+  //         this.parents[2].value;
+  //     this.x0 = this.parents[0].x;
+  //     this.y0 = this.parents[0].y;
+  //     this.x1 = this.x0 + this.parents[1].value * Math.cos(ang);
+  //     this.y1 = this.y0 + this.parents[1].value * Math.sin(ang);
+  //   };
+  //   lin.update();
+  //   return lin;
+  // },
     
   /**
    * Create a Circle from center point and radius
@@ -986,7 +987,7 @@ this.G = {
    * @return {Circle}
    */
   circleFromPointAndRadius: function(centerPoint, radius) {
-    var c = new self.Circle(0, 0, radius);
+    var c = new S.Circle(0, 0, radius);
     c.addParents(centerPoint);
     c.update = function() {
       this.x = this.parents[0].x;
@@ -1003,7 +1004,7 @@ this.G = {
    * @return {Circle}             
    */
   circleFromPointAndMeasure: function(centerPoint, measure) {
-    var c = new self.Circle(0, 0, 0);
+    var c = new S.Circle(0, 0, 0);
     c.addParents(centerPoint, measure);
     c.update = function() {
       this.x = this.parents[0].x;
@@ -1124,7 +1125,7 @@ this.U = {
 // █████╗  ██║     █████╗  ██╔████╔██║█████╗  ██╔██╗ ██║   ██║   
 // ██╔══╝  ██║     ██╔══╝  ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   
 // ███████╗███████╗███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   
-// ╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝                                                         
+// ╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
 
 /**
  * A base Element class from which any associative object inherits
@@ -1136,7 +1137,17 @@ this.Element = function() {
 	this.children = [];
 	this.visible = undefined;
   this.name = undefined;
-  this.style = self.style;  // apply a style from fallback defaults
+  this.style = S.style;  // apply a style from fallback defaults
+
+  /**
+   * A library to store characteristic Elements conforming or derived from 
+   * this Element, store to be computed just once. E.g. 
+   *   line.parts.center (Point)
+   *   line.parts.length (Measure)
+   * @type {Object}
+   */
+  this.parts = {};
+
 };
 
 /**
@@ -1148,7 +1159,7 @@ this.Element.prototype.addParents = function() {
   for (var l = arguments.length, i = 0; i < l; i++) {
 
     // if passed argument is an array
-    if (self.util.isArray(arguments[i])) {
+    if (util.isArray(arguments[i])) {
       
       // if empty array
       if (arguments[i].length == 0) {
@@ -1223,7 +1234,7 @@ this.Element.prototype.setVisible = function(isVisible) {
 this.Element.prototype.checkStates = function() {
   // if nothing changed the visible flag, set it to the global default
   if (this.visible == undefined) {    
-    this.visible = self.drawVisible;
+    this.visible = S.drawVisible;
   }
 };
 
@@ -1252,6 +1263,27 @@ this.Element.prototype.findName = function() {
 };
 
 
+
+//  ██████╗ ███████╗ ██████╗ ███╗   ███╗███████╗████████╗██████╗ ██╗   ██╗
+// ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+// ██║  ███╗█████╗  ██║   ██║██╔████╔██║█████╗     ██║   ██████╔╝ ╚████╔╝ 
+// ██║   ██║██╔══╝  ██║   ██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗  ╚██╔╝  
+// ╚██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   
+//  ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
+
+/**
+ * A base Geometry class inheriting from Node, superclass for any Node with geometric properties
+ * @todo  rethink common properties
+ */
+this.Geometry = function() {
+
+}
+this.Geometry.prototype = Object.create(this.Element.prototype);
+this.Geometry.prototype.constructor = this.Geometry;
+
+
+
+
 // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
 // ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
 // ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   
@@ -1265,11 +1297,11 @@ this.Element.prototype.findName = function() {
  * @param {Number} ypos 
  */
 this.Point = function(xpos, ypos) {
-	self.Element.call(this);
-  self.addElement(this);
+	S.Element.call(this);
+  S.addElement(this);
 
-	this.pad = self;
-  this.type = self.C.POINT;
+	this.pad = S;
+  this.type = C.POINT;
 	this.x = xpos;
 	this.y = ypos;
 	this.r = 1;                // for representation when visible
@@ -1284,13 +1316,13 @@ this.Point.prototype.constructor = this.Point;
  * Render method
  */
 this.Point.prototype.render = function() {
-	self.gr.strokeStyle = this.style.stroke;
-  self.gr.lineWidth = this.style.strokeWidth;
-  self.gr.fillStyle = this.style.fill;
-	self.gr.beginPath();
-	self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-	self.gr.stroke();
-  self.gr.fill();
+	S.gr.strokeStyle = this.style.stroke;
+  S.gr.lineWidth = this.style.strokeWidth;
+  S.gr.fillStyle = this.style.fill;
+	S.gr.beginPath();
+	S.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+	S.gr.stroke();
+  S.gr.fill();
 };
 
 /**
@@ -1322,8 +1354,8 @@ this.Point.prototype.move = function(xinc, yinc) {
  * @type {[type]}
  */
 this.Point.fromMeasures = function(xpos, ypos) {
-  if (xpos.type == self.C.MEASURE && ypos.type == self.C.MEASURE) {
-    return self.G.pointFromTwoMeasures(xpos, ypos);
+  if (xpos.type == C.MEASURE && ypos.type == C.MEASURE) {
+    return G.pointFromTwoMeasures(xpos, ypos);
   }
 
   // not cool
@@ -1345,28 +1377,28 @@ this.Point.along = function(geom, parameter) {
   //return geom.along(parameter);
 
   // number along line
-  if (geom.type == self.C.LINE && typeof parameter === 'number') {
-    return self.G.pointOnLine(geom, parameter);
+  if (geom.type == C.LINE && typeof parameter === 'number') {
+    return G.pointOnLine(geom, parameter);
   }
   // number along circle
-  else if (geom.type == self.C.CIRCLE && typeof parameter === 'number') {
-    return self.G.pointOnCircle(geom, parameter);
+  else if (geom.type == C.CIRCLE && typeof parameter === 'number') {
+    return G.pointOnCircle(geom, parameter);
   }
   // measure along line
-  else if (geom.type == self.C.LINE && parameter.type == self.C.MEASURE) {
-    return self.G.pointOnLineFromMeasure(geom, parameter);
+  else if (geom.type == C.LINE && parameter.type == C.MEASURE) {
+    return G.pointOnLineFromMeasure(geom, parameter);
   }
   // measure along circle
-  else if (geom.type == self.C.CIRCLE && parameter.type == self.C.MEASURE) {
-    return self.G.pointOnCircleFromMeasure(geom, parameter);
+  else if (geom.type == C.CIRCLE && parameter.type == C.MEASURE) {
+    return G.pointOnCircleFromMeasure(geom, parameter);
   }
   // number set along line
-  else if (geom.type == self.C.LINE && parameter.type == self.C.SET && parameter.subtype == self.C.NUMBER) {
-    return self.G.pointsOnLineFromNumberSet(geom, parameter);    
+  else if (geom.type == C.LINE && parameter.type == C.SET && parameter.subtype == C.NUMBER) {
+    return G.pointsOnLineFromNumberSet(geom, parameter);    
   }
   // number set along circle
-  else if (geom.type == self.C.CIRCLE && parameter.type == self.C.SET && parameter.subtype == self.C.NUMBER) {
-    return self.G.pointsOnCircleFromNumberSet(geom, parameter);    
+  else if (geom.type == C.CIRCLE && parameter.type == C.SET && parameter.subtype == C.NUMBER) {
+    return G.pointsOnCircleFromNumberSet(geom, parameter);    
   }
 
   // not cool
@@ -1382,12 +1414,12 @@ this.Point.along = function(geom, parameter) {
  */
 this.Point.projection = function(sourcePoint, targetGeometry) {
   // point to line
-  if (sourcePoint.type == self.C.POINT && targetGeometry.type == self.C.LINE) {
-    return self.G.pointProjectionOnLine(sourcePoint, targetGeometry);  
+  if (sourcePoint.type == C.POINT && targetGeometry.type == C.LINE) {
+    return G.pointProjectionOnLine(sourcePoint, targetGeometry);  
   }
   // point to circle
-  else if (sourcePoint.type == self.C.POINT && targetGeometry.type == self.C.CIRCLE) {
-    return self.G.pointProjectionOnCircle(sourcePoint, targetGeometry); 
+  else if (sourcePoint.type == C.POINT && targetGeometry.type == C.CIRCLE) {
+    return G.pointProjectionOnCircle(sourcePoint, targetGeometry); 
   }
   // not cool
   console.error('Sketchpad: invalid arguments for Point.projection');
@@ -1402,19 +1434,19 @@ this.Point.projection = function(sourcePoint, targetGeometry) {
  */
 this.Point.intersection = function(geom0, geom1) {
   // line-line int
-  if (geom0.type == self.C.LINE && geom1.type == self.C.LINE) {
-    return self.G.pointIntersectionlLineLine(geom0, geom1);
+  if (geom0.type == C.LINE && geom1.type == C.LINE) {
+    return G.pointIntersectionlLineLine(geom0, geom1);
   }
   // line-circle int
-  else if (geom0.type == self.C.LINE && geom1.type == self.C.CIRCLE) {
-    return self.G.pointIntersectionlLineCircle(geom0, geom1);
+  else if (geom0.type == C.LINE && geom1.type == C.CIRCLE) {
+    return G.pointIntersectionlLineCircle(geom0, geom1);
   } 
-  else if (geom0.type == self.C.CIRCLE && geom1.type == self.C.LINE) {
-    return self.G.pointIntersectionlLineCircle(geom1, geom0);
+  else if (geom0.type == C.CIRCLE && geom1.type == C.LINE) {
+    return G.pointIntersectionlLineCircle(geom1, geom0);
   }
   // circle-circle int
-  else if (geom0.type == self.C.CIRCLE && geom1.type == self.C.CIRCLE) {
-    return self.G.pointIntersectionlCircleCircle(geom0, geom1);
+  else if (geom0.type == C.CIRCLE && geom1.type == C.CIRCLE) {
+    return G.pointIntersectionlCircleCircle(geom0, geom1);
   }
   // not cool
   console.error('Sketchpad: invalid arguments for Point.intersection');
@@ -1431,23 +1463,23 @@ this.Point.intersection = function(geom0, geom1) {
 this.Point.offset = function(point, offX, offY) {
 
   // POINT, NUMBER, NUMBER
-  if (point.type == self.C.POINT && self.util.isNumber(offX) && self.util.isNumber(offY)) {
-    return self.G.pointOffsetNumberNumber(point, offX, offY);
+  if (point.type == C.POINT && util.isNumber(offX) && util.isNumber(offY)) {
+    return G.pointOffsetNumberNumber(point, offX, offY);
   }
 
   // POINT, MEASURE, NUMBER
-  else if (point.type == self.C.POINT && offX.type == self.C.MEASURE && self.util.isNumber(offY)) {
-    return self.G.pointOffsetMeasureNumber(point, offX, offY);
+  else if (point.type == C.POINT && offX.type == C.MEASURE && util.isNumber(offY)) {
+    return G.pointOffsetMeasureNumber(point, offX, offY);
   }
 
   // POINT, NUMBER, MEASURE
-  else if (point.type == self.C.POINT && self.util.isNumber(offX) && offY.type == self.C.MEASURE) {
-    return self.G.pointOffsetNumberMeasure(point, offX, offY);
+  else if (point.type == C.POINT && util.isNumber(offX) && offY.type == C.MEASURE) {
+    return G.pointOffsetNumberMeasure(point, offX, offY);
   }
 
   // POINT, MEASURE, MEASURE
-  else if (point.type == self.C.POINT && offX.type == self.C.MEASURE && offY.type == self.C.MEASURE) {
-    return self.G.pointOffsetMeasureMeasure(point, offX, offY);
+  else if (point.type == C.POINT && offX.type == C.MEASURE && offY.type == C.MEASURE) {
+    return G.pointOffsetMeasureMeasure(point, offX, offY);
   }
 
   // not cool
@@ -1464,23 +1496,23 @@ this.Point.offset = function(point, offX, offY) {
  */
 this.Point.offsetPolar = function(point, length, angle) {
   // POINT, NUMBER, NUMBER
-  if (point.type == self.C.POINT && self.util.isNumber(length) && self.util.isNumber(angle)) {
-    return self.G.pointOffsetPolarNumberNumber(point, length, angle);
+  if (point.type == C.POINT && util.isNumber(length) && util.isNumber(angle)) {
+    return G.pointOffsetPolarNumberNumber(point, length, angle);
   }
 
   // POINT, MEASURE, NUMBER
-  else if (point.type == self.C.POINT && length.type == self.C.MEASURE && self.util.isNumber(angle)) {
-    return self.G.pointOffsetPolarMeasureNumber(point, length, angle);
+  else if (point.type == C.POINT && length.type == C.MEASURE && util.isNumber(angle)) {
+    return G.pointOffsetPolarMeasureNumber(point, length, angle);
   }
 
   // POINT, NUMBER, MEASURE
-  else if (point.type == self.C.POINT && self.util.isNumber(length) && angle.type == self.C.MEASURE) {
-    return self.G.pointOffsetPolarNumberMeasure(point, length, angle);
+  else if (point.type == C.POINT && util.isNumber(length) && angle.type == C.MEASURE) {
+    return G.pointOffsetPolarNumberMeasure(point, length, angle);
   }
 
   // POINT, MEASURE, MEASURE
-  else if (point.type == self.C.POINT && length.type == self.C.MEASURE && angle.type == self.C.MEASURE) {
-    return self.G.pointOffsetPolarMeasureMeasure(point, length, angle);
+  else if (point.type == C.POINT && length.type == C.MEASURE && angle.type == C.MEASURE) {
+    return G.pointOffsetPolarMeasureMeasure(point, length, angle);
   }
 
   // not cool
@@ -1512,10 +1544,10 @@ this.N = {
    * @return {Node}                
    */
   nodeOnLine: function(line, startParameter, options) {
-    var n = new self.Node(0, 0);
+    var n = new S.Node(0, 0);
     var clamp = options ? (options['clamp'] || false) : false;
     var u = startParameter || 0.5;
-    if (clamp) u = self.util.clampValue(u, 0, 1);
+    if (clamp) u = util.clampValue(u, 0, 1);
 
     n.addParents(line, u, clamp);
     n.update = function() {
@@ -1529,10 +1561,10 @@ this.N = {
           dly = this.parents[0].y1 - this.parents[0].y0,
           dpx = xpos - this.parents[0].x0,
           dpy = ypos - this.parents[0].y0,
-          l = self.U.lineLength(this.parents[0]);
+          l = S.U.lineLength(this.parents[0]);
       this.parents[1] = (dlx * dpx + dly * dpy) / (l * l);
       if (this.parents[2]) {
-        this.parents[1] = self.util.clampValue(this.parents[1], 0, 1);
+        this.parents[1] = util.clampValue(this.parents[1], 0, 1);
       } 
       this.update();
     };
@@ -1547,17 +1579,17 @@ this.N = {
    * @return {Node}                
    */
   nodeOnCircle: function(circle, startParameter, options) {
-    var n = new self.Node(0, 0);
+    var n = new S.Node(0, 0);
     var u = startParameter || 0;
     n.addParents(circle, u);
     n.update = function() {
-      var a = (this.parents[1] % 1) * self.C.TAU;
+      var a = (this.parents[1] % 1) * C.TAU;
       this.x = this.parents[0].x + this.parents[0].r * Math.cos(a);
       this.y = this.parents[0].y + this.parents[0].r * Math.sin(a);
     };
     n.setPosition = function (xpos, ypos) {
-      var a = self.U.angleBetweenCoordinates(this.parents[0].x, this.parents[0].y, xpos, ypos);
-      this.parents[1] = a / self.C.TAU;
+      var a = S.U.angleBetweenCoordinates(this.parents[0].x, this.parents[0].y, xpos, ypos);
+      this.parents[1] = a / C.TAU;
       this.update();
     };
     n.update();
@@ -1571,7 +1603,7 @@ this.N = {
    * @return {Node}        
    */
   nodeHorizontalMovementFromNumber: function(startX, fixY) {
-    var n = new self.Node(0, 0);
+    var n = new S.Node(0, 0);
     n.addParents(startX, fixY);
     n.update = function() {
       this.x = this.parents[0];
@@ -1592,7 +1624,7 @@ this.N = {
    * @return {Node}        
    */
   nodeHorizontalMovementFromMeasure: function(startX, fixY) {
-    var n = new self.Node(0, 0);
+    var n = new S.Node(0, 0);
     n.addParents(startX, fixY);
     n.update = function() {
       this.x = this.parents[0];
@@ -1613,7 +1645,7 @@ this.N = {
    * @return {Node}        
    */
   nodeVerticalMovementFromNumber: function(fixX, startY) {
-    var n = new self.Node(0, 0);
+    var n = new S.Node(0, 0);
     n.addParents(fixX, startY);
     n.update = function() {
       this.x = this.parents[0];
@@ -1634,7 +1666,7 @@ this.N = {
    * @return {Node}        
    */
   nodeVerticalMovementFromMeasure: function(fixX, startY) {
-    var n = new self.Node(0, 0);
+    var n = new S.Node(0, 0);
     n.addParents(fixX, startY);
     n.update = function() {
       this.x = this.parents[0].value;
@@ -1666,10 +1698,10 @@ this.N = {
  * @param {Number} ypos 
  */
 this.Node = function(xpos, ypos) {
-  self.Point.call(this, xpos, ypos);
+  S.Point.call(this, xpos, ypos);
 
-  // this.type = self.C.NODE;   // keep POINT type to be processed by other methods   
-  this.subtype = self.C.NODE;
+  // this.type = C.NODE;   // keep POINT type to be processed by other methods   
+  this.subtype = C.NODE;
   this.visible = true;
   this.r = 4;  // for representation when visible
 
@@ -1688,19 +1720,19 @@ this.Node.prototype.constructor = this.Node;
 this.Node.along = function(geom, startParameter, options) {
 
   // shim Measure inputs
-  if (startParameter.type == self.C.MEASURE) {
+  if (startParameter.type == C.MEASURE) {
     console.warn('Sketchpad: setting a Measure for Node.along would allow no degrees of freedom in this Node, using Measure.value instead');
     startParameter = startParameter.value;
   }
 
   // along a line
-  if (geom.type == self.C.LINE && self.util.isNumber(startParameter)) {
-    return self.N.nodeOnLine(geom, startParameter, options);
+  if (geom.type == C.LINE && util.isNumber(startParameter)) {
+    return S.N.nodeOnLine(geom, startParameter, options);
   }
 
   // along circle
-  else if (geom.type == self.C.CIRCLE && self.util.isNumber(startParameter)) {
-    return self.N.nodeOnCircle(geom, startParameter, options);
+  else if (geom.type == C.CIRCLE && util.isNumber(startParameter)) {
+    return S.N.nodeOnCircle(geom, startParameter, options);
   }
 
   // not cool
@@ -1718,19 +1750,19 @@ this.Node.along = function(geom, startParameter, options) {
 this.Node.horizontal = function(startX, fixY) {
 
   // shim Measure inputs
-  if (startX.type == self.C.MEASURE) {
+  if (startX.type == C.MEASURE) {
     console.warn('Sketchpad: setting a Measure for startX in Node.horizontal would allow no degrees of freedom in this Node, using Measure.value instead');
     startX = startX.value;
   };
 
   // defined by two numeric value
-  if (self.util.isNumber(startX) && self.util.isNumber(fixY)) {
-    return self.N.nodeHorizontalMovementFromNumber(startX, fixY);
+  if (util.isNumber(startX) && util.isNumber(fixY)) {
+    return S.N.nodeHorizontalMovementFromNumber(startX, fixY);
   }
 
   // defined by a Number and a Measure
-  else if (self.util.isNumber(startX) && fixY.type == self.C.MEASURE) {
-    return self.N.nodeHorizontalMovementFromMeasure(startX, fixY);
+  else if (util.isNumber(startX) && fixY.type == C.MEASURE) {
+    return S.N.nodeHorizontalMovementFromMeasure(startX, fixY);
   }
 
   // not cool
@@ -1742,19 +1774,19 @@ this.Node.horizontal = function(startX, fixY) {
 this.Node.vertical = function(fixX, startY) {
 
   // shim Measure inputs
-  if (startY.type == self.C.MEASURE) {
+  if (startY.type == C.MEASURE) {
     console.warn('Sketchpad: setting a Measure for startY in Node.horizontal would allow no degrees of freedom in this Node, using Measure.value instead');
     startY = startY.value;
   };
 
   // defined by two numeric value
-  if (self.util.isNumber(fixX) && self.util.isNumber(startY)) {
-    return self.N.nodeVerticalMovementFromNumber(fixX, startY);
+  if (util.isNumber(fixX) && util.isNumber(startY)) {
+    return S.N.nodeVerticalMovementFromNumber(fixX, startY);
   }
 
   // defined by a Number and a Measure
-  else if (fixX.type == self.C.MEASURE && self.util.isNumber(startY)) {
-    return self.N.nodeVerticalMovementFromMeasure(fixX, startY);
+  else if (fixX.type == C.MEASURE && util.isNumber(startY)) {
+    return S.N.nodeVerticalMovementFromMeasure(fixX, startY);
   }
 
   // not cool
@@ -1764,16 +1796,12 @@ this.Node.vertical = function(fixX, startY) {
 
 
 
-
-
-
-
 // ██╗     ██╗███╗   ██╗███████╗
 // ██║     ██║████╗  ██║██╔════╝
 // ██║     ██║██╔██╗ ██║█████╗  
 // ██║     ██║██║╚██╗██║██╔══╝  
 // ███████╗██║██║ ╚████║███████╗
-// ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝                             
+// ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝
 
 /**
  * Base primitive Line class, constructed from x y coordinates 
@@ -1782,11 +1810,11 @@ this.Node.vertical = function(fixX, startY) {
  * @param {Number} xpos1 
  * @param {Number} ypos1 
  */
-this.Line = function(xpos0, ypos0, xpos1, ypos1) {
-  self.Element.call(this);
-  self.addElement(this);
+var Line = function(xpos0, ypos0, xpos1, ypos1) {
+  S.Element.call(this);
+  S.addElement(this);
 
-  this.type = self.C.LINE;
+  this.type = C.LINE;
   this.x0 = xpos0;
   this.y0 = ypos0;
   this.x1 = xpos1;
@@ -1794,19 +1822,325 @@ this.Line = function(xpos0, ypos0, xpos1, ypos1) {
 
   this.checkStates();
 };
-this.Line.prototype = Object.create(this.Element.prototype);
-this.Line.prototype.constructor = this.Line;
+Line.prototype = Object.create(this.Geometry.prototype);
+Line.prototype.constructor = this.Line;
 
 /**
  * Render method
  */
-this.Line.prototype.render = function() {
-  self.gr.strokeStyle = this.style.stroke;
-  self.gr.lineWidth = this.style.strokeWidth;
-  self.gr.beginPath();
-  self.gr.moveTo(this.x0, this.y0);
-  self.gr.lineTo(this.x1, this.y1);
-  self.gr.stroke();
+Line.prototype.render = function() {
+  S.gr.strokeStyle = this.style.stroke;
+  S.gr.lineWidth = this.style.strokeWidth;
+  S.gr.beginPath();
+  S.gr.moveTo(this.x0, this.y0);
+  S.gr.lineTo(this.x1, this.y1);
+  S.gr.stroke();
+};
+
+/**
+ * Returns the starting Point of this Line
+ * @return {Point}
+ */
+Line.prototype.start = function() {
+  if (arguments.length != 0) {
+    console.error('Sketchpad: invalid arguments for Line.start');
+    return undefined;
+  }
+
+  if (!this.parts.start) {
+    // this.parts.start = new S.Point(this.x0, this.y0);
+    this.parts.start = S.Point.along(this, 0.0);
+  }
+
+  return this.parts.start;
+};
+
+/**
+ * Returns the end Point of this Line
+ * @return {Point} 
+ */
+Line.prototype.end = function() {
+  if (arguments.length != 0) {
+    console.error('Sketchpad: invalid arguments for Line.end');
+    return undefined;
+  }
+
+  if (!this.parts.end) {
+    // this.parts.end = new S.Point(this.x1, this.y1);
+    this.parts.end = S.Point.along(this, 1.0);
+  }
+
+  return this.parts.end;
+};
+
+/**
+ * Returns the center Point of this Line
+ * @return {Point}
+ */
+Line.prototype.center = function() {
+  if (arguments.length != 0) {
+    console.error('Sketchpad: invalid arguments for Line.center');
+    return undefined;
+  }
+
+  if (!this.parts.center) {
+    this.parts.center = new S.Point.along(this, 0.5);
+  }
+
+  return this.parts.center;
+};
+
+/**
+ * Returns a length Measure of this Line
+ * @return {Measure}
+ */
+Line.prototype.length = function() {
+  if (arguments.length != 0) {
+    console.error('Sketchpad: invalid arguments for Line.length');
+    return undefined;
+  }
+
+  if (!this.parts['length']) {
+    var s = this.start(),
+        e = this.end();
+    this.parts['length'] = S.Measure.distance(s, e);
+  }
+
+  return this.parts['length'];
+};
+
+/**
+ * Returns the angle Measure between the start and end Points
+ * @return {Measure}
+ */
+Line.prototype.angle = function() {
+  if (arguments.length != 0) {
+    console.error('Sketchpad: invalid arguments for Line.angle');
+    return undefined;
+  }
+
+  if (!this.parts.angle) {
+    var s = this.start(),
+        e = this.end();
+    this.parts.angle = S.Measure.angle(s, e);
+  }
+
+  return this.parts.angle;
+};
+
+/**
+ * A library to store all independent Line construction functions
+ * @type {Object}
+ */
+Line.G = {
+  /**
+   * Create a Line from two Points
+   * @param  {Point} startPoint 
+   * @param  {Point} endPoint   
+   * @return {Line}
+   */
+  fromTwoPoints: function(startPoint, endPoint) {
+    var lin = new Line(0, 0, 0, 0);
+    lin.addParents(startPoint, endPoint);
+    lin.update = function() {
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.parents[1].x;
+      this.y1 = this.parents[1].y;
+    };
+    lin.update();
+    return lin;
+  },
+
+  /**
+   * Create a Line Set from a Point to a Point Set
+   * @param  {Point} startPoint 
+   * @param  {Set(Point)} pointSet
+   * @return {Set(Line)} 
+   */
+  fromPointToPointset: function(startPoint, pointSet) {
+    var items = [];
+    for (var l = pointSet.length, i = 0; i < l; i++) {
+      items.push(new Line(0, 0, 0, 0));
+    }
+    var s = new S.Set(items);
+    s.subtype = C.LINE;
+    s.addParents(startPoint, pointSet);
+    s.update = function() {
+      for (var i = 0; i < this.length; i++) {
+        this.items[i].x0 = this.parents[0].x;
+        this.items[i].y0 = this.parents[0].y;
+        this.items[i].x1 = this.parents[1].items[i].x;
+        this.items[i].y1 = this.parents[1].items[i].y;
+      }
+    };
+    s.update();
+    return s;
+  },
+
+  /**
+   * Create a Line Set from a Point Set to a Point Set
+   * @param  {Set(Point)} startPS 
+   * @param  {Set(Point)} endPS   
+   * @return {Set(Line)}         
+   * @todo The update function looks like it was barfed...
+   */
+  fromPointsetToPointset: function(startPS, endPS) {
+    var items = [],
+        maxlen = startPS.length > endPS.length ? startPS.length : endPS.length;
+    for (var i = 0; i < maxlen; i++) {
+      items.push(new Line(0, 0, 0, 0));
+    }
+    var s = new S.Set(items);
+    s.subtype = C.LINE;
+    s.addParents(startPS, endPS);
+    s.update = function() {
+      var sl = this.parents[0].length,
+          el = this.parents[1].length,
+          j = 0,
+          k = 0;
+      for (var i = 0; i < this.length; i++) {
+        this.items[i].x0 = this.parents[0].items[j].x;
+        this.items[i].y0 = this.parents[0].items[j++].y;
+        this.items[i].x1 = this.parents[1].items[k].x;
+        this.items[i].y1 = this.parents[1].items[k++].y;
+        if (j >= sl) j--;
+        if (k >= el) k--;
+      }
+    };
+    s.update();
+    return s;
+  },
+
+  /**
+   * Create a Line from starting Point and numeric length and angle
+   * @param  {Point} startPoint 
+   * @param  {Number} length     
+   * @param  {Number} angle      
+   * @return {Line}
+   */
+  fromPointLengthAngle: function(startPoint, length, angle) {
+    var lin = new Line(0, 0, 0, 0);
+    lin.addParents(startPoint);
+    lin.length = length;
+    lin.angle = angle;
+    lin.update = function() {
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.x0 + this.length * Math.cos(this.angle);
+      this.y1 = this.y0 + this.length * Math.sin(this.angle);
+    };
+    lin.update();
+    return lin;
+  },
+
+  /**
+   * Create a Line from starting Point, length Measure and numeric angle
+   * @param  {Point} startPoint 
+   * @param  {Measure} lengthM    
+   * @param  {Number} angle      
+   * @return {Line}
+   */
+  fromPointMeasureAngle: function(startPoint, lengthM, angle) {
+    var lin = new Line(0, 0, 0, 0);
+    lin.addParents(startPoint, lengthM);
+    lin.angle = angle;
+    lin.update = function() {
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.x0 + this.parents[1].value * Math.cos(this.angle);
+      this.y1 = this.y0 + this.parents[1].value * Math.sin(this.angle);
+    };
+    lin.update();
+    return lin;
+  },
+
+  /**
+   * Create a Line from starting Point, numeric length and Measure angle
+   * @param  {Point} startPoint 
+   * @param  {Number} length     
+   * @param  {Measure} angleM     
+   * @return {Line}            
+   */
+  fromPointLengthMeasure: function(startPoint, length, angleM) {
+    var lin = new Line(0, 0, 0, 0);
+    lin.addParents(startPoint, angleM);
+    lin.length = length;
+    lin.update = function() {
+      var ang = this.parents[1].subtype == C.ANGLE_DEG ?
+          this.parents[1].value * C.TO_RADS :
+          this.parents[1].value;
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.x0 + this.length * Math.cos(ang);
+      this.y1 = this.y0 + this.length * Math.sin(ang);
+    };
+    lin.update();
+    return lin;
+  },
+
+  /**
+   * Create a Line from a starting Point, Measure length and Measure angle
+   * @param  {Point} startPoint 
+   * @param  {Measure} length     
+   * @param  {Measure} angleM     
+   * @return {Line}     
+   */
+  fromPointMeasureMeasure: function(startPoint, lengthM, angleM) {
+    var lin = new Line(0, 0, 0, 0);
+    lin.addParents(startPoint, lengthM, angleM);
+    lin.update = function() {
+      var ang = this.parents[2].subtype == C.ANGLE_DEG ?
+          this.parents[2].value * C.TO_RADS :
+          this.parents[2].value;
+      this.x0 = this.parents[0].x;
+      this.y0 = this.parents[0].y;
+      this.x1 = this.x0 + this.parents[1].value * Math.cos(ang);
+      this.y1 = this.y0 + this.parents[1].value * Math.sin(ang);
+    };
+    lin.update();
+    return lin;
+  }
+};
+
+/**
+ * Main Line factory constructor. Overloads:
+ *   line(x0, y0, x1, y1)
+ *   line(x0, y0, endPoint)
+ *   line(startPoint, x1, y1)
+ *   line(startPoint, endPoint)
+ * @return {Line}
+ */
+this.line = function() {
+  var a = arguments,
+      l = a.length;
+
+  switch(l) {
+    case 2:
+      if (util.isPoint(a[0]) && util.isPoint(a[1])) {
+        return S.line.between(a[0], a[1]);
+      }
+      break;
+    case 3:
+      if (util.isNumber(a[0]) 
+          && util.isNumber(a[1]) 
+          && util.isPoint(a[2])) {
+        return S.line.between(new S.Point(a[0], a[1]), a[2]);
+      } else if (util.isPoint(a[0]) 
+          && util.isNumber(a[1]) 
+          && util.isNumber(a[2])) {
+        return S.line.between(a[0], new S.Point(a[1], a[2]));
+      }
+      break;
+    case 4: 
+      if (S.util.isNumberArray(a)) {
+        return new Line(a[0], a[1], a[2], a[3]);
+      }
+      break;
+  }
+
+  console.error('Sketchpad: invalid arguments for Sketchpad.line');
+  return undefined;
 };
 
 /**
@@ -1815,51 +2149,61 @@ this.Line.prototype.render = function() {
  * @param  {Geometry} element1
  * @return {Line}
  */
-this.Line.between = function(element0, element1) {
+this.line.between = function(element0, element1) {
   // point to point
-  if (element0.type == self.C.POINT && element1.type == self.C.POINT) {
-    return self.G.lineFromTwoPoints(element0, element1);
+  if (util.isPoint(element0)
+      && util.isPoint(element1)) {
+    return Line.G.fromTwoPoints(element0, element1);
   }
   // point to pointSet
-  else if (element0.type == self.C.POINT 
-      && element1.type == self.C.SET 
-      && element1.subtype == self.C.POINT) {
-    return self.G.lineFromPointToPointset(element0, element1);
+  else if (util.isPoint(element0)
+      && util.isSet(element1)
+      && element1.subtype == C.POINT) {
+    return Line.G.fromPointToPointset(element0, element1);
   }
   // pointSet to pointSet
-  else if (element0.type == self.C.SET && element0.subtype == self.C.POINT
-      && element1.type == self.C.SET && element1.subtype == self.C.POINT) {
-    return self.G.lineFromPointsetToPointset(element0, element1);
+  else if (util.isSet(element0)
+      && element0.subtype == C.POINT
+      && util.isSet(element1) 
+      && element1.subtype == C.POINT) {
+    return Line.G.fromPointsetToPointset(element0, element1);
   }
   // not cool
   console.error('Sketchpad: invalid arguments for Line.between');
   return undefined;
 };
 
-this.Line.polar = function(startPoint, length, angle) {
+/**
+ * A constructor method to create a Line from polar coordinates
+ * @param  {Point} startPoint
+ * @param  {Number/Measure} length
+ * @param  {Number/Measure} angle
+ * @return {Line}
+ */
+this.line.polar = function(startPoint, length, angle) {
   // point + number + number
-  if (startPoint.type == self.C.POINT
-    && typeof length === 'number'
-    && typeof angle === 'number') {
-    return self.G.lineFromPointLengthAngle(startPoint, length, angle);
+  if (util.isPoint(startPoint)
+      && util.isNumber(length)
+      && util.isNumber(angle)) {
+    return Line.G.fromPointLengthAngle(startPoint, length, angle);
   } 
   // point + measure + number
-  else if (startPoint.type == self.C.POINT
-    && length.type == self.C.MEASURE
-    && typeof angle === 'number') {
-    return self.G.lineFromPointMeasureAngle(startPoint, length, angle);
+  else if (util.isPoint(startPoint)
+      && utul.isMeasure(length)
+      && util.isNumber(angle)) {
+    return Line.G.fromPointMeasureAngle(startPoint, length, angle);
   }
   // point + number + measure
-  else if (startPoint.type == self.C.POINT
-    && typeof length === 'number'
-    && angle.type == self.C.MEASURE) {
-    return self.G.lineFromPointLengthMeasure(startPoint, length, angle);
+  else if (util.isPoint(startPoint)
+      && util.isNumber(length)
+      && util.isMeasure(angle)) {
+    return Line.G.fromPointLengthMeasure(startPoint, length, angle);
   }
   // point + measure + measure
-  else if (startPoint.type == self.C.POINT
-    && angle.type == self.C.MEASURE
-    && angle.type == self.C.MEASURE) {
-    return self.G.lineFromPointMeasureMeasure(startPoint, length, angle);
+  else if (util.isPoint(startPoint)
+      && util.isMeasure(length)
+      && util.isMeasure(angle)) {
+    return Line.G.fromPointMeasureMeasure(startPoint, length, angle);
   }
   console.error('Sketchpad: invalid arguments for Line.polar');
   return undefined;
@@ -1881,10 +2225,10 @@ this.Line.polar = function(startPoint, length, angle) {
  * @param {Number} radius 
  */
 this.Circle = function(xpos, ypos, radius) {
-  self.Element.call(this);
-  self.addElement(this);
+  S.Element.call(this);
+  S.addElement(this);
 
-  this.type = self.C.CIRCLE;
+  this.type = C.CIRCLE;
   this.x = xpos;
   this.y = ypos;
   this.r = radius;
@@ -1898,13 +2242,13 @@ this.Circle.prototype.constructor = this.Circle;
  * Render method
  */
 this.Circle.prototype.render = function() {
-  self.gr.strokeStyle = this.style.stroke;
-  self.gr.lineWidth = this.style.strokeWidth;
-  self.gr.fillStyle = this.style.fill;
-  self.gr.beginPath();
-  self.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-  self.gr.fill();
-  self.gr.stroke();
+  S.gr.strokeStyle = this.style.stroke;
+  S.gr.lineWidth = this.style.strokeWidth;
+  S.gr.fillStyle = this.style.fill;
+  S.gr.beginPath();
+  S.gr.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+  S.gr.fill();
+  S.gr.stroke();
 };
 
 /**
@@ -1925,12 +2269,12 @@ this.Circle.prototype.setRadius = function(radius) {
  */
 this.Circle.centerRadius = function(centerPoint, radius) {
   // center point + numeric radius
-  if (centerPoint.type == self.C.POINT && typeof radius === 'number') {
-    return self.G.circleFromPointAndRadius(centerPoint, radius);
+  if (centerPoint.type == C.POINT && typeof radius === 'number') {
+    return G.circleFromPointAndRadius(centerPoint, radius);
   } 
   // center point + measure radius
-  else if (centerPoint.type == self.C.POINT && radius.type == self.C.MEASURE) {
-    return self.G.circleFromPointAndMeasure(centerPoint, radius);
+  else if (centerPoint.type == C.POINT && radius.type == C.MEASURE) {
+    return G.circleFromPointAndMeasure(centerPoint, radius);
   }
   // not cool
   console.error('Sketchpad: invalid arguments for Line.centerRadius');
@@ -1957,10 +2301,10 @@ this.M = {
    * @return {Measure}
    */
   canvasWidth: function() {
-    var m = new self.Measure(0);
+    var m = new S.Measure(0);
     // (no parents, update is triggered by eventhandler)
     m.update = function() {
-      this.value = $(self.parentDiv).innerWidth();
+      this.value = $(S.parentDiv).innerWidth();
     };
     m.update();
     return m;
@@ -1971,10 +2315,10 @@ this.M = {
    * @return {Measure}
    */
   canvasHeight: function() {
-    var m = new self.Measure(0);
+    var m = new S.Measure(0);
     // (no parents, update is triggered by eventhandler)
     m.update = function() {
-      this.value = $(self.parentDiv).innerHeight();
+      this.value = $(S.parentDiv).innerHeight();
     };
     m.update();
     return m;
@@ -1987,13 +2331,24 @@ this.M = {
    * @return {Measure}
    */
   distanceBetweenTwoPoints: function(p0, p1) {
-    var m = new self.Measure(0);
+    var m = new S.Measure(0);
     m.addParents(p0, p1);
-    m.subtype = self.C.LENGTH;
+    m.subtype = C.LENGTH;
     m.update = function() {
       var dx = this.parents[1].x - this.parents[0].x,
           dy = this.parents[1].y - this.parents[0].y;
       this.value = Math.sqrt(dx * dx + dy * dy);
+    };
+    m.update();
+    return m;
+  },
+
+  angleBetweenTwoPoints: function(p0, p1) {
+    var m = new S.Measure(0);
+    m.addParents(p0, p1);
+    m.subtype = C.ANGLE_RAD;
+    m.update = function() {
+      this.value = S.U.angleBetween2Points(this.parents[0], this.parents[1]);
     };
     m.update();
     return m;
@@ -2008,11 +2363,11 @@ this.M = {
    * @return {Measure}    
    */
   angleBetweenThreePoints: function(p0, p1, p2) {
-    var m = new self.Measure(0);
+    var m = new S.Measure(0);
     m.addParents(p0, p1, p2);
-    m.subtype = self.C.ANGLE_RAD;
+    m.subtype = C.ANGLE_RAD;
     m.update = function() {
-      this.value = self.U.angleBetween3Points(this.parents[0], this.parents[1], this.parents[2]);
+      this.value = S.U.angleBetween3Points(this.parents[0], this.parents[1], this.parents[2]);
     };
     m.update();
     return m;
@@ -2025,9 +2380,9 @@ this.M = {
    * @return {Measure} 
    */
   transformMeasure: function(paramArray, transFunc) {
-    var m = new self.Measure(0);
+    var m = new S.Measure(0);
     m.addParents(paramArray);
-    m.subtype = self.C.LENGTH;
+    m.subtype = C.LENGTH;
     m.transFunc = transFunc;
     m.update = function() {
       this.value = this.transFunc(this.parents);
@@ -2053,10 +2408,10 @@ this.M = {
  * @param {Number} value
  */
 this.Measure = function(value) {
-  self.Element.call(this);
-  self.addElement(this);
+  S.Element.call(this);
+  S.addElement(this);
 
-  this.type = self.C.MEASURE;
+  this.type = C.MEASURE;
   this.value = value;
   this.visible = false;  // temp workaround to avoid rendering Measure objects
 };
@@ -2070,8 +2425,8 @@ this.Measure.prototype.constructor = this.Measure;
  * @return {Measure}
  */
 this.Measure.distance = function(element0, element1) {
-  if (element0.type == self.C.POINT && element1.type == self.C.POINT) {
-    return self.M.distanceBetweenTwoPoints(element0, element1);
+  if (element0.type == C.POINT && element1.type == C.POINT) {
+    return S.M.distanceBetweenTwoPoints(element0, element1);
   }
   console.error('Sketchpad: invalid arguments for Measure.distance');
   return undefined; 
@@ -2085,12 +2440,17 @@ this.Measure.distance = function(element0, element1) {
 this.Measure.angle = function(elements) {
   var a = arguments,
       len = a.length;
-  if (len == 3) {
+  if (len == 2) {
+    if (a[0].type == C.POINT
+        && a[1].type == C.POINT) {
+      return S.M.angleBetweenTwoPoints(a[0], a[1]);
+    }
+  } else if (len == 3) {
     // angle between 3 points
-    if (a[0].type == self.C.POINT
-      && a[1].type == self.C.POINT
-      && a[2].type == self.C.POINT) {
-      return self.M.angleBetweenThreePoints(a[0], a[1], a[2]);
+    if (a[0].type == C.POINT
+        && a[1].type == C.POINT
+        && a[2].type == C.POINT) {
+      return S.M.angleBetweenThreePoints(a[0], a[1], a[2]);
     }
   }
 
@@ -2125,13 +2485,13 @@ this.Measure.compose = function(args) {
 
   // Actually, being able to reference any field in a parent object is kind of nice
   // for (var i = 0; i < len - 1; i++) {
-  //   if (a[i].type != self.C.MEASURE) {
+  //   if (a[i].type != C.MEASURE) {
   //     console.error('Sketchpad: sorry, at the moment Measure.from only supports Measure objects as input arguments');
   //     return undefined;
   //   }
   // };
 
-  if (!self.util.isFunction(a[len - 1])) {
+  if (!util.isFunction(a[len - 1])) {
     console.error('Sketchpad: last argument at Measure.compose must be a function');
     return undefined;
   };
@@ -2144,7 +2504,7 @@ this.Measure.compose = function(args) {
   };
   var trans = a[len - 1];
 
-  return self.M.transformMeasure(inputs, trans);
+  return S.M.transformMeasure(inputs, trans);
 };
 
 
@@ -2173,10 +2533,10 @@ More candidates:
  * @param {Array} items
  */
 this.Set = function(items) {
-  self.Element.call(this);
-  self.addElement(this);
+  S.Element.call(this);
+  S.addElement(this);
 
-  this.type = self.C.SET;
+  this.type = C.SET;
   this.setItems(items, undefined);
 };
 this.Set.prototype = Object.create(this.Element.prototype);
@@ -2231,7 +2591,7 @@ this.Set.range = function(start, end, steps) {
   if (typeof start === 'number'
       && typeof end === 'number'
       && typeof steps === 'number') {
-    return self.G.setRangeFromNumbers(start, end, steps);
+    return G.setRangeFromNumbers(start, end, steps);
   }
   console.error('Sketchpad: invalid arguments for Set.sequence');
   return undefined; 
@@ -2248,7 +2608,7 @@ this.Set.sequence = function(start, stepSize, count) {
   if (typeof start === 'number'
       && typeof stepSize === 'number'
       && typeof count === 'number') {
-    return self.G.setSequenceFromNumbers(start, stepSize, count);
+    return G.setSequenceFromNumbers(start, stepSize, count);
   }
   console.error('Sketchpad: invalid arguments for Set.sequence');
   return undefined; 
@@ -2267,7 +2627,7 @@ this.Set.random = function(start, end, count) {
   if (typeof start === 'number'
       && typeof end === 'number'
       && typeof count === 'number') {
-    return self.G.setRandomSequenceFromNumbers(start, end, count);
+    return G.setRandomSequenceFromNumbers(start, end, count);
   }
   // not cool
   console.error('Sketchpad: invalid arguments for Set.random');
@@ -2345,7 +2705,7 @@ this.T = {
    */
   tagOnPointFromString: function(point, str) {
     var s = str || point.name || point.findName();
-    var t = new self.Tag(s, 0, 0);
+    var t = new S.Tag(s, 0, 0);
     t.addParents(point, s);
     t.update = function() {
       this.x = this.parents[0].x;
@@ -2363,8 +2723,8 @@ this.T = {
    */
   tagOnLineFromString: function(line, str) {
     var s = str || line.name || line.findName();
-    var p = self.G.pointOnLine(line, 0.5);
-    return self.T.tagOnPointFromString(p, s);
+    var p = G.pointOnLine(line, 0.5);
+    return S.T.tagOnPointFromString(p, s);
   },
 
   /**
@@ -2375,7 +2735,7 @@ this.T = {
    */
   tagOnCircleFromString: function(circle, str) {
     var s = str || circle.name || circle.findName();
-    var t = new self.Tag(s, 0, 0);
+    var t = new S.Tag(s, 0, 0);
     t.addParents(circle, s);
     t.update = function() {
       this.x = this.parents[0].x;
@@ -2392,7 +2752,7 @@ this.T = {
    * @return {Tag}       
    */
   tagOnPointFromLabel: function (point, label) {
-    var t = new self.Tag('', 0, 0);
+    var t = new S.Tag('', 0, 0);
     t.addParents(point, label);
     t.update = function() {
       this.x = this.parents[0].x;
@@ -2410,9 +2770,9 @@ this.T = {
    * @return {Tag}       
    */ 
   tagOnLineFromLabel: function(line, label) {
-    var t = new self.Tag('', 0, 0);
-    var p = self.G.pointOnLine(line, 0.5);
-    return self.T.tagOnPointFromLabel(p, label);
+    var t = new S.Tag('', 0, 0);
+    var p = G.pointOnLine(line, 0.5);
+    return S.T.tagOnPointFromLabel(p, label);
   },
 
   /**
@@ -2422,7 +2782,7 @@ this.T = {
    * @return {Tag}
    */
   tagOnCircleFromLabel: function(circle, label) {
-    var t = new self.Tag('', 0, 0);
+    var t = new S.Tag('', 0, 0);
     t.addParents(circle, label);
     t.update = function() {
       this.x = this.parents[0].x;
@@ -2450,10 +2810,10 @@ this.T = {
  * A basic Tag class representing a text element with visual rendering with optional link to a Geometry object
  */
 this.Tag = function(text, xpos, ypos) {
-  self.Element.call(this);
-  self.addElement(this);
+  S.Element.call(this);
+  S.addElement(this);
 
-  this.type = self.C.TEXT;
+  this.type = C.TEXT;
   this.x = xpos;
   this.y = ypos;
   this.text = text;
@@ -2467,11 +2827,11 @@ this.Tag.prototype.constructor = this.Tag;
  * Render method
  */
 this.Tag.prototype.render = function() {
-  self.gr.fillStyle = this.style.textFill;
-  self.gr.textAlign = this.style.textHAlign;
-  self.gr.textBaseline = this.style.textVAlign;
-  self.gr.font = this.style.fontCSS;
-  self.gr.fillText(this.text, this.x + this.style.textOffsetX, this.y + this.style.textOffsetY);
+  S.gr.fillStyle = this.style.textFill;
+  S.gr.textAlign = this.style.textHAlign;
+  S.gr.textBaseline = this.style.textVAlign;
+  S.gr.font = this.style.fontCSS;
+  S.gr.fillText(this.text, this.x + this.style.textOffsetX, this.y + this.style.textOffsetY);
 };
 
 /**
@@ -2483,39 +2843,39 @@ this.Tag.prototype.render = function() {
 this.Tag.on = function(geom, text) {
 
   // text tag on a Point
-  if ( (geom.type == self.C.POINT || geom.type == self.C.NODE) && self.util.isString(text) ) {
-    return self.T.tagOnPointFromString(geom, text);
+  if ( (geom.type == C.POINT || geom.type == C.NODE) && util.isString(text) ) {
+    return S.T.tagOnPointFromString(geom, text);
   }
 
   // text tag on a Line (midpoint)
-  else if (geom.type == self.C.LINE && self.util.isString(text)) {
-    return self.T.tagOnLineFromString(geom, text);
+  else if (geom.type == C.LINE && util.isString(text)) {
+    return S.T.tagOnLineFromString(geom, text);
   }
 
   // text tag on a Circle (center)
-  else if (geom.type == self.C.CIRCLE && self.util.isString(text)) {
-    return self.T.tagOnCircleFromString(geom, text);
+  else if (geom.type == C.CIRCLE && util.isString(text)) {
+    return S.T.tagOnCircleFromString(geom, text);
   }
 
   // do not process these guys
-  else if ( (geom.type == self.C.TAG || geom.type == self.C.MEASURE) && self.util.isString(text) ) {
+  else if ( (geom.type == C.TAG || geom.type == C.MEASURE) && util.isString(text) ) {
     return undefined;
   }
 
 
-  else if ( (geom.type == self.C.POINT || geom.type == self.C.NODE) && text.type == self.C.LABEL ) {
-    return self.T.tagOnPointFromLabel(geom, text);
+  else if ( (geom.type == C.POINT || geom.type == C.NODE) && text.type == C.LABEL ) {
+    return S.T.tagOnPointFromLabel(geom, text);
   }
 
-  else if (geom.type == self.C.LINE && text.type == self.C.LABEL) {
-    return self.T.tagOnLineFromLabel(geom, text);
+  else if (geom.type == C.LINE && text.type == C.LABEL) {
+    return S.T.tagOnLineFromLabel(geom, text);
   }
 
-  else if (geom.type == self.C.CIRCLE && text.type == self.C.LABEL) {
-    return self.T.tagOnCircleFromLabel(geom, text);
+  else if (geom.type == C.CIRCLE && text.type == C.LABEL) {
+    return S.T.tagOnCircleFromLabel(geom, text);
   }
 
-  else if ( (geom.type == self.C.TAG || geom.type == self.C.MEASURE) && text.type == self.C.LABEL ) {
+  else if ( (geom.type == C.TAG || geom.type == C.MEASURE) && text.type == C.LABEL ) {
     return undefined;
   }
 
@@ -2540,10 +2900,10 @@ this.Tag.on = function(geom, text) {
  * A basic Label class representing a text element linked to other Elements
  */
 this.Label = function(text) {
-  self.Element.call(this);
-  self.addElement(this);
+  S.Element.call(this);
+  S.addElement(this);
 
-  this.type = self.C.LABEL;
+  this.type = C.LABEL;
   this.text = text;
 
 };
@@ -2573,7 +2933,7 @@ this.Label.compose = function(args) {
     return undefined; 
   };
 
-  if (!self.util.isFunction(a[len - 1])) {
+  if (!util.isFunction(a[len - 1])) {
     console.error('Sketchpad: last argument at Label.compose must be a function');
     return undefined;
   };
@@ -2585,7 +2945,7 @@ this.Label.compose = function(args) {
   };
   var trans = a[len - 1];
 
-  return self.L.composeLabel(inputs, trans);
+  return S.L.composeLabel(inputs, trans);
 };
 
 /**
@@ -2594,10 +2954,10 @@ this.Label.compose = function(args) {
  * @return {Label}
  */
 this.Label.from = function(element, options) {
-  if (element.type == self.C.MEASURE) {
+  if (element.type == C.MEASURE) {
     return (options && options.round)
-      ? self.Label.compose(element, function() { return Math.round(element.value); })
-      : self.Label.compose(element, function() { return element.value; });
+      ? S.Label.compose(element, function() { return Math.round(element.value); })
+      : S.Label.compose(element, function() { return element.value; });
   }
 
   // not cool
@@ -2608,7 +2968,7 @@ this.Label.from = function(element, options) {
 this.L = {
 
   composeLabel: function(paramArray, transFunc) {
-    var l = new self.Label('');
+    var l = new S.Label('');
     l.addParents(paramArray, transFunc);
     l.update = function() {
       this.text = this.parents[this.parents.length - 1](this.parents);
@@ -2648,14 +3008,14 @@ if (this.canvas) {
 
   // set window.on('resize') eventhandler
   $(window).resize(function() {
-    self._canvasWidth = $(self.parentDiv).innerWidth();
-    self._canvasHeight = $(self.parentDiv).innerHeight();
-    self.canvas.width = self._canvasWidth;
-    self.canvas.height = self._canvasHeight;
-    self.width.update();
-    self.width.updateChildren();
-    self.height.update();
-    self.height.updateChildren();
+    S._canvasWidth = $(S.parentDiv).innerWidth();
+    S._canvasHeight = $(S.parentDiv).innerHeight();
+    S.canvas.width = S._canvasWidth;
+    S.canvas.height = S._canvasHeight;
+    S.width.update();
+    S.width.updateChildren();
+    S.height.update();
+    S.height.updateChildren();
   });
 
   // we are oficially initialized
@@ -2701,37 +3061,37 @@ this.mouse = {
 	},
 
 	searchNodeToDrag: function (x, y) {
-		// for (var len = self.elements.length, i = 0; i < len; i++) {
-    for (var i = self.elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
-			var elem = self.elements[i];
-			if (elem.constructor != self.Node) continue;
+		// for (var len = S.elements.length, i = 0; i < len; i++) {
+    for (var i = S.elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
+			var elem = S.elements[i];
+			if (elem.constructor != S.Node) continue;
 			if (this.dist2ToNode(x, y, elem) < 25) return elem;		// <--- SUPER DIRTY, NEEDS IMPROV
 		}
 		return null;
 	},
 
 	onMouseDown: function (e) {
-		self.mouse.down = true;
-		self.mouse.downX = self.mouse.x;
-		self.mouse.downY = self.mouse.y;
-		self.mouse.dragObject = self.mouse.searchNodeToDrag(self.mouse.downX, self.mouse.downY);
+		S.mouse.down = true;
+		S.mouse.downX = S.mouse.x;
+		S.mouse.downY = S.mouse.y;
+		S.mouse.dragObject = S.mouse.searchNodeToDrag(S.mouse.downX, S.mouse.downY);
 	},
 
 	onMouseMove: function (e) {
-		var offset = $(self.canvas).offset();
-		self.mouse.x = e.pageX - offset.left;
-		self.mouse.y = e.pageY - offset.top;
-		if (self.mouse.dragObject) {
-      self.mouse.dragObject.setPosition(self.mouse.x, self.mouse.y);
-			// self.mouse.dragObject.x = self.mouse.x;
-			// self.mouse.dragObject.y = self.mouse.y;
-			self.mouse.dragObject.updateChildren();
+		var offset = $(S.canvas).offset();
+		S.mouse.x = e.pageX - offset.left;
+		S.mouse.y = e.pageY - offset.top;
+		if (S.mouse.dragObject) {
+      S.mouse.dragObject.setPosition(S.mouse.x, S.mouse.y);
+			// S.mouse.dragObject.x = S.mouse.x;
+			// S.mouse.dragObject.y = S.mouse.y;
+			S.mouse.dragObject.updateChildren();
 		}
 	},
 
 	onMouseUp: function (e) {
-		self.mouse.down = false;
-		self.mouse.dragObject = null;
+		S.mouse.down = false;
+		S.mouse.dragObject = null;
 	}
 };
 
@@ -2752,10 +3112,10 @@ $(this.canvas).mouseup(this.mouse.onMouseUp);
  // ╚═════╝    ╚═╝   ╚═╝╚══════╝
 
 /**
- * A quick utilities library
+ * A private quick utilities library
  * @type {Object}
  */
-this.util = {
+var util = {
 
   /**
    * Underscore's implementation of _.isNumber
@@ -2764,6 +3124,18 @@ this.util = {
    */
   isNumber: function(obj) {
     return toString.call(obj) === '[object Number]';
+  },
+
+  /**
+   * Checks if all elements in an array are numbers
+   * @param  {Array} array
+   * @return {Boolean}      
+   */
+  isNumberArray: function(array) {
+    for (var l = array.length, i = 0; i < l; i++) {
+      if (!util.isNumber(array[i])) return false;
+    }
+    return true;
   },
 
   /**
@@ -2798,6 +3170,51 @@ this.util = {
   },
 
   /**
+   * Checks if the object is of type Set
+   * @param  {Object}  obj
+   * @return {Boolean}
+   */
+  isSet: function(obj) {
+    return obj.type == C.SET;
+  },
+
+  /**
+   * Checks if the object is of the type Point
+   * @param  {Object}  obj
+   * @return {Boolean}
+   */
+  isPoint: function(obj) {
+    return obj.type == C.POINT;
+  },
+
+  /**
+   * Checks if the object is of the type Line
+   * @param  {Object}  obj
+   * @return {Boolean}     
+   */
+  isLine: function(obj) {
+    return obj.type == C.LINE;
+  },
+
+  /**
+   * Checks if the object is of the type Circle
+   * @param  {Object}  obj
+   * @return {Boolean}     
+   */
+  isCircle: function(obj) {
+    return obj.type == C.CIRCLE;
+  },
+
+  /**
+   * Checks if the object is of the type Measure
+   * @param  {Object}  obj
+   * @return {Boolean}
+   */
+  isMeasure: function(obj) {
+    return obj.type == C.MEASURE;
+  },
+
+  /**
    * Clamps a numeric value between two limit extremes
    * @param  {Number} value
    * @param  {Number} min
@@ -2811,11 +3228,15 @@ this.util = {
 
 };
 
+// A public alias for the util library
+this.utils = util;
+
+
+
+
+
 
 };  // END OF SKETCHPAD
-
-
-
 
 /**
  * Provides requestAnimationFrame in a cross browser way.
@@ -2831,13 +3252,3 @@ window.requestAnimFrame = (function() {
            return window.setTimeout(callback, 1000/60);
          };
 })();
-
-
-
-
-//   ██╗██████╗ 
-//  ██╔╝╚════██╗
-// ██╔╝  █████╔╝
-// ╚██╗  ╚═══██╗
-//  ╚██╗██████╔╝
-//   ╚═╝╚═════╝ 
