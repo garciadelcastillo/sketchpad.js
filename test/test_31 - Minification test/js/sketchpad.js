@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2015, Jose Luis Garcia del Castillo y Lopez
+    Copyright (c) 2014, Jose Luis Garcia del Castillo y Lopez
     http://garciadelcastillo.es
     All rights reserved.
 
@@ -74,6 +74,7 @@ Sketchpad = function(canvasId) {
 
     };
 
+    
 
     // ██████╗  █████╗ ███████╗███████╗
     // ██╔══██╗██╔══██╗██╔════╝██╔════╝
@@ -270,6 +271,7 @@ Sketchpad = function(canvasId) {
         });
     };  
 
+    
 
     //  ██████╗ ███████╗ ██████╗  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
     // ██╔════╝ ██╔════╝██╔═══██╗██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
@@ -811,175 +813,6 @@ Sketchpad = function(canvasId) {
             return s;
         },
 
-        // /**
-        //  * Create a Line from two Points
-        //  * @param  {Point} startPoint 
-        //  * @param  {Point} endPoint   
-        //  * @return {Line}
-        //  */
-        // lineFromTwoPoints: function(startPoint, endPoint) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, endPoint);
-        //   lin.update = function() {
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.parents[1].x;
-        //     this.y1 = this.parents[1].y;
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line Set from a Point to a Point Set
-        //  * @param  {Point} startPoint 
-        //  * @param  {Set(Point)} pointSet
-        //  * @return {Set(Line)} 
-        //  */
-        // lineFromPointToPointset: function(startPoint, pointSet) {
-        //   var items = [];
-        //   for (var l = pointSet.length, i = 0; i < l; i++) {
-        //     items.push(new Line(0, 0, 0, 0));
-        //   }
-        //   var s = new S.Set(items);
-        //   s.subtype = C.LINE;
-        //   s.addParents(startPoint, pointSet);
-        //   s.update = function() {
-        //     for (var i = 0; i < this.length; i++) {
-        //       this.items[i].x0 = this.parents[0].x;
-        //       this.items[i].y0 = this.parents[0].y;
-        //       this.items[i].x1 = this.parents[1].items[i].x;
-        //       this.items[i].y1 = this.parents[1].items[i].y;
-        //     }
-        //   };
-        //   s.update();
-        //   return s;
-        // },
-
-        // /**
-        //  * Create a Line Set from a Point Set to a Point Set
-        //  * @param  {Set(Point)} startPS 
-        //  * @param  {Set(Point)} endPS   
-        //  * @return {Set(Line)}         
-        //  * @todo The update function looks like it was barfed...
-        //  */
-        // lineFromPointsetToPointset: function(startPS, endPS) {
-        //   var items = [],
-        //       maxlen = startPS.length > endPS.length ? startPS.length : endPS.length;
-        //   for (var i = 0; i < maxlen; i++) {
-        //     items.push(new Line(0, 0, 0, 0));
-        //   }
-        //   var s = new S.Set(items);
-        //   s.subtype = C.LINE;
-        //   s.addParents(startPS, endPS);
-        //   s.update = function() {
-        //     var sl = this.parents[0].length,
-        //         el = this.parents[1].length,
-        //         j = 0,
-        //         k = 0;
-        //     for (var i = 0; i < this.length; i++) {
-        //       this.items[i].x0 = this.parents[0].items[j].x;
-        //       this.items[i].y0 = this.parents[0].items[j++].y;
-        //       this.items[i].x1 = this.parents[1].items[k].x;
-        //       this.items[i].y1 = this.parents[1].items[k++].y;
-        //       if (j >= sl) j--;
-        //       if (k >= el) k--;
-        //     }
-        //   };
-        //   s.update();
-        //   return s;
-        // },
-
-        // /**
-        //  * Create a Line from starting Point and numeric length and angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Number} length     
-        //  * @param  {Number} angle      
-        //  * @return {Line}
-        //  */
-        // lineFromPointLengthAngle: function(startPoint, length, angle) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint);
-        //   lin.length = length;
-        //   lin.angle = angle;
-        //   lin.update = function() {
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.length * Math.cos(this.angle);
-        //     this.y1 = this.y0 + this.length * Math.sin(this.angle);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line from starting Point, length Measure and numeric angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Measure} lengthM    
-        //  * @param  {Number} angle      
-        //  * @return {Line}
-        //  */
-        // lineFromPointMeasureAngle: function(startPoint, lengthM, angle) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, lengthM);
-        //   lin.angle = angle;
-        //   lin.update = function() {
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.parents[1].value * Math.cos(this.angle);
-        //     this.y1 = this.y0 + this.parents[1].value * Math.sin(this.angle);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line from starting Point, numeric length and Measure angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Number} length     
-        //  * @param  {Measure} angleM     
-        //  * @return {Line}            
-        //  */
-        // lineFromPointLengthMeasure: function(startPoint, length, angleM) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, angleM);
-        //   lin.length = length;
-        //   lin.update = function() {
-        //     var ang = this.parents[1].subtype == C.ANGLE_DEG ?
-        //         this.parents[1].value * C.TO_RADS :
-        //         this.parents[1].value;
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.length * Math.cos(ang);
-        //     this.y1 = this.y0 + this.length * Math.sin(ang);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line from a starting Point, Measure length and Measure angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Measure} length     
-        //  * @param  {Measure} angleM     
-        //  * @return {Line}     
-        //  */
-        // lineFromPointMeasureMeasure: function(startPoint, lengthM, angleM) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, lengthM, angleM);
-        //   lin.update = function() {
-        //     var ang = this.parents[2].subtype == C.ANGLE_DEG ?
-        //         this.parents[2].value * C.TO_RADS :
-        //         this.parents[2].value;
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.parents[1].value * Math.cos(ang);
-        //     this.y1 = this.y0 + this.parents[1].value * Math.sin(ang);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-            
         /**
          * Create a Circle from center point and radius
          * @param  {Point} centerPoint
@@ -1117,9 +950,6 @@ Sketchpad = function(canvasId) {
         }
 
     };
-
-
-
     // ███████╗██╗     ███████╗███╗   ███╗███████╗███╗   ██╗████████╗
     // ██╔════╝██║     ██╔════╝████╗ ████║██╔════╝████╗  ██║╚══██╔══╝
     // █████╗  ██║     █████╗  ██╔████╔██║█████╗  ██╔██╗ ██║   ██║   
@@ -1263,7 +1093,6 @@ Sketchpad = function(canvasId) {
     };
 
 
-
     //  ██████╗ ███████╗ ██████╗ ███╗   ███╗███████╗████████╗██████╗ ██╗   ██╗
     // ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
     // ██║  ███╗█████╗  ██║   ██║██╔████╔██║█████╗     ██║   ██████╔╝ ╚████╔╝ 
@@ -1280,9 +1109,6 @@ Sketchpad = function(canvasId) {
     }
     this.Geometry.prototype = Object.create(this.Element.prototype);
     this.Geometry.prototype.constructor = this.Geometry;
-
-
-
 
     // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
     // ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
@@ -1518,12 +1344,9 @@ Sketchpad = function(canvasId) {
         // not cool
         console.error('Sketchpad: invalid arguments for Point.offset');
         return undefined;
-    }
+    };
 
-
-
-
-
+    
     // ███╗   ██╗ ██████╗ ██████╗ ███████╗ ██████╗ █████╗ ██╗      ██████╗
     // ████╗  ██║██╔═══██╗██╔══██╗██╔════╝██╔════╝██╔══██╗██║     ██╔════╝
     // ██╔██╗ ██║██║   ██║██║  ██║█████╗  ██║     ███████║██║     ██║     
@@ -1768,7 +1591,7 @@ Sketchpad = function(canvasId) {
         // not cool
         console.error('Sketchpad: invalid arguments for Node.horizontal');
         return undefined;
-    }
+    };
 
 
     this.Node.vertical = function(fixX, startY) {
@@ -1792,10 +1615,9 @@ Sketchpad = function(canvasId) {
         // not cool
         console.error('Sketchpad: invalid arguments for Node.horizontal');
         return undefined;
-    }
+    };
 
-
-
+    
     // ██╗     ██╗███╗   ██╗███████╗
     // ██║     ██║████╗  ██║██╔════╝
     // ██║     ██║██╔██╗ ██║█████╗  
@@ -2210,8 +2032,6 @@ Sketchpad = function(canvasId) {
         return undefined;
     };
 
-
-
     //  ██████╗██╗██████╗  ██████╗██╗     ███████╗
     // ██╔════╝██║██╔══██╗██╔════╝██║     ██╔════╝
     // ██║     ██║██████╔╝██║     ██║     █████╗  
@@ -2281,9 +2101,6 @@ Sketchpad = function(canvasId) {
         console.error('Sketchpad: invalid arguments for Line.centerRadius');
         return undefined;
     };
-
-
-
     // ███╗   ███╗███████╗ █████╗ ███████╗██╗   ██╗ ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
     // ████╗ ████║██╔════╝██╔══██╗██╔════╝██║   ██║██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
     // ██╔████╔██║█████╗  ███████║███████╗██║   ██║██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
@@ -2521,10 +2338,8 @@ Sketchpad = function(canvasId) {
         . Measure.min(measure, measure)
         . Measure.max(measure, measure)  
     */
-
-
-
-
+   
+   
     // ███████╗███████╗████████╗
     // ██╔════╝██╔════╝╚══██╔══╝
     // ███████╗█████╗     ██║   
@@ -2637,9 +2452,7 @@ Sketchpad = function(canvasId) {
         return undefined; 
     };
 
-
-
-
+    
     // ███████╗████████╗██╗   ██╗██╗     ███████╗
     // ██╔════╝╚══██╔══╝╚██╗ ██╔╝██║     ██╔════╝
     // ███████╗   ██║    ╚████╔╝ ██║     █████╗  
@@ -2681,13 +2494,7 @@ Sketchpad = function(canvasId) {
         }
     };
 
-
-
-
-
-
-
-
+    
     // ████████╗ █████╗  ██████╗  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗
     // ╚══██╔══╝██╔══██╗██╔════╝ ██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝
     //    ██║   ███████║██║  ███╗██║     ██║   ██║██╔██╗ ██║███████╗   ██║   
@@ -2885,14 +2692,9 @@ Sketchpad = function(canvasId) {
         // not cool
         console.error('Sketchpad: invalid arguments for Tag.on');
         return undefined;
-    }
+    };
 
-
-
-
-
-
-
+    
     // ██╗      █████╗ ██████╗ ███████╗██╗     
     // ██║     ██╔══██╗██╔══██╗██╔════╝██║     
     // ██║     ███████║██████╔╝█████╗  ██║     
@@ -2981,132 +2783,7 @@ Sketchpad = function(canvasId) {
         }
     };
 
-
-
-
-
-    // ██╗███╗   ██╗██╗████████╗
-    // ██║████╗  ██║██║╚══██╔══╝
-    // ██║██╔██╗ ██║██║   ██║   
-    // ██║██║╚██╗██║██║   ██║   
-    // ██║██║ ╚████║██║   ██║   
-    // ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   
-
-    // Initialize canvas object
-    this.canvasId = canvasId;
-    this.canvas = document.getElementById(canvasId);
-    if (this.canvas) {
-        // init canvas
-        this.style = new this.Style({});
-        this.gr = this.canvas.getContext('2d');
-        this.parentDiv = this.canvas.parentNode;
-        this._canvasWidth = $(this.parentDiv).innerWidth();
-        this._canvasHeight = $(this.parentDiv).innerHeight();
-        this.canvas.width = this._canvasWidth;
-        this.canvas.height = this._canvasHeight;
-
-        // create pad.width & pad.height Measure instances
-        this.width = this.M.canvasWidth();
-        this.height = this.M.canvasHeight();
-
-        // set window.on('resize') eventhandler
-        $(window).resize(function() {
-            S._canvasWidth = $(S.parentDiv).innerWidth();
-            S._canvasHeight = $(S.parentDiv).innerHeight();
-            S.canvas.width = S._canvasWidth;
-            S.canvas.height = S._canvasHeight;
-            S.width.update();
-            S.width.updateChildren();
-            S.height.update();
-            S.height.updateChildren();
-        });
-
-        // we are oficially initialized
-        this.initialized = true;  // looping kicks in
-        if (console.info) console.info("Sketchpad.js " + this.version + ' - Build ' + this.build + '');
-
-        // run one iteration of (overriden) start()
-        this.start();
-
-        // kick off main loop() cycle
-        this.loop();
-
-    } else {
-        console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
-            ' DOM canvas object, e.g. var pad = new Sketchpad("padCanvasId")');
-        return null;
-    }
-
-
-
-
-    // ███╗   ███╗ ██████╗ ██╗   ██╗███████╗███████╗
-    // ████╗ ████║██╔═══██╗██║   ██║██╔════╝██╔════╝
-    // ██╔████╔██║██║   ██║██║   ██║███████╗█████╗  
-    // ██║╚██╔╝██║██║   ██║██║   ██║╚════██║██╔══╝  
-    // ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝███████║███████╗
-    // ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
-
-    /**
-     * A mouse object encapsulating state-based properties and mouse events
-     * @type {Object}
-     */
-    this.mouse = {
-        x: 0,
-        y: 0,
-        down: false,
-        downX: 0,
-        downY: 0,
-        dragObject: null,
-
-        dist2ToNode: function (x, y, node) {
-            return (node.x - x) * (node.x - x) + (node.y - y) * (node.y - y);
-        },
-
-        searchNodeToDrag: function (x, y) {
-            // for (var len = S.elements.length, i = 0; i < len; i++) {
-            for (var i = S.elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
-                var elem = S.elements[i];
-                if (elem.constructor != S.Node) continue;
-                if (this.dist2ToNode(x, y, elem) < 25) return elem;     // <--- SUPER DIRTY, NEEDS IMPROV
-            }
-            return null;
-        },
-
-        onMouseDown: function (e) {
-            S.mouse.down = true;
-            S.mouse.downX = S.mouse.x;
-            S.mouse.downY = S.mouse.y;
-            S.mouse.dragObject = S.mouse.searchNodeToDrag(S.mouse.downX, S.mouse.downY);
-        },
-
-        onMouseMove: function (e) {
-            var offset = $(S.canvas).offset();
-            S.mouse.x = e.pageX - offset.left;
-            S.mouse.y = e.pageY - offset.top;
-            if (S.mouse.dragObject) {
-                S.mouse.dragObject.setPosition(S.mouse.x, S.mouse.y);
-                // S.mouse.dragObject.x = S.mouse.x;
-                // S.mouse.dragObject.y = S.mouse.y;
-                S.mouse.dragObject.updateChildren();
-            }
-        },
-
-        onMouseUp: function (e) {
-            S.mouse.down = false;
-            S.mouse.dragObject = null;
-        }
-    };
-
-    $(this.canvas).mousedown(this.mouse.onMouseDown);
-    $(this.canvas).mousemove(this.mouse.onMouseMove);
-    $(this.canvas).mouseup(this.mouse.onMouseUp);
-
-
-
-
-
-
+    
     // ██╗   ██╗████████╗██╗██╗     
     // ██║   ██║╚══██╔══╝██║██║     
     // ██║   ██║   ██║   ██║██║     
@@ -3234,9 +2911,124 @@ Sketchpad = function(canvasId) {
     // A public alias for the util library
     this.utils = util;
 
+    
+
+    // ██╗███╗   ██╗██╗████████╗
+    // ██║████╗  ██║██║╚══██╔══╝
+    // ██║██╔██╗ ██║██║   ██║   
+    // ██║██║╚██╗██║██║   ██║   
+    // ██║██║ ╚████║██║   ██║   
+    // ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   
+
+    // Initialize canvas object
+    this.canvasId = canvasId;
+    this.canvas = document.getElementById(canvasId);
+    if (this.canvas) {
+        // init canvas
+        this.style = new this.Style({});
+        this.gr = this.canvas.getContext('2d');
+        this.parentDiv = this.canvas.parentNode;
+        this._canvasWidth = $(this.parentDiv).innerWidth();
+        this._canvasHeight = $(this.parentDiv).innerHeight();
+        this.canvas.width = this._canvasWidth;
+        this.canvas.height = this._canvasHeight;
+
+        // create pad.width & pad.height Measure instances
+        this.width = this.M.canvasWidth();
+        this.height = this.M.canvasHeight();
+
+        // set window.on('resize') eventhandler
+        $(window).resize(function() {
+            S._canvasWidth = $(S.parentDiv).innerWidth();
+            S._canvasHeight = $(S.parentDiv).innerHeight();
+            S.canvas.width = S._canvasWidth;
+            S.canvas.height = S._canvasHeight;
+            S.width.update();
+            S.width.updateChildren();
+            S.height.update();
+            S.height.updateChildren();
+        });
+
+        // we are oficially initialized
+        this.initialized = true;  // looping kicks in
+        if (console.info) console.info("Sketchpad.js " + this.version + ' - Build ' + this.build + '');
+
+        // run one iteration of (overriden) start()
+        this.start();
+
+        // kick off main loop() cycle
+        this.loop();
+
+    } else {
+        console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
+            ' DOM canvas object, e.g. var pad = new Sketchpad("padCanvasId")');
+        return null;
+    }
 
 
 
+
+    // ███╗   ███╗ ██████╗ ██╗   ██╗███████╗███████╗
+    // ████╗ ████║██╔═══██╗██║   ██║██╔════╝██╔════╝
+    // ██╔████╔██║██║   ██║██║   ██║███████╗█████╗  
+    // ██║╚██╔╝██║██║   ██║██║   ██║╚════██║██╔══╝  
+    // ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝███████║███████╗
+    // ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
+
+    /**
+     * A mouse object encapsulating state-based properties and mouse events
+     * @type {Object}
+     */
+    this.mouse = {
+        x: 0,
+        y: 0,
+        down: false,
+        downX: 0,
+        downY: 0,
+        dragObject: null,
+
+        dist2ToNode: function (x, y, node) {
+            return (node.x - x) * (node.x - x) + (node.y - y) * (node.y - y);
+        },
+
+        searchNodeToDrag: function (x, y) {
+            // for (var len = S.elements.length, i = 0; i < len; i++) {
+            for (var i = S.elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
+                var elem = S.elements[i];
+                if (elem.constructor != S.Node) continue;
+                if (this.dist2ToNode(x, y, elem) < 25) return elem;     // <--- SUPER DIRTY, NEEDS IMPROV
+            }
+            return null;
+        },
+
+        onMouseDown: function (e) {
+            S.mouse.down = true;
+            S.mouse.downX = S.mouse.x;
+            S.mouse.downY = S.mouse.y;
+            S.mouse.dragObject = S.mouse.searchNodeToDrag(S.mouse.downX, S.mouse.downY);
+        },
+
+        onMouseMove: function (e) {
+            var offset = $(S.canvas).offset();
+            S.mouse.x = e.pageX - offset.left;
+            S.mouse.y = e.pageY - offset.top;
+            if (S.mouse.dragObject) {
+                S.mouse.dragObject.setPosition(S.mouse.x, S.mouse.y);
+                // S.mouse.dragObject.x = S.mouse.x;
+                // S.mouse.dragObject.y = S.mouse.y;
+                S.mouse.dragObject.updateChildren();
+            }
+        },
+
+        onMouseUp: function (e) {
+            S.mouse.down = false;
+            S.mouse.dragObject = null;
+        }
+    };
+
+    $(this.canvas).mousedown(this.mouse.onMouseDown);
+    $(this.canvas).mousemove(this.mouse.onMouseMove);
+    $(this.canvas).mouseup(this.mouse.onMouseUp);
 
 
 };  // END OF SKETCHPAD
