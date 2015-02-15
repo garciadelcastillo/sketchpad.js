@@ -32,7 +32,7 @@
 Sketchpad = function(canvasId) {
 
     this.version = "v0.0.3";
-    this.build = 1100;
+    this.build = 1101;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -810,210 +810,41 @@ Sketchpad = function(canvasId) {
             s.update();
             return s;
         },
-
-        // /**
-        //  * Create a Line from two Points
-        //  * @param  {Point} startPoint 
-        //  * @param  {Point} endPoint   
-        //  * @return {Line}
-        //  */
-        // lineFromTwoPoints: function(startPoint, endPoint) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, endPoint);
-        //   lin.update = function() {
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.parents[1].x;
-        //     this.y1 = this.parents[1].y;
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line Set from a Point to a Point Set
-        //  * @param  {Point} startPoint 
-        //  * @param  {Set(Point)} pointSet
-        //  * @return {Set(Line)} 
-        //  */
-        // lineFromPointToPointset: function(startPoint, pointSet) {
-        //   var items = [];
-        //   for (var l = pointSet.length, i = 0; i < l; i++) {
-        //     items.push(new Line(0, 0, 0, 0));
-        //   }
-        //   var s = new S.Set(items);
-        //   s.subtype = C.LINE;
-        //   s.addParents(startPoint, pointSet);
-        //   s.update = function() {
-        //     for (var i = 0; i < this.length; i++) {
-        //       this.items[i].x0 = this.parents[0].x;
-        //       this.items[i].y0 = this.parents[0].y;
-        //       this.items[i].x1 = this.parents[1].items[i].x;
-        //       this.items[i].y1 = this.parents[1].items[i].y;
-        //     }
-        //   };
-        //   s.update();
-        //   return s;
-        // },
-
-        // /**
-        //  * Create a Line Set from a Point Set to a Point Set
-        //  * @param  {Set(Point)} startPS 
-        //  * @param  {Set(Point)} endPS   
-        //  * @return {Set(Line)}         
-        //  * @todo The update function looks like it was barfed...
-        //  */
-        // lineFromPointsetToPointset: function(startPS, endPS) {
-        //   var items = [],
-        //       maxlen = startPS.length > endPS.length ? startPS.length : endPS.length;
-        //   for (var i = 0; i < maxlen; i++) {
-        //     items.push(new Line(0, 0, 0, 0));
-        //   }
-        //   var s = new S.Set(items);
-        //   s.subtype = C.LINE;
-        //   s.addParents(startPS, endPS);
-        //   s.update = function() {
-        //     var sl = this.parents[0].length,
-        //         el = this.parents[1].length,
-        //         j = 0,
-        //         k = 0;
-        //     for (var i = 0; i < this.length; i++) {
-        //       this.items[i].x0 = this.parents[0].items[j].x;
-        //       this.items[i].y0 = this.parents[0].items[j++].y;
-        //       this.items[i].x1 = this.parents[1].items[k].x;
-        //       this.items[i].y1 = this.parents[1].items[k++].y;
-        //       if (j >= sl) j--;
-        //       if (k >= el) k--;
-        //     }
-        //   };
-        //   s.update();
-        //   return s;
-        // },
-
-        // /**
-        //  * Create a Line from starting Point and numeric length and angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Number} length     
-        //  * @param  {Number} angle      
-        //  * @return {Line}
-        //  */
-        // lineFromPointLengthAngle: function(startPoint, length, angle) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint);
-        //   lin.length = length;
-        //   lin.angle = angle;
-        //   lin.update = function() {
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.length * Math.cos(this.angle);
-        //     this.y1 = this.y0 + this.length * Math.sin(this.angle);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line from starting Point, length Measure and numeric angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Measure} lengthM    
-        //  * @param  {Number} angle      
-        //  * @return {Line}
-        //  */
-        // lineFromPointMeasureAngle: function(startPoint, lengthM, angle) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, lengthM);
-        //   lin.angle = angle;
-        //   lin.update = function() {
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.parents[1].value * Math.cos(this.angle);
-        //     this.y1 = this.y0 + this.parents[1].value * Math.sin(this.angle);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line from starting Point, numeric length and Measure angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Number} length     
-        //  * @param  {Measure} angleM     
-        //  * @return {Line}            
-        //  */
-        // lineFromPointLengthMeasure: function(startPoint, length, angleM) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, angleM);
-        //   lin.length = length;
-        //   lin.update = function() {
-        //     var ang = this.parents[1].subtype == C.ANGLE_DEG ?
-        //         this.parents[1].value * C.TO_RADS :
-        //         this.parents[1].value;
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.length * Math.cos(ang);
-        //     this.y1 = this.y0 + this.length * Math.sin(ang);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
-
-        // /**
-        //  * Create a Line from a starting Point, Measure length and Measure angle
-        //  * @param  {Point} startPoint 
-        //  * @param  {Measure} length     
-        //  * @param  {Measure} angleM     
-        //  * @return {Line}     
-        //  */
-        // lineFromPointMeasureMeasure: function(startPoint, lengthM, angleM) {
-        //   var lin = new Line(0, 0, 0, 0);
-        //   lin.addParents(startPoint, lengthM, angleM);
-        //   lin.update = function() {
-        //     var ang = this.parents[2].subtype == C.ANGLE_DEG ?
-        //         this.parents[2].value * C.TO_RADS :
-        //         this.parents[2].value;
-        //     this.x0 = this.parents[0].x;
-        //     this.y0 = this.parents[0].y;
-        //     this.x1 = this.x0 + this.parents[1].value * Math.cos(ang);
-        //     this.y1 = this.y0 + this.parents[1].value * Math.sin(ang);
-        //   };
-        //   lin.update();
-        //   return lin;
-        // },
             
-        /**
-         * Create a Circle from center point and radius
-         * @param  {Point} centerPoint
-         * @param  {Number} radius
-         * @return {Circle}
-         */
-        circleFromPointAndRadius: function(centerPoint, radius) {
-            var c = new S.Circle(0, 0, radius);
-            c.addParents(centerPoint);
-            c.update = function() {
-                this.x = this.parents[0].x;
-                this.y = this.parents[0].y;
-            };
-            c.update();
-            return c;
-        }, 
+        // /**
+        //  * Create a Circle from center point and radius
+        //  * @param  {Point} centerPoint
+        //  * @param  {Number} radius
+        //  * @return {Circle}
+        //  */
+        // circleFromPointAndRadius: function(centerPoint, radius) {
+        //     var c = new S.Circle(0, 0, radius);
+        //     c.addParents(centerPoint);
+        //     c.update = function() {
+        //         this.x = this.parents[0].x;
+        //         this.y = this.parents[0].y;
+        //     };
+        //     c.update();
+        //     return c;
+        // }, 
 
-        /**
-         * Create a Circle from center point and measure
-         * @param  {Point} centerPoint 
-         * @param  {Measure} measure     
-         * @return {Circle}             
-         */
-        circleFromPointAndMeasure: function(centerPoint, measure) {
-            var c = new S.Circle(0, 0, 0);
-            c.addParents(centerPoint, measure);
-            c.update = function() {
-                this.x = this.parents[0].x;
-                this.y = this.parents[0].y;
-                this.r = this.parents[1].value;
-            };
-            c.update();
-            return c;
-        }
+        // *
+        //  * Create a Circle from center point and measure
+        //  * @param  {Point} centerPoint 
+        //  * @param  {Measure} measure     
+        //  * @return {Circle}             
+         
+        // circleFromPointAndMeasure: function(centerPoint, measure) {
+        //     var c = new S.Circle(0, 0, 0);
+        //     c.addParents(centerPoint, measure);
+        //     c.update = function() {
+        //         this.x = this.parents[0].x;
+        //         this.y = this.parents[0].y;
+        //         this.r = this.parents[1].value;
+        //     };
+        //     c.update();
+        //     return c;
+        // }
 
     };
 
@@ -1132,7 +963,7 @@ Sketchpad = function(canvasId) {
      * @comment Should probably implement a middleware Geometry class to 
      * differentiate from Style or Measure elements
      */
-    this.Element = function() {
+    var Element = function() {
         this.parents = [];
         this.children = [];
         this.visible = undefined;
@@ -1147,6 +978,8 @@ Sketchpad = function(canvasId) {
          * @type {Object}
          */
         this.parts = {};
+        this.prop = this.parts;  // a temp alias
+
 
     };
 
@@ -1155,7 +988,7 @@ Sketchpad = function(canvasId) {
      * object to those parents as child
      * @param {Elements} parents Parent objects driving this element as args
      */
-    this.Element.prototype.addParents = function() {
+    Element.prototype.addParents = function() {
         for (var l = arguments.length, i = 0; i < l; i++) {
 
             // if passed argument is an array
@@ -1192,7 +1025,7 @@ Sketchpad = function(canvasId) {
      * @param {Element} child A child object dependant on this element
      * @deprecated Consider using Element.isChildOf instead
      */
-    this.Element.prototype.addChild = function(child) {
+    Element.prototype.addChild = function(child) {
         console.warn('Element.addChild is deprecated, consider using Element.isChildOf instead');
         this.children.push(child);
     };
@@ -1201,7 +1034,7 @@ Sketchpad = function(canvasId) {
      * Appends this Element as child of the passed parents
      * @param {Elements} arguments Parent objects of this Element
      */
-    this.Element.prototype.isChildOf = function(args) {
+    Element.prototype.isChildOf = function(args) {
         for (var l = arguments.length, i = 0; i < l; i++) {
             arguments[i].children.push(this);  // add this object as child to parent
         }
@@ -1211,7 +1044,7 @@ Sketchpad = function(canvasId) {
      * Calls the update methods on each children
      * @return {[type]} [description]
      */
-    this.Element.prototype.updateChildren = function() {
+    Element.prototype.updateChildren = function() {
         // if (this.name) console.log('updating ' + this.name + ' children:');
         for (var i = 0; i < this.children.length; i++) {
             // console.log('  ' + this.children[i].name);
@@ -1224,14 +1057,14 @@ Sketchpad = function(canvasId) {
      * Sets the 'visible' property of an object
      * @param {Boolean} isVisible
      */
-    this.Element.prototype.setVisible = function(isVisible) {
+    Element.prototype.setVisible = function(isVisible) {
         this.visible = isVisible;
     };
 
     /**
      * Checks pad state-based flags and sets properties accordingly
      */
-    this.Element.prototype.checkStates = function() {
+    Element.prototype.checkStates = function() {
         // if nothing changed the visible flag, set it to the global default
         if (this.visible == undefined) {    
             this.visible = S.drawVisible;
@@ -1242,7 +1075,7 @@ Sketchpad = function(canvasId) {
      * Sets the current style of this object
      * @param {Style} style
      */
-    this.Element.prototype.setStyle = function(style) {
+    Element.prototype.setStyle = function(style) {
         this.style = style;
     };
 
@@ -1251,7 +1084,7 @@ Sketchpad = function(canvasId) {
      * property as object name
      * @return {boolean} Returns true if found an instance of this object
      */
-    this.Element.prototype.findName = function() {
+    Element.prototype.findName = function() {
         for (var a in window) {
             if (window[a] == this) {    // deprecation warning ?!
             // if (navigator[a] == this) {
@@ -1275,11 +1108,11 @@ Sketchpad = function(canvasId) {
      * A base Geometry class inheriting from Node, superclass for any Node with geometric properties
      * @todo  rethink common properties
      */
-    this.Geometry = function() {
+    var Geometry = function() {
 
     }
-    this.Geometry.prototype = Object.create(this.Element.prototype);
-    this.Geometry.prototype.constructor = this.Geometry;
+    Geometry.prototype = Object.create(Element.prototype);
+    Geometry.prototype.constructor = Geometry;
 
 
 
@@ -1297,7 +1130,7 @@ Sketchpad = function(canvasId) {
      * @param {Number} ypos 
      */
     this.Point = function(xpos, ypos) {
-        S.Element.call(this);
+        Element.call(this);
         S.addElement(this);
 
         this.pad = S;
@@ -1309,7 +1142,7 @@ Sketchpad = function(canvasId) {
 
         this.checkStates();
     };
-    this.Point.prototype = Object.create(this.Element.prototype);
+    this.Point.prototype = Object.create(Geometry.prototype);
     this.Point.prototype.constructor = this.Point;
 
     /**
@@ -1811,7 +1644,7 @@ Sketchpad = function(canvasId) {
      * @param {Number} ypos1 
      */
     var Line = function(xpos0, ypos0, xpos1, ypos1) {
-        S.Element.call(this);
+        Element.call(this);
         S.addElement(this);
 
         this.type = C.LINE;
@@ -1822,8 +1655,8 @@ Sketchpad = function(canvasId) {
 
         this.checkStates();
     };
-    Line.prototype = Object.create(this.Geometry.prototype);
-    Line.prototype.constructor = this.Line;
+    Line.prototype = Object.create(Geometry.prototype);
+    Line.prototype.constructor = Line;
 
     /**
      * Render method
@@ -2225,24 +2058,25 @@ Sketchpad = function(canvasId) {
      * @param {Number} ypos   
      * @param {Number} radius 
      */
-    this.Circle = function(xpos, ypos, radius) {
-        S.Element.call(this);
+    var Circle = function(xpos, ypos, radius) {
+        Element.call(this);
         S.addElement(this);
 
-        this.type = C.CIRCLE;
+        // this.type = C.CIRCLE;
+        this.type = 'circle';
         this.x = xpos;
         this.y = ypos;
         this.r = radius;
 
         this.checkStates();
     };
-    this.Circle.prototype = Object.create(this.Element.prototype);
-    this.Circle.prototype.constructor = this.Circle;
+    Circle.prototype = Object.create(Geometry.prototype);
+    Circle.prototype.constructor = Circle;
 
     /**
      * Render method
      */
-    this.Circle.prototype.render = function() {
+    Circle.prototype.render = function() {
         S.gr.strokeStyle = this.style.stroke;
         S.gr.lineWidth = this.style.strokeWidth;
         S.gr.fillStyle = this.style.fill;
@@ -2252,35 +2086,179 @@ Sketchpad = function(canvasId) {
         S.gr.stroke();
     };
 
-    /**
-     * Sets the position of the Point
-     * @param {Number} xpos 
-     * @param {Number} ypos 
-     */   
-    this.Circle.prototype.setRadius = function(radius) {
-        this.r = radius;
-        this.updateChildren();
+    Circle.prototype.center = function() {
+        
+    };
+
+    Circle.prototype.length = function() {
+
+    };
+
+    Circle.prototype.area = function() {
+        
+    };
+
+    Circle.prototype.pointAt = function() {
+
     };
 
     /**
-     * A constructor method to create a Circle from a center point and radius
+     * A library to store all independent Circle construction functions
+     * @type {Object}
+     */
+    Circle.G = {
+        /**
+         * Create a Circle from center coordinates and Measure radius
+         * @param  {Number} x       
+         * @param  {Number} y       
+         * @param  {Measure} measure
+         * @return {Circle}
+         */
+        fromCoordinatesAndMeasure: function(x, y, measure) {
+            var c = new Circle(x, y, measure.value);
+            c.addParents(x, y, measure);
+            c.parts['radius'] = measure;
+            c.update = function() {
+                // this.r = this.parents[2].value;
+                this.r = this.parts.radius.value;
+            };
+            // c.update();
+            return c;
+        },
+
+        /**
+         * Create a Circle from center point and radius
+         * @param  {Point} centerPoint
+         * @param  {Number} radius
+         * @return {Circle}
+         */
+        fromPointAndRadius: function(centerPoint, radius) {
+            var c = new Circle(0, 0, radius);
+            c.addParents(centerPoint, radius);
+            c.parts['center'] = centerPoint;
+            c.parts['radius'] = radius;
+            c.update = function() {
+                // this.x = this.parents[0].x;
+                // this.y = this.parents[0].y;
+                this.x = this.parts.center.x;
+                this.y = this.parts.center.y;
+            };
+            c.update();
+            return c;
+        }, 
+
+        /**
+         * Create a Circle from center point and measure
+         * @param  {Point} centerPoint 
+         * @param  {Measure} measure     
+         * @return {Circle}             
+         */
+        fromPointAndMeasure: function(centerPoint, measure) {
+            var c = new Circle(0, 0, 0);
+            c.addParents(centerPoint, measure);
+            c.parts['center'] = centerPoint;
+            c.parts['radius'] = measure;
+            c.update = function() {
+                // this.x = this.parents[0].x;
+                // this.y = this.parents[0].y;
+                // this.r = this.parents[1].value;
+                this.x = this.parts.center.x;
+                this.y = this.parts.center.y;
+                this.r = this.parts.radius.value;
+            };
+            c.update();
+            return c;
+        }
+    };
+
+    /**
+     * Main Circle factory constructor. Overloads:
+     *     circle(centerPoint, radius)
+     *     circle(x, y, radius)
+     * @return {Circle}
+     */
+    this.circle = function() {
+        var a = arguments,
+            l = a.length;
+
+        switch(l) {
+            case 2:
+                // circle(centerPoint, radius)
+                if (util.isPoint(a[0])
+                        && (util.isNumber(a[1]) || util.isMeasure(a[1]))) {
+                    return S.circle.centerRadius(a[0], a[1]);
+                }
+                break;
+            case 3: 
+                // circle(x, y, radius)
+                if (util.isNumber(a[0])
+                        && util.isNumber(a[1])
+                        && util.isNumber(a[2])) {
+                    return new Circle(a[0], a[1], a[2]);
+                } else if (util.isNumber(a[0])
+                        && util.isNumber(a[1])
+                        && util.isMeasure(a[2])) {
+                    return Circle.G.fromCoordinatesAndMeasure(a[0], a[1], a[2]);
+                }
+                break;
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.circle');
+        return undefined;
+    };
+
+    /**
+     * A constructor method to create a Circle from a center Point and radius
      * @param  {Point} centerPoint
      * @param  {Number || Measure} radius
      * @return {Circle}
      */
-    this.Circle.centerRadius = function(centerPoint, radius) {
+    this.circle.centerRadius = function(centerPoint, radius) {
         // center point + numeric radius
-        if (centerPoint.type == C.POINT && typeof radius === 'number') {
-            return G.circleFromPointAndRadius(centerPoint, radius);
-        } 
+        if (util.isPoint(centerPoint) && util.isNumber(radius)) {
+            return Circle.G.fromPointAndRadius(centerPoint, radius);
+        }
         // center point + measure radius
-        else if (centerPoint.type == C.POINT && radius.type == C.MEASURE) {
-            return G.circleFromPointAndMeasure(centerPoint, radius);
+        else if (util.isPoint(centerPoint) && util.isMeasure(radius)) {
+            return Circle.G.fromPointAndMeasure(centerPoint, radius);
         }
         // not cool
         console.error('Sketchpad: invalid arguments for Line.centerRadius');
         return undefined;
     };
+
+
+
+
+    // /**
+    //  * Sets the position of the Point
+    //  * @param {Number} xpos 
+    //  * @param {Number} ypos 
+    //  */   
+    // Circle.prototype.setRadius = function(radius) {
+    //     this.r = radius;
+    //     this.updateChildren();
+    // };
+
+    // /**
+    //  * A constructor method to create a Circle from a center point and radius
+    //  * @param  {Point} centerPoint
+    //  * @param  {Number || Measure} radius
+    //  * @return {Circle}
+    //  */
+    // this.Circle.centerRadius = function(centerPoint, radius) {
+    //     // center point + numeric radius
+    //     if (centerPoint.type == C.POINT && typeof radius === 'number') {
+    //         return G.circleFromPointAndRadius(centerPoint, radius);
+    //     } 
+    //     // center point + measure radius
+    //     else if (centerPoint.type == C.POINT && radius.type == C.MEASURE) {
+    //         return G.circleFromPointAndMeasure(centerPoint, radius);
+    //     }
+    //     // not cool
+    //     console.error('Sketchpad: invalid arguments for Line.centerRadius');
+    //     return undefined;
+    // };
 
 
 
@@ -2411,14 +2389,14 @@ Sketchpad = function(canvasId) {
      * @param {Number} value
      */
     this.Measure = function(value) {
-        S.Element.call(this);
+        Element.call(this);
         S.addElement(this);
 
         this.type = C.MEASURE;
         this.value = value;
         this.visible = false;  // temp workaround to avoid rendering Measure objects
     };
-    this.Measure.prototype = Object.create(this.Element.prototype);
+    this.Measure.prototype = Object.create(Element.prototype);
     this.Measure.prototype.constructor = this.Measure;
 
     /**
@@ -2536,13 +2514,13 @@ Sketchpad = function(canvasId) {
      * @param {Array} items
      */
     this.Set = function(items) {
-        S.Element.call(this);
+        Element.call(this);
         S.addElement(this);
 
         this.type = C.SET;
         this.setItems(items, undefined);
     };
-    this.Set.prototype = Object.create(this.Element.prototype);
+    this.Set.prototype = Object.create(Element.prototype);
     this.Set.prototype.constructor = this.Set;
 
     /**
@@ -2813,7 +2791,7 @@ Sketchpad = function(canvasId) {
      * A basic Tag class representing a text element with visual rendering with optional link to a Geometry object
      */
     this.Tag = function(text, xpos, ypos) {
-        S.Element.call(this);
+        Element.call(this);
         S.addElement(this);
 
         this.type = C.TEXT;
@@ -2823,7 +2801,7 @@ Sketchpad = function(canvasId) {
 
         this.checkStates();
     };
-    this.Tag.prototype = Object.create(this.Element.prototype);
+    this.Tag.prototype = Object.create(Element.prototype);
     this.Tag.prototype.constructor = this.Tag;
 
     /**
@@ -2903,14 +2881,14 @@ Sketchpad = function(canvasId) {
      * A basic Label class representing a text element linked to other Elements
      */
     this.Label = function(text) {
-        S.Element.call(this);
+        Element.call(this);
         S.addElement(this);
 
         this.type = C.LABEL;
         this.text = text;
 
     };
-    this.Label.prototype = Object.create(this.Element.prototype);
+    this.Label.prototype = Object.create(Element.prototype);
     this.Label.prototype.constructor = this.Label;
 
     /**
