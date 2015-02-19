@@ -18,6 +18,12 @@ var A = new pad.Node(100, 300),
 var B = new pad.Node(100, 400),
     circleB = pad.circle(B, R);
 
+var a = circleA.pointAt(0),
+	b = circleB.pointAt(0.5),
+	ab = pad.line(a, b),
+	ab2 = ab.pointAt(0.5);
+	line2 = pad.line(ab2, circleStatic.center());
+
 pad.tagElementNames();
 
 

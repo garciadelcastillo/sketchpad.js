@@ -1762,6 +1762,20 @@ Sketchpad = function(canvasId) {
     };
 
     /**
+     * Returns a Point at the specified parameter. This is an alias for Sketchpad.point.along(line, parameter) 
+     * @param  {Number/Measure} parameter
+     * @return {Point}
+     */
+    Line.prototype.pointAt = function(parameter) {
+        if (arguments.length != 1) {
+            console.error('Sketchpad: invalid arguments for Line.pointAt');
+            return undefined;
+        }
+
+        return S.Point.along(this, parameter);
+    };
+
+    /**
      * A library to store all independent Line construction functions
      * @type {Object}
      */
@@ -2062,11 +2076,14 @@ Sketchpad = function(canvasId) {
         Element.call(this);
         S.addElement(this);
 
-        // this.type = C.CIRCLE;
-        this.type = 'circle';
+        this.type = C.CIRCLE;
+        // this.type = 'circle';
         this.x = xpos;
         this.y = ypos;
         this.r = radius;
+
+        this.parts['center'] = new S.Point(xpos, ypos);
+        this.parts['radius'] = radius;
 
         this.checkStates();
     };
@@ -2086,21 +2103,73 @@ Sketchpad = function(canvasId) {
         S.gr.stroke();
     };
 
+    /**
+     * Returns the center Point of the Circle 
+     * @return {Point}
+     */
     Circle.prototype.center = function() {
-        
+        // this should be improved to allow new centers if centerpoint is unconstrained for example...
+        if (arguments.length != 0) {
+            console.error('Sketchpad: invalid arguments for Circle.center');
+            return undefined;
+        }
+
+        return this.parts.center || undefined;
     };
 
+    /**
+     * Returns the longitude of the perimeter
+     * @return {Measure}
+     */
     Circle.prototype.length = function() {
+        // if radius was unconstrained, this could accept arguments
+        if (arguments.length != 0) {
+            console.error('Sketchpad: invalid arguments for Circle.length');
+            return undefined;
+        }
 
+        if (!this.parts['longitude']) {
+            this.parts['longitude'] = this.parts.radius.type == C.MEASURE ?
+                        S.Measure.compose(this.parts.radius, function(args) { return C.TAU * args[0].value; }) :
+                        S.Measure.compose(this.parts.radius, function(args) { return C.TAU * args[0]; }); 
+        }
+
+        return this.parts['longitude'];
     };
 
+    /**
+     * An alias for Circle.length()
+     * @type {[type]}
+     */
+    Circle.prototype.longitude = Circle.prototype.length;
+
+    /**
+     * Returns the area of the Circle
+     * @return {Measure}
+     */
     Circle.prototype.area = function() {
-        
+        // if radius was unconstrained, this could accept arguments
+        if (arguments.length != 0) {
+            console.error('Sketchpad: invalid arguments for Circle.area');
+            return undefined;
+        }
+
+        if (!this.parts['area']) {
+            this.parts['area'] = this.parts.radius.type == C.MEASURE ?
+                        S.Measure.compose(this.parts.radius, function(args) { return C.PI * args[0].value * args[0].value; }) :
+                        S.Measure.compose(this.parts.radius, function(args) { return C.PI * args[0] * args[0]; }); 
+        }
+
+        return this.parts['area'];
     };
 
-    Circle.prototype.pointAt = function() {
-
-    };
+    /**
+     * Returns a Point at specified parameter. This is an alias for Sketchpad.point.along(circle, parameter)
+     * @return {Point}
+     */
+    Circle.prototype.pointAt = function(parameter) {
+        return S.Point.along(this, parameter);
+    };  
 
     /**
      * A library to store all independent Circle construction functions
@@ -2117,6 +2186,7 @@ Sketchpad = function(canvasId) {
         fromCoordinatesAndMeasure: function(x, y, measure) {
             var c = new Circle(x, y, measure.value);
             c.addParents(x, y, measure);
+            c.parts['center'] = new S.Point(x, y);
             c.parts['radius'] = measure;
             c.update = function() {
                 // this.r = this.parents[2].value;
