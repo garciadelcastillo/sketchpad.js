@@ -36,7 +36,8 @@ Sketchpad = function(canvasId) {
 
     // jQuery detection
     if (!window.jQuery || !$) {
-        console.error('Sketchpad.js depends on jQuery. Please add it to current window context.');
+        console.error('Sketchpad.js depends on jQuery.' + 
+            'Please add it to current window context.');
         return undefined;
     }
 
@@ -264,7 +265,8 @@ Sketchpad = function(canvasId) {
     };
 
     /**
-     * Test for same as above, but passing an object with objects in properties, to be also added to the .properties object:
+     * Test for same as above, but passing an object with objects in properties, 
+     * to be also added to the .properties object:
      * element.addParentParams({
      *     start: point0,
      *     end: point1
@@ -319,7 +321,8 @@ Sketchpad = function(canvasId) {
 
 
     /**
-     * A wrapper for simple numeric values. It makes things easier when used in conjuntion with Measure, so that all methods refer to .value properties 
+     * A wrapper for simple numeric values. It makes things easier when used 
+     * in conjuntion with Measure, so that all methods refer to .value properties 
      * @param {Number} val
      */
     var Value = function(val) {
@@ -334,7 +337,8 @@ Sketchpad = function(canvasId) {
 
     Value.prototype.set = function(newValue) {
         if (this.__.constrained) {
-            console.warning('Sketchpad: this Value is constrained, cannot be set to ' + newValue);
+            console.warning('Sketchpad: this Value is constrained, cannot be set to '
+                + newValue);
             return;
         }
         this.value = newValue;
@@ -343,7 +347,8 @@ Sketchpad = function(canvasId) {
 
     Value.prototype.add = function(offset) {
         if (this.__.constrained) {
-            console.warning('Sketchpad: this Value is constrained, cannot be incremented ' + offset);
+            console.warning('Sketchpad: this Value is constrained, cannot be incremented ' 
+                + offset);
             return;
         }
         this.value += offset;
@@ -425,7 +430,8 @@ Sketchpad = function(canvasId) {
     //  ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
 
     /**
-     * A base Geometry class inheriting from Node, superclass for any Node with geometric properties
+     * A base Geometry class inheriting from Node, superclass for any Node with 
+     * geometric properties
      * @todo  rethink common properties
      */
     var Geometry = function() {
@@ -767,7 +773,8 @@ Sketchpad = function(canvasId) {
             if (!this.args || this.args.length != len) return false;
             for (var l = this.args.length, i = 0; i < l; i++) {
                 if (types[i] === 'numeric') {
-                    if ( !util.isNumber(this.args[i]) && this.args[i].type !== 'value') return false;
+                    if ( !util.isNumber(this.args[i]) 
+                        && this.args[i].type !== 'value') return false;
 
                 } else if (types[i] === 'number') {
                     if ( !util.isNumber(this.args[i]) ) return false;
