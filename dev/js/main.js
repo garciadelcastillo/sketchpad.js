@@ -7,22 +7,24 @@
 
 var pad = new Sketchpad('sketchPadCanvas');
 
-var a = pad.value(10);
+// var a = pad.value(10);
 
-var p = pad.point(150, 100);
+// var p = pad.point(150, 100);
 
-var b = pad.value(150), 
-	c = pad.value(150),
-	d = pad.value(150),
-	e = pad.value(50);
+// var b = pad.value(150), 
+// 	c = pad.value(150),
+// 	d = pad.value(150),
+// 	e = pad.value(50);
 
-var pp = pad.point(b, c),
-	ppp = pad.point(d, e);
+// var pp = pad.point(b, c),
+// 	ppp = pad.point(d, e);
 
-var ll = pad.value.distance(p, pp);
+// var ll = pad.value.distance(p, pp);
 
-var line1 = pad.line(p, pp),
-	line2 = pad.line(pp, ppp);
+// var line1 = pad.line(p, pp),
+// 	line2 = pad.line(pp, ppp);
+
+// var pline2 = pad.point.along(line2, 0.5);
 
 // console.log(
 // 	pad
@@ -31,11 +33,22 @@ var line1 = pad.line(p, pp),
 // 	.ofTypes('value', 'number', 'array', 'string', 'function')
 // );
 
-var ang1 = 0,
-	ang2 = 0;
+var a = pad.value(150); 
+	b = pad.value(200);
+
+var p = pad.point(150, 100),
+	pp = pad.point(a, b);	
+
+var line1 = pad.line(p, pp);
+
+var ab2 = pad.point.along(line1, 0.5);
+
+
+var rot1 = 0,
+	rot2 = 0;
 pad.update = function() {
-	ang1 += 0.1;
-	ang2 += 0.01;
-	b.add(Math.cos(ang1));
-	d.add(Math.cos(ang2));
+	rot1 += 0.01;
+	rot2 += 0.02;
+	a.add(Math.cos(rot1));
+	ab2.properties.parameter.set(pad.utils.map(Math.cos(rot2), -1, 1, 0, 1));
 };

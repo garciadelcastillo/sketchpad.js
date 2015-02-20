@@ -213,8 +213,8 @@ Sketchpad = function(canvasId) {
          *   line.parts.length (Measure)
          * @type {Object}
          */
-        this.parameters = {};
-        this.__ = this.parameters;
+        this.properties = {};
+        this.__ = this.properties;
 
         // Adds this Element to the list manager 
         S.addElement(this);
@@ -264,7 +264,7 @@ Sketchpad = function(canvasId) {
     };
 
     /**
-     * Test for same as above, but passing an object with objects in properties, to be also added to the .parameters object:
+     * Test for same as above, but passing an object with objects in properties, to be also added to the .properties object:
      * element.addParentParams({
      *     start: point0,
      *     end: point1
@@ -333,13 +333,19 @@ Sketchpad = function(canvasId) {
     Value.prototype.constructor = Value;
 
     Value.prototype.set = function(newValue) {
-        if (this.__.constrained) return;
+        if (this.__.constrained) {
+            console.warning('Sketchpad: this Value is constrained, cannot be set to ' + newValue);
+            return;
+        }
         this.value = newValue;
         this.updateChildren();
     };
 
     Value.prototype.add = function(offset) {
-        if (this.__.constrained) return;
+        if (this.__.constrained) {
+            console.warning('Sketchpad: this Value is constrained, cannot be incremented ' + offset);
+            return;
+        }
         this.value += offset;
         this.updateChildren();
     };
@@ -384,12 +390,14 @@ Sketchpad = function(canvasId) {
             v.subtype = 'length';
             v.addParentParams({
                 start: p0,
-                end: p1
+                end: p1, 
+                constrained: true
             });
             v.update = Value.U.distancePointPoint;
             v.update();
             return v;
         }
+
     };
 
     Value.U = {
@@ -453,9 +461,9 @@ Sketchpad = function(canvasId) {
         this.type = 'point';
         // this.visible = false;
 
-        // parameters
-        this.__.x = util.isNumber(x) ? S.value(x) : x;
-        this.__.y = util.isNumber(y) ? S.value(y) : y;
+        // properties
+        this.__.x = x;
+        this.__.y = y;
         this.__.r = { value: 1 };
 
         // aliases
@@ -498,7 +506,7 @@ Sketchpad = function(canvasId) {
         var a = arguments,
             len = a.length;
 
-        switch(len) {
+        switch (len) {
         case 2:
             if (are.objects(a).ofTypes('numeric', 'numeric')) {
                 return Point.G.fromNumericNumeric(a[0], a[1]);
@@ -510,13 +518,53 @@ Sketchpad = function(canvasId) {
         return undefined;
     };
 
+    this.point.along = function() {
+        var a = arguments,
+            len = a.length;
+
+        switch (len) {
+        case 2: 
+            if (are.objects(a).ofTypes('line', 'numeric')) {
+                return Point.G.onLine(a[0], a[1]);
+            }
+            break;
+        };
+        console.error('Sketchpad: invalid arguments for Sketchpad.point.along');
+        return undefined;
+    }
+
 
     Point.G = {
 
         fromNumericNumeric: function(x, y) {
-            var p = new Point(x, y);
-            p.addParents(x, y);
+            var X = util.isNumber(x) ? S.value(x) : x,
+                Y = util.isNumber(y) ? S.value(y) : y;
+            var p = new Point(X, Y);
+            p.addParents(X, Y);
             return p;
+        },
+
+        onLine: function(line, parameter) {
+            var p = new Point(S.value(0), S.value(0));
+            var param = util.isNumber(parameter) ? S.value(parameter) : parameter;
+            p.addParentParams({
+                line: line,
+                parameter: param
+            });
+            p.update = Point.U.onLine;
+            p.update();
+            return p;
+        }
+
+    };
+
+    Point.U = {
+
+        onLine: function() {
+            this.x.value = this.__.line.start.x.value + this.__.parameter.value *
+                (this.__.line.end.x.value - this.__.line.start.x.value);
+            this.y.value = this.__.line.start.y.value + this.__.parameter.value * 
+                (this.__.line.end.y.value - this.__.line.start.y.value);
         }
 
     };
@@ -565,7 +613,7 @@ Sketchpad = function(canvasId) {
         var a = arguments,
             len = a.length;
 
-        switch(len) {
+        switch (len) {
         case 2:
             if (are.objects(a).ofTypes('point', 'point')) {
                 return Line.G.fromPointPoint(a[0], a[1]);
@@ -999,6 +1047,14 @@ Sketchpad = function(canvasId) {
          */
         clampValue: function(value, min, max) {
             return Math.max(min, Math.min(value, max));
+        },
+
+        map: function(value, sMin, sMax, tMin, tMax, clamp) {
+            if (clamp) {
+                if (value < sMin) value = sMin;
+                else if (value > sMax) value = sMax;
+            }
+            return tMin + (value - sMin) * (tMax - tMin) / (sMax - sMin);
         }
 
     };
