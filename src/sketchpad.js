@@ -115,13 +115,13 @@ Sketchpad = function(canvasId) {
             if (!S.elements[i].visible) continue;
 
             // render sets: this should be a nested function of some sort (sets of sets?)
-            if (S.elements[i].type == C.SET && S.elements[i].subtype != C.NUMBER) {
+            // if (S.elements[i].type == C.SET && S.elements[i].subtype != C.NUMBER) {
                 // since elements were added to the parents list anyway, they are rendered
                 // so no need to render them again (?)
                 // for (var j = 0; j < S.elements[i].length; j++) {
                 //   S.elements[i].items[j].render(S.gr);
                 // }
-            }
+            // }
 
             // or individual elements
             else {
@@ -220,9 +220,11 @@ Sketchpad = function(canvasId) {
         S.addElement(this);
     };
 
-    this.element = function() {
-        return new Element();
-    };
+    // this.element = function() {
+    //     return new Element();
+    // };
+
+    Element.prototype.update = function(){};
 
     /**
      * Appends any number of parent objects to this element, and appends this 
@@ -259,6 +261,24 @@ Sketchpad = function(canvasId) {
 
         }
         return;
+    };
+
+    /**
+     * Test for same as above, but passing an object with objects in properties, to be also added to the .parameters object:
+     * element.addParentParams({
+     *     start: point0,
+     *     end: point1
+     * })
+     */
+    Element.prototype.addParentParams = function(parents) {
+        for (var key in parents) {
+            var obj = parents[key];
+            this.parents.push(obj);
+            if (obj.children) {
+                obj.children.push(this);
+            }
+            this.__[key] = obj;
+        }
     };
 
     /**
@@ -305,14 +325,80 @@ Sketchpad = function(canvasId) {
     var Value = function(val) {
         Element.call(this);
 
+        this.type = 'value';
         this.value = val;
-    }
+        this.__.constrained = false;
+    };
     Value.prototype = Object.create(Element.prototype);
     Value.prototype.constructor = Value;
 
+    Value.prototype.set = function(newValue) {
+        if (this.__.constrained) return;
+        this.value = newValue;
+        this.updateChildren();
+    };
+
+    Value.prototype.add = function(offset) {
+        if (this.__.constrained) return;
+        this.value += offset;
+        this.updateChildren();
+    };
+
     // public factory
-    this.value = function(value) {
-        return new Value(value);
+    this.value = function() {
+        var a = arguments,
+            len = a.length;
+
+        switch(len) {
+        case 1:
+            if (are.objects(a).ofTypes('number')) {
+                return new Value(a[0]);
+            };
+            break;
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.value');
+        return undefined;
+    };
+
+    this.value.distance = function() {
+        var a = arguments,
+            len = a.length;
+
+        switch(len) {
+        case 2:
+            if (are.objects(a).ofTypes('point', 'point')) {
+                return Value.G.distancePointPoint(a[0], a[1]);
+            };
+            break;
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.value.distance');
+        return undefined;
+    };
+
+    Value.G = {
+
+        distancePointPoint: function(p0, p1) {
+            var v = new Value(0);
+            v.subtype = 'length';
+            v.addParentParams({
+                start: p0,
+                end: p1
+            });
+            v.update = Value.U.distancePointPoint;
+            v.update();
+            return v;
+        }
+    };
+
+    Value.U = {
+
+        distancePointPoint: function() {
+            var dx = this.__.end.x.value - this.__.start.x.value,
+                    dy = this.__.end.y.value - this.__.start.y.value;
+            this.value = Math.sqrt(dx * dx + dy * dy);
+        }
     };
 
 
@@ -337,7 +423,7 @@ Sketchpad = function(canvasId) {
     var Geometry = function() {
         Element.call(this);
 
-        this.visible = undefined;
+        this.visible = true;
     };
     Geometry.prototype = Object.create(Element.prototype);
     Geometry.prototype.constructor = Geometry;
@@ -354,12 +440,84 @@ Sketchpad = function(canvasId) {
 
 
 
-
-
-
-
+    // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
+    // ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
+    // ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   
+    // ██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   
+    // ██║     ╚██████╔╝██║██║ ╚████║   ██║   
+    // ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   
 
     var Point = function(x, y) {
+        Geometry.call(this);
+
+        this.type = 'point';
+        // this.visible = false;
+
+        // parameters
+        this.__.x = util.isNumber(x) ? S.value(x) : x;
+        this.__.y = util.isNumber(y) ? S.value(y) : y;
+        this.__.r = { value: 1 };
+
+        // aliases
+        // not working because primitives are passed by value
+        // in the future this can probably be improved with getter/setters
+        // this.x = this.__.x.value;
+        // this.y = this.__.y.value;
+        // this.r = this.__.r.value;
+
+        // temp workaround, referencing the objects
+        this.x = this.__.x;
+        this.y = this.__.y;
+        this.r = this.__.r;
+
+    };
+    Point.prototype = Object.create(Geometry.prototype);
+    Point.prototype.constructor = Point;
+
+    /**
+     * Render method
+     */
+    Point.prototype.render = function() {
+        S.gr.strokeStyle = 'black'
+        S.gr.lineWidth = 1;
+        S.gr.fillStyle = 'red';
+
+        // S.gr.strokeStyle = this.style.stroke;
+        // S.gr.lineWidth = this.style.strokeWidth;
+        // S.gr.fillStyle = this.style.fill;
+
+        S.gr.beginPath();
+        S.gr.arc(this.x.value, this.y.value, this.r.value, 0, 2 * Math.PI);
+        S.gr.stroke();
+        S.gr.fill();
+    };
+
+
+
+    this.point = function() {
+        var a = arguments,
+            len = a.length;
+
+        switch(len) {
+        case 2:
+            if (are.objects(a).ofTypes('numeric', 'numeric')) {
+                return Point.G.fromNumericNumeric(a[0], a[1]);
+            }
+            break;
+        };
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.point');
+        return undefined;
+    };
+
+
+    Point.G = {
+
+        fromNumericNumeric: function(x, y) {
+            var p = new Point(x, y);
+            p.addParents(x, y);
+            return p;
+        }
 
     };
 
@@ -368,17 +526,67 @@ Sketchpad = function(canvasId) {
 
 
 
+    // ██╗     ██╗███╗   ██╗███████╗
+    // ██║     ██║████╗  ██║██╔════╝
+    // ██║     ██║██╔██╗ ██║█████╗  
+    // ██║     ██║██║╚██╗██║██╔══╝  
+    // ███████╗██║██║ ╚████║███████╗
+    // ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝
 
+    var Line = function(startPoint, endPoint) {
+        Geometry.call(this);
 
+        this.type = 'line';
 
+        this.__.start = startPoint;
+        this.__.end   = endPoint;
 
+        this.start = this.__.start;
+        this.end   = this.__.end;
+    };
+    Line.prototype = Object.create(Geometry.prototype);
+    Line.prototype.constructor = Line;
 
+    /**
+     * Render method
+     */
+    Line.prototype.render = function() {
+        S.gr.strokeStyle = 'black';
+        S.gr.strokeWidth = 1;
+        // S.gr.strokeStyle = this.style.stroke;
+        // S.gr.lineWidth = this.style.strokeWidth;
+        S.gr.beginPath();
+        S.gr.moveTo(this.start.x.value, this.start.y.value);
+        S.gr.lineTo(this.end.x.value, this.end.y.value);
+        S.gr.stroke();
+    };
 
+    this.line = function() {
+        var a = arguments,
+            len = a.length;
 
+        switch(len) {
+        case 2:
+            if (are.objects(a).ofTypes('point', 'point')) {
+                return Line.G.fromPointPoint(a[0], a[1]);
+            }
+            break;
+        }
 
+        console.error('Sketchpad: invalid arguments for Sketchpad.line');
+        return undefined;
+    };
 
 
+    Line.G = {
 
+        fromPointPoint: function(p0, p1) {
+            var lin = new Line(p0, p1);
+            lin.addParents(p0, p1);
+            // no update override needed
+            return lin;
+        }
+    }
 
 
 
@@ -470,6 +678,68 @@ Sketchpad = function(canvasId) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * An object that implements cascading check of Element types:
+     *     if ( are.objects(args).ofTypes('point', 'measure') )
+     * @type {Object}
+     * @ref http://javascriptissexy.com/beautiful-javascript-easily-create-chainable-cascading-methods-for-expressiveness/
+     */
+    var are = {
+        args: [],
+
+        objects: function(args_) {
+            this.args = args_;
+
+            return this;
+        },
+
+        ofTypes: function() {
+            var types = arguments,
+                len = types.length;
+            if (!this.args || this.args.length != len) return false;
+            for (var l = this.args.length, i = 0; i < l; i++) {
+                if (types[i] === 'numeric') {
+                    if ( !util.isNumber(this.args[i]) && this.args[i].type !== 'value') return false;
+
+                } else if (types[i] === 'number') {
+                    if ( !util.isNumber(this.args[i]) ) return false;
+
+                } else if (types[i] === 'array') {
+                    if ( !util.isArray(this.args[i]) ) return false;
+
+                } else if (types[i] === 'function') {
+                    if ( !util.isFunction(this.args[i]) ) return false;
+
+                } else if (types[i] === 'string') {
+                    if ( !util.isString(this.args[i]) ) return false;
+
+                } else if (this.args[i].type !== types[i]) {
+                    return false;    
+                } 
+            }
+            return true;
+        }
+    };
 
 
 
@@ -520,10 +790,10 @@ Sketchpad = function(canvasId) {
             S._canvasHeight = $(S.parentDiv).innerHeight();
             S.canvas.width = S._canvasWidth;
             S.canvas.height = S._canvasHeight;
-            S.width.update();
-            S.width.updateChildren();
-            S.height.update();
-            S.height.updateChildren();
+            // S.width.update();
+            // S.width.updateChildren();
+            // S.height.update();
+            // S.height.updateChildren();
         });
 
         // we are oficially initialized
