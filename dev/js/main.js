@@ -40,8 +40,20 @@ var p = pad.point(150, 100),
 	pp = pad.point(a, b);	
 
 var line1 = pad.line(p, pp);
-
 var ab2 = pad.point.along(line1, 0.5);
+
+
+var c = pad.value(100);
+
+var p2 = pad.point(c, 300);
+
+
+var A = pad.point(400, 100),
+	B = pad.point(400, 200);
+var AB = pad.line(A, B);
+var C = pad.point.along(AB, 0.5);
+
+
 
 
 var rot1 = 0,
