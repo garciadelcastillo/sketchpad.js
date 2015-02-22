@@ -113,7 +113,7 @@ Sketchpad = function(canvasId) {
 
         // render each element
         for (var i = 0; i < S.elements.length; i++) {
-            if (!S.elements[i].visible) continue;
+            if (!S.elements[i]._.visible) continue;
 
             // render sets: this should be a nested function of some sort (sets of sets?)
             // if (S.elements[i].type == C.SET && S.elements[i].subtype != C.NUMBER) {
@@ -126,7 +126,7 @@ Sketchpad = function(canvasId) {
 
             // or individual elements
             else {
-                S.elements[i].render(S.gr);
+                S.elements[i]._render(S.gr);
             }
         }
 
@@ -170,7 +170,7 @@ Sketchpad = function(canvasId) {
      */
     this.findElementNames = function() {
         this.elements.forEach(function(e) {
-            if (!e.name) e.findName();
+            if (!e._.name) e._findName();
         })
     };
 
@@ -180,8 +180,8 @@ Sketchpad = function(canvasId) {
      */
     this.tagElementNames = function() {
         this.elements.forEach(function(e) {
-            if (!e.name) e.findName();      // if there was no previous name, try to fallback on window var name
-            if (e.name) this.Tag.on(e, e.name);    // create a Text tag if some name was found
+            if (!e._.name) e._findName();      // if there was no previous name, try to fallback on window var name
+            // if (e._.name) this.Tag.on(e, e.name);    // create a Text tag if some name was found
         }, this);  // pass current context as 'this' object inside forEach 
     };
 
@@ -233,11 +233,14 @@ Sketchpad = function(canvasId) {
      */
     var Element = function() {
 
-        this.name = undefined;
-        this.id = getId();
-        this.parents = [];
-        this.children = [];
-        this.constrained = true;
+        // private accessor to object properties
+        this._ = {};
+
+        this._.name = undefined;
+        this._.id = getId();
+        this._.parents = [];
+        this._.children = [];
+        // this.constrained = true;
 
         /**
          * A library to store characteristic Elements conforming or derived from 
@@ -246,30 +249,26 @@ Sketchpad = function(canvasId) {
          *   line.parts.length (Measure)
          * @type {Object}
          */
-        this.properties = {};
-        this.props = this.properties;
-        this.__ = this.properties;
+        this._.properties = {};
+        this._.p = this._.properties;
 
         // An object to store flags for properties that are constrained
-        this.constrains = {};
-        this.cons = this.constrains;
+        // this.constrains = {};
+        // this.cons = this.constrains;
 
         // Adds this Element to the list manager 
         S.addElement(this);
     };
 
-    // this.element = function() {
-    //     return new Element();
-    // };
 
-    Element.prototype.update = function() {};
+    Element.prototype._update = function() {};
 
     /**
      * Appends any number of parent objects to this element, and appends this 
      * object to those parents as child
      * @param {Elements} parents Parent objects driving this element as args
      */
-    Element.prototype.addParents = function() {
+    Element.prototype._addParents = function() {
         for (var l = arguments.length, i = 0; i < l; i++) {
 
             // if passed argument is an array
@@ -283,7 +282,7 @@ Sketchpad = function(canvasId) {
                 } else {
                     // add nested arrays recursively
                     arguments[i].forEach(function(element) {
-                        this.addParents(element);
+                        this._.addParents(element);
                     }, this)
                     // return;
                 }
@@ -291,9 +290,9 @@ Sketchpad = function(canvasId) {
 
             // if it is not an array of objects
             else {
-                this.parents.push(arguments[i]);
-                if (arguments[i].children) {         // if this object has children (i.e. is not a number or an array...)
-                    arguments[i].children.push(this);  // add this object as child to parent
+                this._.parents.push(arguments[i]);
+                if (arguments[i]._.children) {         // if this object has children (i.e. is not a number or an array...)
+                    arguments[i]._.children.push(this);  // add this object as child to parent
                 } 
             }
 
@@ -309,14 +308,14 @@ Sketchpad = function(canvasId) {
      *     end: point1
      * })
      */
-    Element.prototype.addParentParams = function(parents) {
+    Element.prototype._addParentParams = function(parents) {
         for (var key in parents) {
             var obj = parents[key];
-            this.parents.push(obj);
-            if (obj.children) {
-                obj.children.push(this);
+            this._.parents.push(obj);
+            this._.p[key] = obj;
+            if (obj._.children) {
+                obj._.children.push(this);
             }
-            this.__[key] = obj;
         }
     };
 
@@ -324,10 +323,10 @@ Sketchpad = function(canvasId) {
      * Calls the update methods on each children
      * @return {[type]} [description]
      */
-    Element.prototype.updateChildren = function() {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].update();
-            this.children[i].updateChildren();
+    Element.prototype._updateChildren = function() {
+        for (var i = 0; i < this._.children.length; i++) {
+            this._.children[i]._update();
+            this._.children[i]._updateChildren();
         }
     };
 
@@ -336,11 +335,11 @@ Sketchpad = function(canvasId) {
      * property as object name
      * @return {boolean} Returns true if found an instance of this object
      */
-    Element.prototype.findName = function() {
+    Element.prototype._findName = function() {
         for (var a in window) {
             if (window[a] == this) {    // deprecation warning ?!
             // if (navigator[a] == this) {
-                this.name = a;
+                this._.name = a;
                 return a;
             }
         }
@@ -350,6 +349,10 @@ Sketchpad = function(canvasId) {
 
 
 
+    // this can be public
+    Element.prototype.isConstrained = function() {
+        return this._.parents.length !== 0;
+    };
 
 
 
@@ -374,6 +377,48 @@ Sketchpad = function(canvasId) {
 
 
 
+
+
+
+
+
+    // ██╗   ██╗ █████╗ ██████╗ ██╗ █████╗ ██████╗ ██╗     ███████╗
+    // ██║   ██║██╔══██╗██╔══██╗██║██╔══██╗██╔══██╗██║     ██╔════╝
+    // ██║   ██║███████║██████╔╝██║███████║██████╔╝██║     █████╗  
+    // ╚██╗ ██╔╝██╔══██║██╔══██╗██║██╔══██║██╔══██╗██║     ██╔══╝  
+    //  ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██████╔╝███████╗███████╗
+    //   ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝
+
+    var Variable = function(value) {
+        Element.call(this);
+
+        this._.value = value;
+    };
+    Variable.prototype = Object.create(Element.prototype);
+    Variable.prototype.constructor = Variable;
+
+    // PUBLIC ESSENTIAL METHOD
+    Variable.prototype.value = function() {
+        var a = arguments, len = a.length;
+
+        // getter
+        // if (len == 0) {
+        //     return this._.value;
+        // }
+
+        // setter
+        if (len == 1) {
+            if (this.isConstrained()) {
+                console.warn('Sorry, Variable is constrained');
+            } else {
+                this._.value = a[0];
+                this._updateChildren();
+            }
+        }
+
+        // default: getter
+        return this._.value;
+    };
 
 
 
@@ -388,32 +433,18 @@ Sketchpad = function(canvasId) {
     // ╚███╔███╔╝██║  ██║██║  ██║██║     
     //  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     
 
-    /**
-     * A wrapper for simple numeric values. It makes things easier when used 
-     * in conjuntion with Measure, so that all methods refer to .value properties 
-     * Only to be used internally by Sketchpad, representing unconstrained elements
-     * @param {Number} val
-     */
-    var Wrap = function(val) {
-        // Element.call(this);
+    var Wrap = function(value) {
+        Variable.call(this, value);
 
-        this.type = 'wrap';
-        this.value = val;
-        this.cons = {
-            value: false
-        };
+        this._.type = 'wrap';
     };
-    // Wrap.prototype = Object.create(Element.prototype);
-    // Wrap.prototype.constructor = Wrap;
+    Wrap.prototype = Object.create(Variable.prototype);
+    Wrap.prototype.constructor = Wrap;
 
-    Wrap.prototype.set = function(newValue) {
-        this.value = newValue;
-        // this.updateChildren();
-    };
-
-    Wrap.prototype.add = function(offset) {
-        this.value += offset;
-        // this.updateChildren();
+    Wrap.prototype.add = function(value) {
+        this._.value += value;
+        this._updateChildren();
+        return this._.value;
     };
 
 
@@ -421,163 +452,160 @@ Sketchpad = function(canvasId) {
 
 
 
+    // ███╗   ██╗██╗   ██╗███╗   ███╗███████╗██████╗  █████╗ ██╗     
+    // ████╗  ██║██║   ██║████╗ ████║██╔════╝██╔══██╗██╔══██╗██║     
+    // ██╔██╗ ██║██║   ██║██╔████╔██║█████╗  ██████╔╝███████║██║     
+    // ██║╚██╗██║██║   ██║██║╚██╔╝██║██╔══╝  ██╔══██╗██╔══██║██║     
+    // ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗██║  ██║██║  ██║███████╗
+    // ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
+    var Numeral = function(value) {
+        Variable.call(this, value);
 
-
-
-    // ██╗   ██╗ █████╗ ██╗     ██╗   ██╗███████╗
-    // ██║   ██║██╔══██╗██║     ██║   ██║██╔════╝
-    // ██║   ██║███████║██║     ██║   ██║█████╗  
-    // ╚██╗ ██╔╝██╔══██║██║     ██║   ██║██╔══╝  
-    //  ╚████╔╝ ██║  ██║███████╗╚██████╔╝███████╗
-    //   ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝
-
-    /**
-     * A Value Element for users to create their own numeric linked objects
-     * @param {[type]} value [description]
-     */
-    var Value = function(value) {
-        Element.call(this);
-        this.type = 'value';
-        this.value = value;
-        this.cons.value = true;
+        this._.type = 'numeral';
     };
-    Value.prototype = Object.create(Element.prototype);
-    Value.prototype.constructor = Value;
-    
-    Value.prototype.set = function(newValue) {
-        this.value = newValue;
-        this.updateChildren();
-    };
+    Numeral.prototype = Object.create(Variable.prototype);
+    Numeral.prototype.constructor = Numeral;
 
-    Value.prototype.add = function(offset) {
-        this.value += offset;
-        this.updateChildren();
-    };
-
-    this.value = function() {
-        var a = arguments,
-            len = a.length;
-
-        switch(len) {
-        case 1:
-            if (are.objects(a).ofTypes('number')) {
-                return new Value(a[0]);
-            };
-            break;
+    // PUBLIC CLASS METHODS
+    Numeral.prototype.add = function(value) {
+        if (!util.isNumber(value)) {
+            console.error('arg error');
+            return undefined;
         }
 
-        console.error('Sketchpad: invalid arguments for Sketchpad.value');
-        return undefined;
-    };
-
-
-
-
-
-
-    // ███╗   ███╗███████╗ █████╗ ███████╗██╗   ██╗██████╗ ███████╗
-    // ████╗ ████║██╔════╝██╔══██╗██╔════╝██║   ██║██╔══██╗██╔════╝
-    // ██╔████╔██║█████╗  ███████║███████╗██║   ██║██████╔╝█████╗  
-    // ██║╚██╔╝██║██╔══╝  ██╔══██║╚════██║██║   ██║██╔══██╗██╔══╝  
-    // ██║ ╚═╝ ██║███████╗██║  ██║███████║╚██████╔╝██║  ██║███████╗
-    // ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
-
-    /**
-     * Same as Value, but is defined by a relation, and cannot be modified
-     * @param {[type]} val [description]
-     */
-    var Measure = function(val) {
-        Element.call(this);
-
-        this.type = 'measure';
-        this.value = val;
-
-        this.cons.value = true;
-    };
-    Measure.prototype = Object.create(Element.prototype);
-    Measure.prototype.constructor = Measure;
-
-
-
-    this.measure = function() {
-        return undefined;
-    };
-
-    this.measure.distance = function() {
-        var a = arguments,
-            len = a.length;
-
-        switch(len) {
-        case 2:
-            if (are.objects(a).ofTypes('point', 'point')) {
-                return Measure.G.distancePointPoint(a[0], a[1]);
-            };
-            break;
+        if (this.isConstrained()) {
+            console.warn('constrain error');
+            return this._.value;
         }
 
-        console.error('Sketchpad: invalid arguments for Sketchpad.measure.distance');
+        this._.value += value;
+        this._updateChildren();
+        return this._.value;
+    };
+
+    // PUBLIC SPAWN METHODS
+    Numeral.prototype.half = function() {
+        if (arguments.length != 0) {
+            console.error('error');
+            return undefined;
+        }
+
+        if (!this._.p['half']) {
+            this._.p['half'] = Numeral.G.half(this);
+        }
+
+        return this._.p['half'];
+    };
+
+    // PUBLIC FACTORIES
+    this.number = function(value) {
+        if (is(value).primitive('number')) {
+            return Numeral.G.fromNumber(value);
+        }
+
+        console.log('error...');
         return undefined;
     };
 
-    // this.measure.distance.horizontal = function() {
-    //     var a = arguments,
-    //         len = a.length;
+    this.number.half = function(numeral) {
+        return numeral.half();
+    };
 
-    //     switch(len) {
-    //     case 2:
-    //         if (are.objects(a).ofTypes('point', 'point')) {
-    //             return Measure.G.distancePointPoint(a[0], a[1]);
-    //         };
-    //         break;
-    //     }
-
-    //     console.error('Sketchpad: invalid arguments for Sketchpad.measure.distance');
-    //     return undefined;
-    // };
+    this.number.linked = function(object, essentialProp) {
+        return Numeral.G.linked(object, essentialProp);
+    };
 
 
-    Measure.G = {
+    // PRIVATE CONSTRUCTIVE LIBRARIES
+    Numeral.G = {
 
-        distancePointPoint: function(p0, p1) {
-            var v = new Measure(0);
-            v.subtype = 'length';
-            v.addParentParams({
-                start: p0,
-                end: p1
+        fromNumber: function(number) {
+            var n = new Numeral(number);
+            n._addParentParams({
+                value: new Wrap(number)
             });
-            v.update = Measure.U.distancePointPoint;
-            v.update();
-            return v;
+            n._update = Numeral.U.fromNumber;
+            return n;
         },
 
-        // distanceHorizontalPointPoint: function(p0, p1) {
-        //     var v = new Measure(0);
-        //     v.subtype = 'length';
-        //     v.addParentParams({
-        //         start: p0,
-        //         end: p1
-        //     });
-        //     v.update = Measure.U.distancePointPoint;
-        //     v.update();
-        //     return v;
-        // }
+        half: function(numeral) {
+            var n = new Numeral(numeral._.value / 2);
+            n._addParentParams({
+                operand: numeral
+            });
+            n._update = Numeral.U.half;
+            return n;
+        },
+
+        linked: function(obj, prop) {
+            var n = new Numeral(obj._[prop]);
+            n._addParentParams({
+                element: obj,
+                property: prop
+            });
+            n._update = Numeral.U.linked;
+            return n;
+        }
+
+    };
+
+    Numeral.U = {
+
+        fromNumber: function() {
+            this._.value = this._p['value']._.value;
+        },
+
+        half: function() {
+            this._.value = this._.p['operand']._.value / 2;
+        },
+
+        linked: function() {
+            this._.value = this._.p['element']._[this.__['property']];
+        }
+
     };
 
 
-    Measure.U = {
 
-        distancePointPoint: function() {
-            var dx = this.__.end.x.value - this.__.start.x.value,
-                    dy = this.__.end.y.value - this.__.start.y.value;
-            this.value = Math.sqrt(dx * dx + dy * dy);
-        },
 
-        // distanceHorizontalPointPoint: function() {
-        //     this.value = this.__.end.y.value - this.__.start.y.value;
-        // },
 
-    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -631,7 +659,7 @@ Sketchpad = function(canvasId) {
     var Geometry = function() {
         Element.call(this);
 
-        this.visible = true;
+        this._.visible = true;
     };
     Geometry.prototype = Object.create(Element.prototype);
     Geometry.prototype.constructor = Geometry;
@@ -640,9 +668,25 @@ Sketchpad = function(canvasId) {
      * Sets the 'visible' property of an object
      * @param {Boolean} isVisible
      */
-    Geometry.prototype.setVisible = function(isVisible) {
-        this.visible = isVisible;
+    Geometry.prototype.visible = function(isVisible) {
+        this._.visible = isVisible;
+
+        var a = arguments, len = a.length;
+
+        // setter
+        if (len == 1) {
+            if (util.isBoolean(isVisible)) {
+                this._.value = isVisible;
+                this._updateChildren();
+            } else {
+                console.error('error');
+            }
+        }
+
+        // default: getter
+        return this._.value;
     };
+
 
 
 
@@ -655,127 +699,31 @@ Sketchpad = function(canvasId) {
     // ██║     ╚██████╔╝██║██║ ╚████║   ██║   
     // ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   
 
-    var Point = function(x, y) {
+    // INPUTS ARE PRIMITIVE NUMBERS
+    var Point = function(x, y, r) {
         Geometry.call(this);
 
-        this.type = 'point';
-        // this.visible = false;
+        this._.type = 'point';
+        // this._.visible = false;
 
-        // properties
-        this.__.x = x;
-        this.__.y = y;
-        this.__.r = { value: 1 };
-
-        // aliases
-        // not working because primitives are passed by value
-        // in the future this can probably be improved with getter/setters
-        // this.x = this.__.x.value;
-        // this.y = this.__.y.value;
-        // this.r = this.__.r.value;
-
-        // temp workaround, referencing the objects
-        this.x = this.__.x;
-        this.y = this.__.y;
-        this.r = this.__.r;
-
+        // ESSENTIAL PROPS
+        this._.x = x;
+        this._.y = y;
+        this._.r = r;
     };
     Point.prototype = Object.create(Geometry.prototype);
     Point.prototype.constructor = Point;
 
-    Point.prototype.x = function() {
-        if (!this.properties['x']) {
-            this.properties['x'] = new LinkedValue(this, 'x');
-        }
-
-        return this.properties['x'];
-    };
-
-    var LinkedValue = function(elem, property) {
-        Element.call(this);
-
-        this.type = 'linkedvalue';
-        this.value = elem[property];
-        this.parents = {
-            element: elem,
-            property: property
-        };
-        this.children = {};
-    };
-    // class inheritance...
-    LinkedValue.prototype.update = function() {
-        this.value = this.parents.element[this.parents.property];
-    };
-
-
-    /**
-     * Render method
-     */
-    Point.prototype.render = function() {
-        S.gr.strokeStyle = 'black'
-        S.gr.lineWidth = 1;
-        S.gr.fillStyle = 'red';
-
-        // S.gr.strokeStyle = this.style.stroke;
-        // S.gr.lineWidth = this.style.strokeWidth;
-        // S.gr.fillStyle = this.style.fill;
-
-        S.gr.beginPath();
-        S.gr.arc(this.x.value, this.y.value, this.r.value, 0, 2 * Math.PI);
-        S.gr.stroke();
-        S.gr.fill();
-    };
-
-    Point.prototype.set = function(newX, newY) {
-        if (!are.objects(arguments).ofTypes('number', 'number')) {
-            console.error('Sketchpad: invalid arguments for Point.set');
-            return;
-        }
-
-        if (this.cons.x) {
-            console.warn('Sketchpad: the X coordinate of this Point is constrained');
-        } else {
-            // this.__.x.set(newX);
-            this.__.x.value = newX;
-        };
-
-        if (this.cons.y) {
-            console.warn('Sketchpad: the Y coordinate of this Point is constrained');
-        } else {
-            // this.__.y.set(newY);
-            this.__.y.value = newY;
-        };
-
-        this.updateChildren();
-    };
-
     Point.prototype.move = function(offX, offY) {
-        if (!are.objects(arguments).ofTypes('number', 'number')) {
-            console.error('Sketchpad: invalid arguments for Point.move');
-            return;
-        };
-
-        if (this.cons.x) {
-            console.warn('Sketchpad: the X coordinate of this Point is constrained');
-        } else {
-            // this.__.x.add(offX);
-            this.__.x.value += offX;
-        };
-
-        if (this.cons.y) {
-            console.warn('Sketchpad: the Y coordinate of this Point is constrained');
-        } else {
-            // this.__.y.add(offY);
-            this.__.y.value += offY;
-        };
-
-        this.updateChildren();
+        if (are.objects(arguments).ofTypes('number', 'number')) {
+            if (this._.p['x']) this._.p['x'].add(offX);
+            if (this._.p['y']) this._.p['y'].add(offY);
+        }
     };
 
-
-
+    // PUBLIC FACTORIES
     this.point = function() {
-        var a = arguments,
-            len = a.length;
+        var a = arguments, len = a.length;
 
         switch (len) {
         case 2:
@@ -789,152 +737,368 @@ Sketchpad = function(canvasId) {
         return undefined;
     };
 
-    this.point.along = function() {
-        var a = arguments,
-            len = a.length;
-
-        switch (len) {
-        case 2: 
-            if (are.objects(a).ofTypes('line', 'numeric')) {
-                return Point.G.onLine(a[0], a[1]);
-            }
-            break;
-        };
-        console.error('Sketchpad: invalid arguments for Sketchpad.point.along');
-        return undefined;
-    };
-
-
     Point.G = {
 
         fromNumericNumeric: function(x, y) {
             var X = util.isNumber(x) ? new Wrap(x) : x,
-                Y = util.isNumber(y) ? new Wrap(y) : y;
-            var p = new Point(X, Y);
-            // p.addParents(X, Y); 
-            p.addParentParams({
+                Y = util.isNumber(y) ? new Wrap(y) : y,
+                R = new Wrap(1);
+            var p = new Point(X._.value, Y._.value, R._.value);
+            p._addParentParams({
                 x: X,
-                y: Y
+                y: Y,
+                r: R
             })
-            p.cons.x = !util.isNumber(x);
-            p.cons.y = !util.isNumber(y);
+            p._update = Point.U.fromNumericNumeric;
             return p;
-        },
-
-        onLine: function(line, parameter) {
-            var pnum = util.isNumber(parameter);
-            var p = new Point(new Wrap(0), new Wrap(0));
-            var param = pnum ? new Wrap(parameter) : parameter;
-            p.addParentParams({
-                line: line,
-                parameter: param
-            });
-            p.cons.x = true;
-            p.cons.y = true;
-            p.cons.parameter = !pnum;
-            if (pnum) p.setParameter = Point.G.setParameter;
-            p.update = Point.U.onLine;
-            p.update();
-            return p;
-        },
-
-        setParameter: function(parameter) {
-            if (util.isNumber(parameter)) {
-                this.__.parameter.value = parameter;
-            }
-            this.update();
-            this.updateChildren();
         }
     };
 
     Point.U = {
-
-        onLine: function() {
-            // both elements are Wraps
-            this.x.value = this.__.line.start.x.value + this.__.parameter.value *
-                (this.__.line.end.x.value - this.__.line.start.x.value);
-            this.y.value = this.__.line.start.y.value + this.__.parameter.value * 
-                (this.__.line.end.y.value - this.__.line.start.y.value);
-        },
+        fromNumericNumeric: function() {
+            this._.x = this._.p.x._.value;
+            this._.y = this._.p.y._.value;
+            this._.r = this._.p.r._.value;
+        }
+    };
 
 
+
+    // ESSENTIAL GETTER/SETTERS
+    Point.prototype.x = function() {
+        var a = arguments, len = a.length;
+
+        if (len == 0) {
+            if (!this._.p['x']) {
+                this._.p['x'] = new S.number.linked(this, 'x');
+            }
+            return this._.p['x'];
+        }
+
+        if (len == 1) {
+            this._.p.x.value(a[0]);
+        }
+    };
+
+    Point.prototype.y = function() {
+        var a = arguments, len = a.length;
+
+        if (len == 0) {
+            if (!this._.p['y']) {
+                this._.p['y'] = new S.number.linked(this, 'y');
+            }
+            return this._.p['y'];
+        }
+
+        if (len == 1) {
+            this._.p.y.value(a[0]);
+        }
+    };
+
+    Point.prototype.r = function() {
+        var a = arguments, len = a.length;
+
+        if (len == 0) {
+            if (!this._.p['r']) {
+                this._.p['r'] = new S.number.linked(this, 'r');
+            }
+            return this._.p['r'];
+        }
+
+        if (len == 1) {
+            this._.p.r.value(a[0]);
+        }
     };
 
 
 
 
+    // PRIVATE CLASS METHODS
+    Point.prototype._render = function() {
+        S.gr.strokeStyle = 'black'
+        S.gr.lineWidth = 1;
+        S.gr.fillStyle = 'red';
 
-
-    // ██╗     ██╗███╗   ██╗███████╗
-    // ██║     ██║████╗  ██║██╔════╝
-    // ██║     ██║██╔██╗ ██║█████╗  
-    // ██║     ██║██║╚██╗██║██╔══╝  
-    // ███████╗██║██║ ╚████║███████╗
-    // ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝
-
-    var Line = function(startPoint, endPoint) {
-        Geometry.call(this);
-
-        this.type = 'line';
-
-        this.__.start = startPoint;
-        this.__.end   = endPoint;
-
-        this.start = this.__.start;
-        this.end   = this.__.end;
-    };
-    Line.prototype = Object.create(Geometry.prototype);
-    Line.prototype.constructor = Line;
-
-    /**
-     * Render method
-     */
-    Line.prototype.render = function() {
-        S.gr.strokeStyle = 'black';
-        S.gr.strokeWidth = 1;
         // S.gr.strokeStyle = this.style.stroke;
         // S.gr.lineWidth = this.style.strokeWidth;
+        // S.gr.fillStyle = this.style.fill;
+
         S.gr.beginPath();
-        S.gr.moveTo(this.start.x.value, this.start.y.value);
-        S.gr.lineTo(this.end.x.value, this.end.y.value);
+        S.gr.arc(this._.x, this._.y, this._.r, 0, 2 * Math.PI);
         S.gr.stroke();
-    };
-
-    Line.prototype.pointAt = function(parameter) {
-        if (arguments.length != 1) {
-            console.error('Sketchpad: invalid arguments for Line.pointAt');
-            return undefined;
-        }
-
-        return S.point.along(this, parameter);
-    };
-
-    this.line = function() {
-        var a = arguments,
-            len = a.length;
-
-        switch (len) {
-        case 2:
-            if (are.objects(a).ofTypes('point', 'point')) {
-                return Line.G.fromPointPoint(a[0], a[1]);
-            }
-            break;
-        }
-
-        console.error('Sketchpad: invalid arguments for Sketchpad.line');
-        return undefined;
+        S.gr.fill();
     };
 
 
-    Line.G = {
+    //     Numeral.prototype.half = function() {
+    //     if (arguments.length != 0) {
+    //         console.log('error');
+    //         return undefined;
+    //     }
 
-        fromPointPoint: function(p0, p1) {
-            var lin = new Line(p0, p1);
-            lin.addParents(p0, p1);
-            // no update override needed, line takes params directly from x,y props
-            return lin;
-        }
-    }
+    //     if (!this.__['half']) {
+    //         this.__['half'] = Numeral.G.half(this);
+    //     }
+
+    //     return this.__['half'];
+    // };
+
+
+
+
+    // Point.prototype.x = function() {
+    //     if (!this.properties['x']) {
+    //         this.properties['x'] = new LinkedValue(this, 'x');
+    //     }
+
+    //     return this.properties['x'];
+    // };
+
+    // var LinkedValue = function(elem, property) {
+    //     Element.call(this);
+
+    //     this.type = 'linkedvalue';
+    //     this.value = elem[property];
+    //     this.parents = {
+    //         element: elem,
+    //         property: property
+    //     };
+    //     this.children = {};
+    // };
+    // // class inheritance...
+    // LinkedValue.prototype.update = function() {
+    //     this.value = this.parents.element[this.parents.property];
+    // };
+
+
+    // /**
+    //  * Render method
+    //  */
+    // Point.prototype.render = function() {
+    //     S.gr.strokeStyle = 'black'
+    //     S.gr.lineWidth = 1;
+    //     S.gr.fillStyle = 'red';
+
+    //     // S.gr.strokeStyle = this.style.stroke;
+    //     // S.gr.lineWidth = this.style.strokeWidth;
+    //     // S.gr.fillStyle = this.style.fill;
+
+    //     S.gr.beginPath();
+    //     S.gr.arc(this.x.value, this.y.value, this.r.value, 0, 2 * Math.PI);
+    //     S.gr.stroke();
+    //     S.gr.fill();
+    // };
+
+    // Point.prototype.set = function(newX, newY) {
+    //     if (!are.objects(arguments).ofTypes('number', 'number')) {
+    //         console.error('Sketchpad: invalid arguments for Point.set');
+    //         return;
+    //     }
+
+    //     if (this.cons.x) {
+    //         console.warn('Sketchpad: the X coordinate of this Point is constrained');
+    //     } else {
+    //         // this.__.x.set(newX);
+    //         this.__.x.value = newX;
+    //     };
+
+    //     if (this.cons.y) {
+    //         console.warn('Sketchpad: the Y coordinate of this Point is constrained');
+    //     } else {
+    //         // this.__.y.set(newY);
+    //         this.__.y.value = newY;
+    //     };
+
+    //     this.updateChildren();
+    // };
+
+    // Point.prototype.move = function(offX, offY) {
+    //     if (!are.objects(arguments).ofTypes('number', 'number')) {
+    //         console.error('Sketchpad: invalid arguments for Point.move');
+    //         return;
+    //     };
+
+    //     if (this.cons.x) {
+    //         console.warn('Sketchpad: the X coordinate of this Point is constrained');
+    //     } else {
+    //         // this.__.x.add(offX);
+    //         this.__.x.value += offX;
+    //     };
+
+    //     if (this.cons.y) {
+    //         console.warn('Sketchpad: the Y coordinate of this Point is constrained');
+    //     } else {
+    //         // this.__.y.add(offY);
+    //         this.__.y.value += offY;
+    //     };
+
+    //     this.updateChildren();
+    // };
+
+
+
+    // this.point = function() {
+    //     var a = arguments,
+    //         len = a.length;
+
+    //     switch (len) {
+    //     case 2:
+    //         if (are.objects(a).ofTypes('numeric', 'numeric')) {
+    //             return Point.G.fromNumericNumeric(a[0], a[1]);
+    //         }
+    //         break;
+    //     };
+
+    //     console.error('Sketchpad: invalid arguments for Sketchpad.point');
+    //     return undefined;
+    // };
+
+    // this.point.along = function() {
+    //     var a = arguments,
+    //         len = a.length;
+
+    //     switch (len) {
+    //     case 2: 
+    //         if (are.objects(a).ofTypes('line', 'numeric')) {
+    //             return Point.G.onLine(a[0], a[1]);
+    //         }
+    //         break;
+    //     };
+    //     console.error('Sketchpad: invalid arguments for Sketchpad.point.along');
+    //     return undefined;
+    // };
+
+
+    // Point.G = {
+
+    //     fromNumericNumeric: function(x, y) {
+    //         var X = util.isNumber(x) ? new Wrap(x) : x,
+    //             Y = util.isNumber(y) ? new Wrap(y) : y;
+    //         var p = new Point(X, Y);
+    //         // p.addParents(X, Y); 
+    //         p.addParentParams({
+    //             x: X,
+    //             y: Y
+    //         })
+    //         p.cons.x = !util.isNumber(x);
+    //         p.cons.y = !util.isNumber(y);
+    //         return p;
+    //     },
+
+    //     onLine: function(line, parameter) {
+    //         var pnum = util.isNumber(parameter);
+    //         var p = new Point(new Wrap(0), new Wrap(0));
+    //         var param = pnum ? new Wrap(parameter) : parameter;
+    //         p.addParentParams({
+    //             line: line,
+    //             parameter: param
+    //         });
+    //         p.cons.x = true;
+    //         p.cons.y = true;
+    //         p.cons.parameter = !pnum;
+    //         if (pnum) p.setParameter = Point.G.setParameter;
+    //         p.update = Point.U.onLine;
+    //         p.update();
+    //         return p;
+    //     },
+
+    //     setParameter: function(parameter) {
+    //         if (util.isNumber(parameter)) {
+    //             this.__.parameter.value = parameter;
+    //         }
+    //         this.update();
+    //         this.updateChildren();
+    //     }
+    // };
+
+    // Point.U = {
+
+    //     onLine: function() {
+    //         // both elements are Wraps
+    //         this.x.value = this.__.line.start.x.value + this.__.parameter.value *
+    //             (this.__.line.end.x.value - this.__.line.start.x.value);
+    //         this.y.value = this.__.line.start.y.value + this.__.parameter.value * 
+    //             (this.__.line.end.y.value - this.__.line.start.y.value);
+    //     },
+
+
+    // };
+
+
+
+
+
+
+    // // ██╗     ██╗███╗   ██╗███████╗
+    // // ██║     ██║████╗  ██║██╔════╝
+    // // ██║     ██║██╔██╗ ██║█████╗  
+    // // ██║     ██║██║╚██╗██║██╔══╝  
+    // // ███████╗██║██║ ╚████║███████╗
+    // // ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝
+
+    // var Line = function(startPoint, endPoint) {
+    //     Geometry.call(this);
+
+    //     this.type = 'line';
+
+    //     this.__.start = startPoint;
+    //     this.__.end   = endPoint;
+
+    //     this.start = this.__.start;
+    //     this.end   = this.__.end;
+    // };
+    // Line.prototype = Object.create(Geometry.prototype);
+    // Line.prototype.constructor = Line;
+
+    // /**
+    //  * Render method
+    //  */
+    // Line.prototype.render = function() {
+    //     S.gr.strokeStyle = 'black';
+    //     S.gr.strokeWidth = 1;
+    //     // S.gr.strokeStyle = this.style.stroke;
+    //     // S.gr.lineWidth = this.style.strokeWidth;
+    //     S.gr.beginPath();
+    //     S.gr.moveTo(this.start.x.value, this.start.y.value);
+    //     S.gr.lineTo(this.end.x.value, this.end.y.value);
+    //     S.gr.stroke();
+    // };
+
+    // Line.prototype.pointAt = function(parameter) {
+    //     if (arguments.length != 1) {
+    //         console.error('Sketchpad: invalid arguments for Line.pointAt');
+    //         return undefined;
+    //     }
+
+    //     return S.point.along(this, parameter);
+    // };
+
+    // this.line = function() {
+    //     var a = arguments,
+    //         len = a.length;
+
+    //     switch (len) {
+    //     case 2:
+    //         if (are.objects(a).ofTypes('point', 'point')) {
+    //             return Line.G.fromPointPoint(a[0], a[1]);
+    //         }
+    //         break;
+    //     }
+
+    //     console.error('Sketchpad: invalid arguments for Sketchpad.line');
+    //     return undefined;
+    // };
+
+
+    // Line.G = {
+
+    //     fromPointPoint: function(p0, p1) {
+    //         var lin = new Line(p0, p1);
+    //         lin.addParents(p0, p1);
+    //         // no update override needed, line takes params directly from x,y props
+    //         return lin;
+    //     }
+    // }
 
 
 
@@ -1068,9 +1232,10 @@ Sketchpad = function(canvasId) {
             for (var l = this.args.length, i = 0; i < l; i++) {
                 if (types[i] === 'numeric') {
                     if ( !util.isNumber(this.args[i]) 
-                        && !this.args[i].hasOwnProperty('value')) return false;
-                    // if ( !util.isNumber(this.args[i]) 
-                    //     && this.args[i].type !== 'value') return false;
+                        && !this.args[i]._.hasOwnProperty('value')) return false;
+
+                } else if (types[i] === 'boolean') {
+                    if ( !util.isBoolean(this.args[i]) ) return false;
 
                 } else if (types[i] === 'number') {
                     if ( !util.isNumber(this.args[i]) ) return false;
@@ -1084,7 +1249,7 @@ Sketchpad = function(canvasId) {
                 } else if (types[i] === 'string') {
                     if ( !util.isString(this.args[i]) ) return false;
 
-                } else if (this.args[i].type !== types[i]) {
+                } else if (this.args[i]._.type !== types[i]) {
                     return false;    
                 } 
             }
@@ -1093,7 +1258,7 @@ Sketchpad = function(canvasId) {
     };
 
 
-    this.is = function(target) {
+    var is = function(target) {
 
         return {
             arg: target,
@@ -1262,6 +1427,15 @@ Sketchpad = function(canvasId) {
     var util = {
 
         /**
+         * Underscore's implementation of _.isBoolean
+         * @param  {Object}  obj
+         * @return {Boolean}
+         */
+        isBoolean: function(obj) {
+            return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
+        },
+
+        /**
          * Underscore's implementation of _.isNumber
          * @param  {Object}  obj
          * @return {Boolean}
@@ -1276,6 +1450,7 @@ Sketchpad = function(canvasId) {
          * @return {Boolean}      
          */
         isNumberArray: function(array) {
+            if (!util.isArray(array)) return false;
             for (var l = array.length, i = 0; i < l; i++) {
                 if (!util.isNumber(array[i])) return false;
             }
@@ -1319,7 +1494,7 @@ Sketchpad = function(canvasId) {
          * @return {Boolean}
          */
         isSet: function(obj) {
-            return obj.type === 'set';
+            return obj._.type === 'set';
         },
 
         /**
@@ -1328,7 +1503,7 @@ Sketchpad = function(canvasId) {
          * @return {Boolean}
          */
         isPoint: function(obj) {
-            return obj.type === 'point';
+            return obj._.type === 'point';
         },
 
         /**
@@ -1337,7 +1512,7 @@ Sketchpad = function(canvasId) {
          * @return {Boolean}     
          */
         isLine: function(obj) {
-            return obj.type === 'line';
+            return obj._.type === 'line';
         },
 
         /**
@@ -1346,7 +1521,7 @@ Sketchpad = function(canvasId) {
          * @return {Boolean}     
          */
         isCircle: function(obj) {
-            return obj.type === 'circle';
+            return obj._.type === 'circle';
         },
 
         /**
@@ -1355,7 +1530,7 @@ Sketchpad = function(canvasId) {
          * @return {Boolean}
          */
         isValue: function(obj) {
-            return obj.type === 'value';
+            return obj._.type === 'value';
         },
 
         /**
@@ -1396,11 +1571,11 @@ Sketchpad = function(canvasId) {
  */
 window.requestAnimFrame = (function() {
     return window.requestAnimationFrame ||
-                 window.webkitRequestAnimationFrame ||
-                 window.mozRequestAnimationFrame ||
-                 window.oRequestAnimationFrame ||
-                 window.msRequestAnimationFrame ||
-                 function(callback, element) {
-                     return window.setTimeout(callback, 1000/60);
-                 };
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(callback, element) {
+                return window.setTimeout(callback, 1000/60);
+            };
 })();
