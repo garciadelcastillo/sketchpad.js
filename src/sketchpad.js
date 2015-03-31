@@ -31,8 +31,8 @@
 
 Sketchpad = function(canvasId) {
 
-    this.version = "v0.0.3";
-    this.build = 1102;
+    this.version = "v0.0.3a1";
+    this.build = 1103;
 
     // jQuery detection
     if (!window.jQuery || !$) {
@@ -240,7 +240,7 @@ Sketchpad = function(canvasId) {
         this._.id = getId();
         this._.parents = [];
         this._.children = [];
-        // this.constrained = true;
+        this._.constrained = true;
 
         /**
          * A library to store characteristic Elements conforming or derived from 
@@ -250,11 +250,7 @@ Sketchpad = function(canvasId) {
          * @type {Object}
          */
         this._.properties = {};
-        this._.p = this._.properties;
-
-        // An object to store flags for properties that are constrained
-        // this.constrains = {};
-        // this.cons = this.constrains;
+        this._.p = this._.properties;  // an alias
 
         // Adds this Element to the list manager 
         S.addElement(this);
@@ -263,42 +259,42 @@ Sketchpad = function(canvasId) {
 
     Element.prototype._update = function() {};
 
-    /**
-     * Appends any number of parent objects to this element, and appends this 
-     * object to those parents as child
-     * @param {Elements} parents Parent objects driving this element as args
-     */
-    Element.prototype._addParents = function() {
-        for (var l = arguments.length, i = 0; i < l; i++) {
+    // /**
+    //  * Appends any number of parent objects to this element, and appends this 
+    //  * object to those parents as child
+    //  * @param {Elements} parents Parent objects driving this element as args
+    //  */
+    // Element.prototype._addParents = function() {
+    //     for (var l = arguments.length, i = 0; i < l; i++) {
 
-            // if passed argument is an array
-            if (util.isArray(arguments[i])) {
+    //         // if passed argument is an array
+    //         if (util.isArray(arguments[i])) {
                 
-                // if empty array
-                if (arguments[i].length == 0) {
-                    // return;
+    //             // if empty array
+    //             if (arguments[i].length == 0) {
+    //                 // return;
 
-                // if multiple objects in array
-                } else {
-                    // add nested arrays recursively
-                    arguments[i].forEach(function(element) {
-                        this._.addParents(element);
-                    }, this)
-                    // return;
-                }
-            }
+    //             // if multiple objects in array
+    //             } else {
+    //                 // add nested arrays recursively
+    //                 arguments[i].forEach(function(element) {
+    //                     this._.addParents(element);
+    //                 }, this)
+    //                 // return;
+    //             }
+    //         }
 
-            // if it is not an array of objects
-            else {
-                this._.parents.push(arguments[i]);
-                if (arguments[i]._.children) {         // if this object has children (i.e. is not a number or an array...)
-                    arguments[i]._.children.push(this);  // add this object as child to parent
-                } 
-            }
+    //         // if it is not an array of objects
+    //         else {
+    //             this._.parents.push(arguments[i]);
+    //             if (arguments[i]._.children) {         // if this object has children (i.e. is not a number or an array...)
+    //                 arguments[i]._.children.push(this);  // add this object as child to parent
+    //             } 
+    //         }
 
-        }
-        return;
-    };
+    //     }
+    //     return;
+    // };
 
     /**
      * Test for same as above, but passing an object with objects in properties, 
@@ -312,7 +308,7 @@ Sketchpad = function(canvasId) {
         for (var key in parents) {
             var obj = parents[key];
             this._.parents.push(obj);
-            this._.p[key] = obj;
+            this._.properties[key] = obj;
             if (obj._ && obj._.children) {
                 obj._.children.push(this);
             }
@@ -320,8 +316,7 @@ Sketchpad = function(canvasId) {
     };
 
     /**
-     * Calls the update methods on each children
-     * @return {[type]} [description]
+     * Calls the update methods recursively on all children
      */
     Element.prototype._updateChildren = function() {
         for (var i = 0; i < this._.children.length; i++) {
@@ -349,9 +344,8 @@ Sketchpad = function(canvasId) {
 
 
 
-    // this can be public
     Element.prototype.isConstrained = function() {
-        return this._.parents.length !== 0;
+        return this._.constrained;
     };
 
 
@@ -388,36 +382,50 @@ Sketchpad = function(canvasId) {
     // ╚██╗ ██╔╝██╔══██║██╔══██╗██║██╔══██║██╔══██╗██║     ██╔══╝  
     //  ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██████╔╝███████╗███████╗
     //   ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝
-
+    /**
+     * A class representing a linked Element whose unique characteristic is 
+     * a value of some kind (numeric, string, array, etc). Parent class to
+     * Wrap, Numeral and so on classes. 
+     * This is kind of an abstraction of an 'associative variable'
+     * @param {Object} value
+     * @todo  create Int, Float, String children classes?
+     */
     var Variable = function(value) {
         Element.call(this);
 
-        this._.value = value;
+        this._.value = value;  // the main characteristic
     };
     Variable.prototype = Object.create(Element.prototype);
     Variable.prototype.constructor = Variable;
 
-    // PUBLIC ESSENTIAL METHOD
+    /**
+     * Getter/setter for the main value property.
+     * @return {Object} On setter, returns true if value was set, 
+     *                     false otherwise (this Variable was constrained). 
+     *                     On getter, returns the value property.
+     */ 
     Variable.prototype.value = function() {
         var a = arguments, len = a.length;
 
         // getter
-        // if (len == 0) {
-        //     return this._.value;
-        // }
+        if (len == 0) {
+            return this._.value;
+        }
 
         // setter
         if (len == 1) {
             if (this.isConstrained()) {
-                console.warn('Sorry, Variable is constrained');
+                console.warn('Sketchpad: this Variable is constrained');
+                return false;
             } else {
                 this._.value = a[0];
                 this._updateChildren();
+                return true;
             }
         }
 
-        // default: getter
-        return this._.value;
+        console.error('Sketchpad: invalid arguments for Variable.value()');
+        return false;
     };
 
 
@@ -432,7 +440,10 @@ Sketchpad = function(canvasId) {
     // ██║███╗██║██╔══██╗██╔══██║██╔═══╝ 
     // ╚███╔███╔╝██║  ██║██║  ██║██║     
     //  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     
-
+    /**
+     * A class to wrap primitive numeric inputs in an 'associative var'
+     * @param {object} The value to wrap
+     */
     var Wrap = function(value) {
         Variable.call(this, value);
 
@@ -441,11 +452,12 @@ Sketchpad = function(canvasId) {
     Wrap.prototype = Object.create(Variable.prototype);
     Wrap.prototype.constructor = Wrap;
 
-    Wrap.prototype.add = function(value) {
-        this._.value += value;
-        this._updateChildren();
-        return this._.value;
-    };
+    // THIS IS ASSUMING A NUMERICAL VALUE, SHOULD BE ATOMIZED
+    // Wrap.prototype.add = function(value) {
+    //     this._.value += value;
+    //     this._updateChildren();
+    //     return this._.value;
+    // };
 
 
 
@@ -459,6 +471,10 @@ Sketchpad = function(canvasId) {
     // ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗██║  ██║██║  ██║███████╗
     // ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
+    /**
+     * A class representing an associative numerical variable
+     * @param {[type]} value [description]
+     */
     var Numeral = function(value) {
         Variable.call(this, value);
 
@@ -499,7 +515,7 @@ Sketchpad = function(canvasId) {
     };
 
     // PUBLIC FACTORIES
-    this.number = function(value) {
+    this.numeral = function(value) {
         if (is(value).primitive('number')) {
             return Numeral.G.fromNumber(value);
         }
@@ -508,11 +524,11 @@ Sketchpad = function(canvasId) {
         return undefined;
     };
 
-    this.number.half = function(numeral) {
+    this.numeral.half = function(numeral) {
         return numeral.half();
     };
 
-    this.number.linked = function(object, essentialProp) {
+    this.numeral.linked = function(object, essentialProp) {
         return Numeral.G.linked(object, essentialProp);
     };
 
@@ -709,7 +725,7 @@ Sketchpad = function(canvasId) {
         // ESSENTIAL PROPS
         this._.x = x;
         this._.y = y;
-        this._.r = r || 1;
+        this._.radius = r || 1;
     };
     Point.prototype = Object.create(Geometry.prototype);
     Point.prototype.constructor = Point;
@@ -858,18 +874,18 @@ Sketchpad = function(canvasId) {
         }
     };
 
-    Point.prototype.r = function() {
+    Point.prototype.radius = function() {
         var a = arguments, len = a.length;
 
         if (len == 0) {
-            if (!this._.p['r']) {
-                this._.p['r'] = S.number.linked(this, 'r');
+            if (!this._.p['radius']) {
+                this._.p['radius'] = S.number.linked(this, 'radius');
             }
-            return this._.p['r'];
+            return this._.p['radius'];
         }
 
         if (len == 1) {
-            this._.p.r.value(a[0]);
+            this._.p.radius.value(a[0]);
         }
     };
 
@@ -887,7 +903,7 @@ Sketchpad = function(canvasId) {
         // S.gr.fillStyle = this.style.fill;
 
         S.gr.beginPath();
-        S.gr.arc(this._.x, this._.y, this._.r, 0, 2 * Math.PI);
+        S.gr.arc(this._.x, this._.y, this._.radius, 0, 2 * Math.PI);
         S.gr.stroke();
         S.gr.fill();
     };
@@ -950,7 +966,7 @@ Sketchpad = function(canvasId) {
             n._addParentParams({
                 x: X,
                 y: Y,
-                r: R
+                radius: R
             });
             n._update = Node.U.fromNumericNumeric;
             return n;

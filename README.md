@@ -13,24 +13,21 @@ Let's start by creating a simple HTML scaffolding with some basic styling for a 
 <meta charset="utf-8">
 <html>
   <head>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #sketchpadDiv {
+        position: absolute; 
+        width: 100%; 
+        height: 100%;
+      }
+      #sketchpadCanvas {
+        position: absolute;
+      }
+    </style>
   </head>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
-    #sketchpadDiv {
-      position: absolute; 
-      width: 100%; 
-      height: 100%;
-    }
-
-    #sketchpadCanvas {
-      position: absolute;
-    }
-
-  </style>
   <body>
     <div id="sketchpadDiv">
       <canvas id="sketchpadCanvas"></canvas>       
@@ -39,9 +36,7 @@ Let's start by creating a simple HTML scaffolding with some basic styling for a 
   <script type="text/javascript" src="jquery-2.1.1.min.js"></script>
   <script type="text/javascript" src="sketchpad.js"></script>
   <script>
-
     // Sketchpad code goes here
-
   </script>
 </html>
 ```
