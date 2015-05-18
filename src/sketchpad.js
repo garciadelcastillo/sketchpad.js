@@ -133,6 +133,24 @@ var Sketchpad = function(canvasId) {
 
 
 
+    // Checks if this object has only one wrapped parent
+    var checkConstrainedParenthood = function(obj) {
+        if (obj._parents.length == 1 && obj._parents[0]._type == 'varwrap') {
+            obj._isConstrained = false;
+            obj._wrappedSingleParent = true;
+        }
+    };  
+
+
+
+
+
+
+
+
+
+
+
 
     // ███████╗██╗     ███████╗███╗   ███╗███████╗███╗   ██╗████████╗
     // ██╔════╝██║     ██╔════╝████╗ ████║██╔════╝████╗  ██║╚══██╔══╝
@@ -144,28 +162,80 @@ var Sketchpad = function(canvasId) {
     /**
      * A base Element class from which any associative object inherits
      */
-    var Element = function() {
+    var Element = function(value) {
 
         // Quasi-private proerties
-        this._id = index++;
-        this._parents = [];
-        this._children = [];
-        // this.visible = undefined;  // this should go to a renderable class 
-        this.name = undefined;
-        // this.style = S.style;  // apply a style from fallback defaults  // --> moved to Renderable
+        this._spobj = true;         // is this a Sketchpad Object?
+        this._id = index++;         // unique identifier
+        this._parents = [];         // collection of parents
+        this._children = [];        // collection of children
+        
+        this._name = "";
+        this._type = "element";
+
+        this._isConstrained = true;
+        this._wrappedSingleParent = false;
+
+        this._isArray = false;  // is the _value in this XVAR array-like?
+        this._parentLengths = [];
+        this._matchPatternType = 'longest-list';  // default behavior
+        this._matchPattern = [];  // an array with indices representing the match pattern
+
+        this._preUpdate = null;  // a custom _preUdate function to be run once for special entities (e.g. .random())
 
 
 
 
+        /**
+         * Contains references to objects representing characteristic properties of
+         * the object. They get registered here upon first creation, and referenced
+         * on any subsequent query.
+         * @type {Object}
+         */
+        this._properties = {};
 
+        // Add it to the collection
+        this._elements.push(this);
+
+
+        /**
+         * Takes an array of objects, and adds them as parents of this object
+         */
+        this._makeChildOfParents = function(parents) {
+            for (var l = parents.length, i = 0; i < l; i++) {
+                var p = parents[i];
+                if (!p || !p._spobj) p = wrap(p);  // if parent is falsey (undefined, null) or if parent is not an XVAR, wrap it into one
+                this._parents.push(p);
+                p._children.push(this);
+            }
+
+            // Do some default parent lengths and pattern match
+            var patt = [];
+            for (var l = parents.length, i = 0; i < l; i++) {
+                this._parentLengths.push(0);  // defaults to singletons, should be corrected on first update
+                patt.push(-1);
+            }
+            this._matchPattern.push(patt);
+
+            checkConstrainedParenthood(this);
+        };
+
+        /**
+         * Add a new object to a characteristic property of this object.
+         * It won't overwrite the property if it already exists, unless forced.
+         * Returns that property's value.
+         * @param  {string} prop
+         * @param  {object} obj
+         * @param  {boolean} force Force overwriting the property if exists
+         * @return {object} the registered object
+         */
+        this._register = function(prop, obj, force) {
+            if (force || !this._properties[prop]) this._properties[prop] = obj;
+            return this._properties[prop];
+        };
 
 
     };
-
-
-
-
-
 
 
 
