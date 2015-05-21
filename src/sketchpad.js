@@ -31,16 +31,53 @@
 
 var Sketchpad = function(canvasId) {
 
+    var DEV = false;  // Turn development mode on for extra-verbose console logs
+
+    //  ██████╗ ██████╗ ██████╗ ███████╗
+    // ██╔════╝██╔═══██╗██╔══██╗██╔════╝
+    // ██║     ██║   ██║██████╔╝█████╗  
+    // ██║     ██║   ██║██╔══██╗██╔══╝  
+    // ╚██████╗╚██████╔╝██║  ██║███████╗
+    //  ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+    
+    // Versioning
     this.version = "v0.1.0";
     this.build = 1200;
 
-    var DEV = false;
+    // Incremental id assignment
+    var index = 1;  // zero is reserved
+
 
     // jQuery detection
     if (!window.jQuery) {
         console.error('Sketchpad.js currently depends on jQuery. Please add it to current window context.');
         return undefined;
-    }
+    };
+
+    // Set how verbose Sketchpad.js is
+    // 0 = no logging, 1 = some help logs
+    var log = 1;
+    this.logLevel = function(value) {
+        if (arguments.length == 0) return log;
+        log = value;
+    };
+
+    // Some constants
+    var TAU = 2 * Math.PI,          // ;)
+        TO_DEGS = 180 / Math.PI,
+        TO_RADS = Math.PI / 180;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -51,7 +88,7 @@ var Sketchpad = function(canvasId) {
     // ██████╔╝██║  ██║███████║███████╗
     // ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
         
-    // Private properties
+    // Pseudo-private properties
     var S = this;                   // self
     this._elements = [];            // all the Elements this skectch contains
     this._renderableElements = [];  // references to renderable Elements
@@ -64,52 +101,51 @@ var Sketchpad = function(canvasId) {
     this._canvasHeight;
     this._frameCount = 0;           // elapsed frames
 
-    // Public properties
-    // this.frameCount = 0;    // @TODO: should this be turned into a method returning a SketchVar?
 
-
-
-    /**
-     * Internal start block. Will be run once before first pad.loop() interation
-     */
-    this.start = function() { };
 
     /**
      * An 'update' function with code to run on each sketchpad loop.
      * Will be executed AFTER the render fn.
-     * This is mean to be overriden by the user:
+     * Intended to be overriden by the user:
      *   pad.update = function() {
      *     point.move(1, 0);  
      *   };
      */
     this.update = function() { };
-
+    
     /**
-     * Same as pad.update(), but is run before the pad.render function 
+     * Same as pad.update(), but is run before the pad.render function.
+     * Intended to be overriden by the user.
      */
     this.preupdate = function() { };
 
     /**
-     * The main render function for this Sketchpad
+     * Internal start block. Will be run once before first pad.loop() interation.
+     * Intended to be overriden by the user.
      */
-    this.render = function() {
+    this.start = function() { };
+
+    /**
+     * The main render function for this Sketchpad.
+     */
+    this._render = function() {
         if (DEV) console.log("Rendering frame " + this._frameCount);
         
-        // clean the background
+        // Clean the background
         this._gr.globalAlpha = 1.00;
         this._gr.fillStyle = "#ffffff";
         this._gr.clearRect(0, 0, this._canvasWidth, this._canvasHeight);
         this._gr.fillRect(0, 0, this._canvasWidth, this._canvasHeight);
         
-        // gross workaround to the 1px line aliasing problem: http://stackoverflow.com/a/3279863/1934487
+        // Gross workaround to the 1px line aliasing problem: http://stackoverflow.com/a/3279863/1934487
         this._gr.translate(0.5, 0.5);
 
-        // render each element
+        // Render each element --> TODO: only render Renderable elements
         for (var i = 0; i < S._elements.length; i++) {
-
+            // S._elements[i]._render();
         }
 
-        // revert the translation
+        // Revert the translation
         this._gr.translate(-0.5, -0.5);  
     };
 
@@ -119,27 +155,10 @@ var Sketchpad = function(canvasId) {
     this.loop = function() {
         window.requestAnimFrame(S.loop);
         S.preupdate();
-        S.render();
+        S._render();
         S.update();
         S._frameCount++;
     };
-
-
-
-
-
-
-
-
-
-
-    // Checks if this object has only one wrapped parent
-    var checkConstrainedParenthood = function(obj) {
-        if (obj._parents.length == 1 && obj._parents[0]._type == 'varwrap') {
-            obj._isConstrained = false;
-            obj._wrappedSingleParent = true;
-        }
-    };  
 
 
 
@@ -160,42 +179,42 @@ var Sketchpad = function(canvasId) {
     // ╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
 
     /**
-     * A base Element class from which any associative object inherits
+     * A base Element class from which any associative object inherits.
+     * This represents anything that is associative and included in update chains.
      */
-    var Element = function(value) {
+    var Element = function() {
 
-        // Quasi-private proerties
-        this._spobj = true;         // is this a Sketchpad Object?
-        this._id = index++;         // unique identifier
-        this._parents = [];         // collection of parents
-        this._children = [];        // collection of children
-        
-        this._name = "";
-        this._type = "element";
+        // Pseudo-private properties
+        this._padObj = true;                    // is this a Sketchpad Object?
+        this._id = index++;                     // unique identifier
+        this._parents = [];                     // collection of parents
+        this._children = [];                    // collection of children
+        this._name = "";                        // given name, usually autotagged from the object's var name in global context
+        this._type = "element";                 // element type
+        this._isConstrained = true;             // does this object depend on any parent?
+        this._wrappedSingleParent = false;      // does this object inherit from a single wrapped parent?
 
-        this._isConstrained = true;
-        this._wrappedSingleParent = false;
-
-        this._isArray = false;  // is the _value in this XVAR array-like?
-        this._parentLengths = [];
-        this._matchPatternType = 'longest-list';  // default behavior
-        this._matchPattern = [];  // an array with indices representing the match pattern
-
-        this._preUpdate = null;  // a custom _preUdate function to be run once for special entities (e.g. .random())
-
-
-
+        // Add this element to the main collection
+        S._elements.push(this);
 
         /**
          * Contains references to objects representing characteristic properties of
-         * the object. They get registered here upon first creation, and referenced
-         * on any subsequent query.
+         * the object, e.g. 'x', 'y', 'center', 'half'...
+         * They get registered here upon first creation, and referenced on any subsequent query.
          * @type {Object}
          */
         this._properties = {};
 
-        // Add it to the collection
-        this._elements.push(this);
+        this._preUpdate = null;  // a custom _preUdate function to be run once for special entities (e.g. .random())
+
+
+        //  TO REWORK WHEN DOING THE XVARS
+        // this._isArray = false;  // is the _value in this XVAR array-like?
+        // this._parentLengths = [];
+        // this._matchPatternType = 'longest-list';  // default behavior
+        // this._matchPattern = [];  // an array with indices representing the match pattern
+
+
 
 
         /**
@@ -204,18 +223,18 @@ var Sketchpad = function(canvasId) {
         this._makeChildOfParents = function(parents) {
             for (var l = parents.length, i = 0; i < l; i++) {
                 var p = parents[i];
-                if (!p || !p._spobj) p = wrap(p);  // if parent is falsey (undefined, null) or if parent is not an XVAR, wrap it into one
+                if (!p || !p._padObj) p = wrap(p);  // if parent is falsey (undefined, null) or if parent is not an XVAR, wrap it into one
                 this._parents.push(p);
                 p._children.push(this);
             }
 
-            // Do some default parent lengths and pattern match
-            var patt = [];
-            for (var l = parents.length, i = 0; i < l; i++) {
-                this._parentLengths.push(0);  // defaults to singletons, should be corrected on first update
-                patt.push(-1);
-            }
-            this._matchPattern.push(patt);
+            // // Do some default parent lengths and pattern match
+            // var patt = [];
+            // for (var l = parents.length, i = 0; i < l; i++) {
+            //     this._parentLengths.push(0);  // defaults to singletons, should be corrected on first update
+            //     patt.push(-1);
+            // }
+            // this._matchPattern.push(patt);
 
             checkConstrainedParenthood(this);
         };
@@ -234,8 +253,319 @@ var Sketchpad = function(canvasId) {
             return this._properties[prop];
         };
 
+        // A function that encompasses all update actions for this object
+        this._updateElement = function(forceDeep) {
+
+            // REVIEW THIS WHEN DOING ARRAY STUFF
+                // // Check if size of parents has changed
+                // var changed = false;
+                // if (forceDeep) {
+                //     changed = true;
+                // } else {
+                //     for (var l = this._parents.length, i = 0; i < l; i++) {
+                //         var len = this._parents[i]._isArray ? this._parents[i]._value.length : 0;
+                //         if (len != this._parentLengths[i]) {
+                //             this._parentLengths[i] = len;  
+                //             changed = true;
+                //         }
+                //     }
+                // }
+
+                // // If parents changed in size, update 'arrayness' the matching pattern 
+                // if (changed) {
+                //     this._checkArrayness();  // flag this XVAR as array-like
+                //     this._updateMatchPattern();  // recalculate parent matching pattern
+                // }
+
+            // Check if there a _preUpdate funtion was registered, and run it
+            if (this._preUpdate) this._preUpdate();
+
+                // // Now call the _update function according to the matching pattern
+                // // Call _update passing extracted parent values according to matching pattern
+                // if (this._isArray) {
+                //     this._value = [];
+                //     for (var i = 0; i < this._matchPattern.length; i++) {
+                //         var slice = this._parentSlice(this._matchPattern[i]);
+                //         this._value.push(this._update(slice, i));
+                //     }
+                // } else {
+                //     var slice = this._parentSlice();
+                //     this._value = this._update(slice, 0);
+                // }
+
+            var slice = this._parentSlice();
+            this._value = this._update(slice, 0);
+
+        };
+
+        // Returns an array with the _value prop of the _parents objs
+        // for specified indexArray (pattern matching)
+        // THIS COULD BECOME A PRIVATE FUNCTION: var valueSlice = function(parents, indexArray) {...}
+        this._parentSlice = function(indexArray) {
+            var arr = [];
+
+            // If no index passed (singleton parents)
+            if (typeof indexArray === 'undefined') {
+                for (var len = this._parents.length, i = 0; i < len; i++) {
+                    arr.push(this._parents[i]._value);
+                }
+
+            // If array parents 
+            } else {
+                for (var len = this._parents.length, i = 0; i < len; i++) {
+                    arr.push( indexArray[i] === -1 ?   // is singleton?
+                            this._parents[i]._value :
+                            this._parents[i]._value[indexArray[i]]);
+                }
+            }
+
+            return arr;
+        };
+
+                // Calls updateElement and updateChildren on all object's children
+        this._updateChildren = function() {
+            this._children.forEach(function(elem) {
+                if (DEV) console.log('DEBUG: updating "' + elem._name + '"');
+                elem._updateElement();
+                elem._updateChildren();
+            });
+        };
 
     };
+
+
+    // Checks if this object has only one wrapped parent
+    var checkConstrainedParenthood = function(obj) {
+        if (obj._parents.length == 1 && obj._parents[0]._type == 'xwrap') {
+            obj._isConstrained = false;
+            obj._wrappedSingleParent = true;
+        }
+    };  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ██╗  ██╗██████╗  █████╗ ███████╗███████╗
+    // ╚██╗██╔╝██╔══██╗██╔══██╗██╔════╝██╔════╝
+    //  ╚███╔╝ ██████╔╝███████║███████╗█████╗  
+    //  ██╔██╗ ██╔══██╗██╔══██║╚════██║██╔══╝  
+    // ██╔╝ ██╗██████╔╝██║  ██║███████║███████╗
+    // ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+
+    /**
+     * A base class for XVar objects to inherit from
+     * Contains the _value property, and the .value gsetters 
+     * @param {Object} value 
+     */
+    var XBase = function(value) {
+        Element.call(this);
+        this._value = value;
+        this._type = 'xbase';
+    };
+    XBase.prototype = Object.create(Element.prototype);
+    XBase.prototype.constructor = XBase;
+
+    // This has better performance than Object.defineProperties(): http://jsperf.com/getter-setter/7
+    XBase.prototype = {
+        get value() {
+            return this._value;
+        },
+        set value(x) {
+            if (this._isConstrained) {
+                if (log) console.warn('Sketchpad.js: Sorry, this variable is constrained');
+            } else {
+                // update for single parented wrapped objects
+                if (this._wrappedSingleParent) {
+                    this._parents[0].value = x;  
+
+                // update for wrap objects 
+                } else {
+                    this._value = x;  
+                    // this._checkArrayness();
+                    this._updateChildren();
+                }
+            }
+        }
+    };
+
+
+    // ██╗  ██╗██╗    ██╗██████╗  █████╗ ██████╗ 
+    // ╚██╗██╔╝██║    ██║██╔══██╗██╔══██╗██╔══██╗
+    //  ╚███╔╝ ██║ █╗ ██║██████╔╝███████║██████╔╝
+    //  ██╔██╗ ██║███╗██║██╔══██╗██╔══██║██╔═══╝ 
+    // ██╔╝ ██╗╚███╔███╔╝██║  ██║██║  ██║██║     
+    // ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     
+
+    /**
+     * A class to wrap primitive values of XVars, and make it
+     * easier to refer to _value properties seamlessly everywhere. 
+     * @param {Object} value
+     */
+    var XWrap = function(value) {
+        XBase.call(this, value);
+        this._type = 'xwrap';
+        this._isConstrained = false;
+        // this._checkArrayness();  // see if the _value in this element is an array
+    };
+    XWrap.prototype = Object.create(XBase.prototype);
+    XWrap.prototype.constructor = XWrap;
+
+    // Returns the argument wrapped inside a XWRAP object
+    var wrap = function(value){
+        return new XWrap(value);
+    };
+
+
+    // ██╗  ██╗██╗   ██╗ █████╗ ██████╗ 
+    // ╚██╗██╔╝██║   ██║██╔══██╗██╔══██╗
+    //  ╚███╔╝ ██║   ██║███████║██████╔╝
+    //  ██╔██╗ ╚██╗ ██╔╝██╔══██║██╔══██╗
+    // ██╔╝ ██╗ ╚████╔╝ ██║  ██║██║  ██║
+    // ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝
+
+    /**
+     * Main XVar class, to create associative variables of any kind
+     * @see https://github.com/garciadelcastillo/X.js
+     * @param {Object} value
+     */
+    var XVar = function(value) {
+        XBase.call(this, value);
+        this._type = 'xvar';
+    };
+    XVar.prototype = Object.create(XBase.prototype);
+    XVar.prototype.constructor = XVar;
+
+    XVar._updates = {
+        fromValue: function(p) {
+            return p[0];  // retrieve from xvar/xwrapped parent
+        },
+
+        //////////////////////////
+        // ARITHMETIC FUNCTIONS //
+        //////////////////////////
+
+        half: function(p) {
+            return 0.5 * p[0];
+        },
+
+        double: function(p) {
+            return 2 * p[0];
+        },
+    };
+
+    //////////////////////////////////////////////////
+    // AUTO GENERATION OF CHARACTERISTIC PROTOTYPES //
+    // (this are all argument-less)                 //
+    //////////////////////////////////////////////////
+    var XVarProtos = [
+        // 'not',
+        'half',
+        'double',
+        // 'abs',
+        // 'sqrt',
+        // 'sin',
+        // 'cos',
+        // 'tan',
+        // 'round',
+        // 'floor',
+        // 'ceil',
+        // 'toDegrees',
+        // 'toRadians',
+        // 'length',
+        // 'toLowerCase',
+        // 'toUpperCase'
+    ];
+
+    XVarProtos.forEach(function(prop) {
+        XVar.prototype[prop] = function() {
+            return typeof this._properties[prop] !== 'undefined' ?
+                    this._properties[prop] :
+                    this._register(prop, build('xvar', [this], prop));
+        };
+    });
+
+    //////////////////////
+    // BASE CONSTRUCTOR //
+    //////////////////////
+
+    this.var = function(value) {
+        if (arguments.length != 1) {
+            if (log) console.warn('Sketchpad.js: Invalid arguments for sketch.var()');
+            return undefined;
+        };
+
+        return build('xvar', arguments, 'fromValue');
+    };
+
+    // An object mapping Object types to private constructors
+    var typeMap = {
+        'element'  : Element,
+        'xbase'    : XBase,
+        'xwrap'    : XWrap,
+        'xvar'     : XVar
+    };
+
+    // A generic constructor interface to create Sketchpad Objects with type, 
+    // args and update function name
+    var build = function(TYPE, parents, update, customProps) {
+        var obj = new typeMap[TYPE]();                  // construct an object of this type
+    
+        obj._makeChildOfParents(parents);
+        obj._update = typeMap[TYPE]._updates[update];   // choose which update function to bind
+
+        // Add custom properties to object if applicable, and before any update
+        // Do it after setting obj._update, in case it should be overriden
+        if (customProps) {
+            for (var prop in customProps) {
+                if (customProps.hasOwnProperty(prop)) {
+                    obj[prop] = customProps[prop];
+                }
+            }
+        }
+
+        obj._updateElement();  // update once everything is in place
+        return obj;
+    };
+
+
+
+
+
+
+
+
 
 
 
