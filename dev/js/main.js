@@ -8,5 +8,5 @@
 var pad = new Sketchpad('sketchPadCanvas');
 
 var a = pad.var(100),
-	b = a.half();
-
+	b = a.half(),
+	c = a.half();

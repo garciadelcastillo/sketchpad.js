@@ -31,7 +31,10 @@
 
 var Sketchpad = function(canvasId) {
 
-    var DEV = false;  // Turn development mode on for extra-verbose console logs
+    // Turn development mode on for extra-verbose console logs
+    var DEV = false;  
+
+
 
     //  ██████╗ ██████╗ ██████╗ ███████╗
     // ██╔════╝██╔═══██╗██╔══██╗██╔════╝
@@ -42,11 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1200;
-
-    // Incremental id assignment
-    var index = 1;  // zero is reserved
-
+    this.build = 1201;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -62,12 +61,69 @@ var Sketchpad = function(canvasId) {
         log = value;
     };
 
+
+
+
+
+
+
+
+    // ██████╗ ██████╗ ██╗██╗   ██╗ █████╗ ████████╗███████╗
+    // ██╔══██╗██╔══██╗██║██║   ██║██╔══██╗╚══██╔══╝██╔════╝
+    // ██████╔╝██████╔╝██║██║   ██║███████║   ██║   █████╗  
+    // ██╔═══╝ ██╔══██╗██║╚██╗ ██╔╝██╔══██║   ██║   ██╔══╝  
+    // ██║     ██║  ██║██║ ╚████╔╝ ██║  ██║   ██║   ███████╗
+    // ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝
+    /**
+     * A place for all private variables, objects and function closures
+     */
+
+    var S = this;                   // the context
+
     // Some constants
     var TAU = 2 * Math.PI,          // ;)
         TO_DEGS = 180 / Math.PI,
         TO_RADS = Math.PI / 180;
 
+    // Incremental id assignment
+    var index = 1;  // zero is reserved
 
+
+
+    // A generic constructor interface to create Sketchpad Objects with type, 
+    // args and update function name
+    var build = function(TYPE, parents, update, customProps) {
+        var obj = new typeMap[TYPE]();                  // construct an object of this type
+    
+        obj._makeChildOfParents(parents);
+        obj._update = typeMap[TYPE]._updates[update];   // choose which update function to bind
+
+        // Add custom properties to object if applicable, and before any update
+        // Do it after setting obj._update, in case it should be overriden
+        if (customProps) {
+            for (var prop in customProps) {
+                if (customProps.hasOwnProperty(prop)) {
+                    obj[prop] = customProps[prop];
+                }
+            }
+        }
+
+        obj._updateElement();  // update once everything is in place
+        return obj;
+    };
+
+     // Checks if this object has only one wrapped parent
+    var checkConstrainedParenthood = function(obj) {
+        if (obj._parents.length == 1 && obj._parents[0]._type == 'xwrap') {
+            obj._isConstrained = false;
+            obj._wrappedSingleParent = true;
+        }
+    };  
+
+    // Returns the argument wrapped inside a XWRAP object
+    var wrap = function(value){
+        return new XWrap(value);
+    };
 
 
 
@@ -87,21 +143,18 @@ var Sketchpad = function(canvasId) {
     // ██╔══██╗██╔══██║╚════██║██╔══╝  
     // ██████╔╝██║  ██║███████║███████╗
     // ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
-        
+
     // Pseudo-private properties
-    var S = this;                   // self
     this._elements = [];            // all the Elements this skectch contains
     this._renderableElements = [];  // references to renderable Elements
     this._initialized = false;      // was this correctly initialized
     this._canvas;                   // the html canvas element this Sketchpad is attached to
     this._canvasId;                 // the id of _canvas
     this._gr;                       // graphic context of the canvas
-    this._parentNode;               // this canvas' parent node (for width/height calculations)
+    this._parentNode;               // this canvas' parent node, used for width/height calculations
     this._canvasWidth;              
     this._canvasHeight;
     this._frameCount = 0;           // elapsed frames
-
-
 
     /**
      * An 'update' function with code to run on each sketchpad loop.
@@ -205,17 +258,19 @@ var Sketchpad = function(canvasId) {
          */
         this._properties = {};
 
-        this._preUpdate = null;  // a custom _preUdate function to be run once for special entities (e.g. .random())
+        this._preUpdate = null;                     // a custom _preUdate function to be run once for special entities (e.g. .random())
+
+        // Managing array-like xvars
+        this._isArray = false;                      // is the _value in this Element array-like?
+        this._parentLengths = [];
+        this._matchPatternType = 'longest-list';    // default behavior
+        this._matchPattern = [];                    // an array with indices representing the match pattern
 
 
-        //  TO REWORK WHEN DOING THE XVARS
-        // this._isArray = false;  // is the _value in this XVAR array-like?
-        // this._parentLengths = [];
-        // this._matchPatternType = 'longest-list';  // default behavior
-        // this._matchPattern = [];  // an array with indices representing the match pattern
-
-
-
+        /**
+         * An identity update function to be overriden
+         */
+        this._update = function(parents) { };
 
         /**
          * Takes an array of objects, and adds them as parents of this object
@@ -228,13 +283,13 @@ var Sketchpad = function(canvasId) {
                 p._children.push(this);
             }
 
-            // // Do some default parent lengths and pattern match
-            // var patt = [];
-            // for (var l = parents.length, i = 0; i < l; i++) {
-            //     this._parentLengths.push(0);  // defaults to singletons, should be corrected on first update
-            //     patt.push(-1);
-            // }
-            // this._matchPattern.push(patt);
+            // Do some default parent lengths and pattern matching
+            var patt = [];
+            for (var l = parents.length, i = 0; i < l; i++) {
+                this._parentLengths.push(0);    // defaults to singletons, should be corrected on first update
+                patt.push(-1);                  // -1 is used to flag singleton elements
+            }
+            this._matchPattern.push(patt);
 
             checkConstrainedParenthood(this);
         };
@@ -253,7 +308,67 @@ var Sketchpad = function(canvasId) {
             return this._properties[prop];
         };
 
-        // A function that encompasses all update actions for this object
+        /**
+         * Resets parent objects from this object, and removes this child 
+         * from parents. Performs search on parents based on own _id
+         * @return {Boolean} 
+         */
+        this._makeOrphan = function() {
+            // Remove this from parents' children
+            for (var i = 0; i < this._parents.length; i++) {
+                var rem = false;
+                for (var j = 0; j < this._parents[i]._children.length; j++) {
+                    if (this._parents[i]._children[j]._id == this._id) {
+                        this._parents[i]._children.splice(j, 1);
+                        rem = true;
+                        break;
+                    }
+                }
+                if (!rem) {
+                    if (DEV) console.log('Couldnt find this object in parents children, something went wrong ' + i);
+                    return false;
+                }
+            }
+            this._parents = [];
+            return true;
+        };
+
+        /**
+         * Flags this._isArray
+         * @return {Boolean}  this._isArray
+         */
+        this._checkArrayness = function() {
+            this._isArray = false;
+
+            if (this._type == 'xwrap') {
+                this._isArray = is(this._value).type('array');  // USING ONTOLOGY.JS, TO REMOVE
+            } else {
+                for (var l = this._parentLengths.length, i = 0; i < l; i++) {
+                    if (this._parentLengths[i]) {  // if any parent length != 0
+                        this._isArray = true;
+                        break;
+                    }
+                }
+            };
+
+            return this._isArray;
+        };
+
+        /**
+         * Calls updateElement and updateChildren on all object's children
+         */
+        this._updateChildren = function() {
+            this._children.forEach(function(elem) {
+                if (DEV) console.log('DEBUG: updating "' + elem._name + '"');
+                elem._updateElement();
+                elem._updateChildren();
+            });
+        };
+
+        /**
+         * A function that encompasses all update actions for this object
+         * @param  {boolean} forceDeep Update even if parents haven't changed? 
+         */
         this._updateElement = function(forceDeep) {
 
             // REVIEW THIS WHEN DOING ARRAY STUFF
@@ -298,29 +413,7 @@ var Sketchpad = function(canvasId) {
 
         };
 
-        // Returns an array with the _value prop of the _parents objs
-        // for specified indexArray (pattern matching)
-        // THIS COULD BECOME A PRIVATE FUNCTION: var valueSlice = function(parents, indexArray) {...}
-        this._parentSlice = function(indexArray) {
-            var arr = [];
-
-            // If no index passed (singleton parents)
-            if (typeof indexArray === 'undefined') {
-                for (var len = this._parents.length, i = 0; i < len; i++) {
-                    arr.push(this._parents[i]._value);
-                }
-
-            // If array parents 
-            } else {
-                for (var len = this._parents.length, i = 0; i < len; i++) {
-                    arr.push( indexArray[i] === -1 ?   // is singleton?
-                            this._parents[i]._value :
-                            this._parents[i]._value[indexArray[i]]);
-                }
-            }
-
-            return arr;
-        };
+        
 
                 // Calls updateElement and updateChildren on all object's children
         this._updateChildren = function() {
@@ -334,13 +427,7 @@ var Sketchpad = function(canvasId) {
     };
 
 
-    // Checks if this object has only one wrapped parent
-    var checkConstrainedParenthood = function(obj) {
-        if (obj._parents.length == 1 && obj._parents[0]._type == 'xwrap') {
-            obj._isConstrained = false;
-            obj._wrappedSingleParent = true;
-        }
-    };  
+
 
 
 
@@ -393,6 +480,33 @@ var Sketchpad = function(canvasId) {
         Element.call(this);
         this._value = value;
         this._type = 'xbase';
+
+        /**
+         * Returns an array with the _value prop of the _parents objs
+         * for specified indexArray (pattern matching)
+         * @todo  Could this become a private function? var valueSlice = function(parents, indexArray) {...}
+         */
+        this._parentSlice = function(indexArray) {
+            var arr = [];
+
+            // If no index passed (singleton parents)
+            if (typeof indexArray === 'undefined') {
+                for (var len = this._parents.length, i = 0; i < len; i++) {
+                    arr.push(this._parents[i]._value);
+                }
+
+            // If array parents 
+            } else {
+                for (var len = this._parents.length, i = 0; i < len; i++) {
+                    arr.push( indexArray[i] === -1 ?   // is singleton?
+                            this._parents[i]._value :
+                            this._parents[i]._value[indexArray[i]]);
+                }
+            }
+
+            return arr;
+        };
+        
     };
     XBase.prototype = Object.create(Element.prototype);
     XBase.prototype.constructor = XBase;
@@ -402,7 +516,26 @@ var Sketchpad = function(canvasId) {
         get value() {
             return this._value;
         },
+        get val() {
+            return this._value;
+        },
         set value(x) {
+            if (this._isConstrained) {
+                if (log) console.warn('Sketchpad.js: Sorry, this variable is constrained');
+            } else {
+                // update for single parented wrapped objects
+                if (this._wrappedSingleParent) {
+                    this._parents[0].value = x;  
+
+                // update for wrap objects 
+                } else {
+                    this._value = x;  
+                    // this._checkArrayness();
+                    this._updateChildren();
+                }
+            }
+        },
+        set val(x) {
             if (this._isConstrained) {
                 if (log) console.warn('Sketchpad.js: Sorry, this variable is constrained');
             } else {
@@ -442,10 +575,7 @@ var Sketchpad = function(canvasId) {
     XWrap.prototype = Object.create(XBase.prototype);
     XWrap.prototype.constructor = XWrap;
 
-    // Returns the argument wrapped inside a XWRAP object
-    var wrap = function(value){
-        return new XWrap(value);
-    };
+
 
 
     // ██╗  ██╗██╗   ██╗ █████╗ ██████╗ 
@@ -468,9 +598,86 @@ var Sketchpad = function(canvasId) {
     XVar.prototype.constructor = XVar;
 
     XVar._updates = {
+
         fromValue: function(p) {
             return p[0];  // retrieve from xvar/xwrapped parent
         },
+
+
+        ///////////////////////
+        // CASTING FUNCTIONS //
+        ///////////////////////
+
+        boolean: function(p) {
+            return Boolean(p[0]);
+        },
+
+        number: function(p) {
+            return Number(p[0]);
+        },
+
+        string: function(p) {
+            return String(p[0]);
+        },
+
+        array: function(p) {
+            return [p[0]];
+        },
+
+        ////////////////////
+        // BOOLEAN LOGIC  //
+        ////////////////////
+
+        not: function(p) {
+            return !p[0];
+        },
+
+        and: function(p) {
+            for (var i = 0; i < p.length; i++) {
+                if (!p[i]) return false;
+            }
+            return true;
+        },
+
+        or: function(p) {
+            for (var i = 0; i < p.length; i++) {
+                if (p[i]) return true;
+            }
+            return false;
+        },
+
+        equal: function(p) {
+            for (var l = p.length - 1, i = 0; i < l; i++) {
+                if (p[i] != p[i + 1]) return false;
+            }
+            return true;
+        },
+
+        notEqual: function(p) {
+            for (var l = p.length, i = 0; i < l - 1; i++) {  // pyramidal comparison without self-check 
+                for (var j = i + 1; j < l; j++) {
+                    if (p[i] == p[j]) return false;
+                }
+            }
+            return true;
+        },
+
+        greater: function(p) {
+            return p[0] > p[1];
+        },
+
+        greaterEqual: function(p) {
+            return p[0] >= p[1];
+        },
+
+        less: function(p) {
+            return p[0] < p[1];
+        },
+
+        lessEqual: function(p) {
+            return p[0] <= p[1];
+        },
+
 
         //////////////////////////
         // ARITHMETIC FUNCTIONS //
@@ -483,6 +690,168 @@ var Sketchpad = function(canvasId) {
         double: function(p) {
             return 2 * p[0];
         },
+
+        abs: function(p) {
+            return Math.abs(p[0]);
+        },
+
+        sqrt: function(p) {
+            return Math.sqrt(p[0]);
+        },
+
+        sin: function(p) {
+            return Math.sin(p[0]);
+        },
+
+        cos: function(p) {
+            return Math.cos(p[0]);
+        },
+
+        tan: function(p) {
+            return Math.tan(p[0]);
+        },
+
+        round: function(p) {
+            return Math.round(p[0]);
+        },
+
+        floor: function(p) {
+            return Math.floor(p[0]);
+        },
+
+        ceil: function(p) {
+            return Math.ceil(p[0]);
+        },
+
+        toDegrees: function(p) {
+            return TO_DEGS * p[0];
+        },
+
+        toRadians: function(p) {
+            return TO_RADS * p[0];
+        },
+
+        add: function(p) {
+            var sum = p[0];  // also sets initial type
+            for (var i = 1; i < p.length; i++) {
+                sum += p[i];
+            }
+            return sum;
+        },
+
+        subtract: function(p) {
+            return p[0] - p[1];
+        },
+
+        multiply: function(p) {
+            var mul = p[0];
+            for (var l = p.length, i = 1; i < l; i++) {
+                mul *= p[i];
+            }
+            return mul;
+        },
+
+        divide: function(p) {
+            return p[0] / p[1];
+        },
+
+        modulo: function(p) {
+            return p[0] % p[1];
+        },
+
+        pow: function(p) {
+            return Math.pow(p[0], p[1]);
+        },
+
+        atan2: function(p) {
+            return Math.atan2(p[0], p[1]);  // inputs were in the form (Y, X)
+        },
+
+        random: function(p, i) {
+            // Updates the value without changing the random parameter. See 'randomNext'.
+            return this._randomSeeds[i] * (p[1] - p[0]) + p[0];
+        },
+
+
+        /////////////////////
+        // ARRAY FUNCTIONS //
+        /////////////////////
+
+        // @TODO: what if 'count' is a float?
+        series: function(p) {
+            var ser = [];
+            for (var i = 0; i < p[0]; i++) {  // inputs in the form (count, start, step)
+                ser.push(p[1] + i * p[2]);
+            }  
+            return ser;
+        },
+
+        // @TODO: what if 'count' is a float?
+        range: function(p) {
+            var rang = [],
+                step = (p[2] - p[1]) / p[0];
+            for (var i = p[1]; i <= p[2]; i += step) {  // inputs in the form (count, start, end)
+                rang.push(i);
+            }  
+            return rang;
+        },
+
+        //////////////////////
+        // STRING FUNCTIONS //
+        //////////////////////
+
+        // returns the length of parent string (or array, if parent is array of arrays)
+        // should have no default, and return undefined if not eligible? This would be 'truer' to JS...
+        length: function(p) {
+            return typeof p[0].length !== 'undefined' ? p[0].length : 1; 
+        },
+
+        toLowerCase: function(p) {
+            // Parent may not be a string
+            return p[0].toLowerCase ? p[0].toLowerCase() : p[0];
+        },
+
+        toUpperCase: function(p) {
+            // Parent may not be a string
+            return p[0].toUpperCase ? p[0].toUpperCase() : p[0];
+        },
+
+        slice: function(p) {
+            return typeof p[0].slice !== 'undefined' ?
+                    p[0].slice(p[1], p[2]) : 
+                    p[0];
+        },
+
+        charAt: function(p) {
+            return typeof p[0].charAt !== 'undefined' ? 
+                    p[0].charAt(p[1]) : 
+                    p[0];
+        },
+
+        replace: function(p) {
+            return typeof p[0].replace !== 'undefined' ? 
+                    p[0].replace(p[1], p[2]) : 
+                    p[0];
+        },
+
+        concat: function(p) {
+            var sum = String(p[0]);
+            for (var i = 1; i < p.length; i++) {
+                sum += p[i];
+            }
+            return sum;
+        },
+
+
+        ////////////////////
+        // MISC FUNCTIONS //
+        ////////////////////
+
+        // A dummy update, will in fact be overriden by the custom callback
+        compose: function(p) {
+            return p[0];
+        }
+
     };
 
     //////////////////////////////////////////////////
@@ -490,22 +859,22 @@ var Sketchpad = function(canvasId) {
     // (this are all argument-less)                 //
     //////////////////////////////////////////////////
     var XVarProtos = [
-        // 'not',
+        'not',
         'half',
         'double',
-        // 'abs',
-        // 'sqrt',
-        // 'sin',
-        // 'cos',
-        // 'tan',
-        // 'round',
-        // 'floor',
-        // 'ceil',
-        // 'toDegrees',
-        // 'toRadians',
-        // 'length',
-        // 'toLowerCase',
-        // 'toUpperCase'
+        'abs',
+        'sqrt',
+        'sin',
+        'cos',
+        'tan',
+        'round',
+        'floor',
+        'ceil',
+        'toDegrees',
+        'toRadians',
+        'length',
+        'toLowerCase',
+        'toUpperCase'
     ];
 
     XVarProtos.forEach(function(prop) {
@@ -529,6 +898,58 @@ var Sketchpad = function(canvasId) {
         return build('xvar', arguments, 'fromValue');
     };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ██████╗ ██████╗ ██╗██╗   ██╗ █████╗ ████████╗███████╗
+    // ██╔══██╗██╔══██╗██║██║   ██║██╔══██╗╚══██╔══╝██╔════╝
+    // ██████╔╝██████╔╝██║██║   ██║███████║   ██║   █████╗  
+    // ██╔═══╝ ██╔══██╗██║╚██╗ ██╔╝██╔══██║   ██║   ██╔══╝  
+    // ██║     ██║  ██║██║ ╚████╔╝ ██║  ██║   ██║   ███████╗
+    // ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝
+    /**
+     * A place for all private variables, objects and function closures
+     * All the way at the end, some of this variables refer to entities
+     * that were defined previously
+     */
+
     // An object mapping Object types to private constructors
     var typeMap = {
         'element'  : Element,
@@ -536,62 +957,6 @@ var Sketchpad = function(canvasId) {
         'xwrap'    : XWrap,
         'xvar'     : XVar
     };
-
-    // A generic constructor interface to create Sketchpad Objects with type, 
-    // args and update function name
-    var build = function(TYPE, parents, update, customProps) {
-        var obj = new typeMap[TYPE]();                  // construct an object of this type
-    
-        obj._makeChildOfParents(parents);
-        obj._update = typeMap[TYPE]._updates[update];   // choose which update function to bind
-
-        // Add custom properties to object if applicable, and before any update
-        // Do it after setting obj._update, in case it should be overriden
-        if (customProps) {
-            for (var prop in customProps) {
-                if (customProps.hasOwnProperty(prop)) {
-                    obj[prop] = customProps[prop];
-                }
-            }
-        }
-
-        obj._updateElement();  // update once everything is in place
-        return obj;
-    };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -669,8 +1034,8 @@ var Sketchpad = function(canvasId) {
 
         searchNodeToDrag: function (x, y) {
             // for (var len = S.elements.length, i = 0; i < len; i++) {
-            for (var i = S.elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
-                var elem = S.elements[i];
+            for (var i = S._elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
+                var elem = S._elements[i];
                 if (elem.constructor != S.Node) continue;
                 if (this.dist2ToNode(x, y, elem) < 25) return elem;     // <--- SUPER DIRTY, NEEDS IMPROV
             }
