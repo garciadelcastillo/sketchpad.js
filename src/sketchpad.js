@@ -32,7 +32,7 @@
 var Sketchpad = function(canvasId) {
 
     // Turn development mode on for extra-verbose console logs
-    var DEV = false;  
+    var DEV = true;  
 
 
 
@@ -45,7 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1201;
+    this.build = 1202;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -86,9 +86,7 @@ var Sketchpad = function(canvasId) {
         TO_RADS = Math.PI / 180;
 
     // Incremental id assignment
-    var index = 1;  // zero is reserved
-
-
+    var index = 1;                  // zero is reserved
 
     // A generic constructor interface to create Sketchpad Objects with type, 
     // args and update function name
@@ -98,8 +96,8 @@ var Sketchpad = function(canvasId) {
         obj._makeChildOfParents(parents);
         obj._update = typeMap[TYPE]._updates[update];   // choose which update function to bind
 
-        // Add custom properties to object if applicable, and before any update
-        // Do it after setting obj._update, in case it should be overriden
+        // Add custom properties to object if applicable, and before any update.
+        // Do it after setting obj._update, in case it should be overriden.
         if (customProps) {
             for (var prop in customProps) {
                 if (customProps.hasOwnProperty(prop)) {
@@ -146,7 +144,7 @@ var Sketchpad = function(canvasId) {
 
     // Pseudo-private properties
     this._elements = [];            // all the Elements this skectch contains
-    this._renderableElements = [];  // references to renderable Elements
+    this._renderableElements = [];  // references to renderable Elements --> TODO: implement
     this._initialized = false;      // was this correctly initialized
     this._canvas;                   // the html canvas element this Sketchpad is attached to
     this._canvasId;                 // the id of _canvas
@@ -182,7 +180,7 @@ var Sketchpad = function(canvasId) {
      * The main render function for this Sketchpad.
      */
     this._render = function() {
-        if (DEV) console.log("Rendering frame " + this._frameCount);
+        //if (DEV) console.log("Rendering frame " + this._frameCount);
         
         // Clean the background
         this._gr.globalAlpha = 1.00;
@@ -261,6 +259,7 @@ var Sketchpad = function(canvasId) {
         this._preUpdate = null;                     // a custom _preUdate function to be run once for special entities (e.g. .random())
 
         // Managing array-like xvars
+        // @TODO: think if this should go to XBase (although geometry objects may also be array-like)
         this._isArray = false;                      // is the _value in this Element array-like?
         this._parentLengths = [];
         this._matchPatternType = 'longest-list';    // default behavior
@@ -278,7 +277,8 @@ var Sketchpad = function(canvasId) {
         this._makeChildOfParents = function(parents) {
             for (var l = parents.length, i = 0; i < l; i++) {
                 var p = parents[i];
-                if (!p || !p._padObj) p = wrap(p);  // if parent is falsey (undefined, null) or if parent is not an XVAR, wrap it into one
+                // If parent is falsey (undefined, null) or if parent is not an XVAR, wrap it into one
+                if (!p || !p._padObj) p = wrap(p);  
                 this._parents.push(p);
                 p._children.push(this);
             }
@@ -325,7 +325,7 @@ var Sketchpad = function(canvasId) {
                     }
                 }
                 if (!rem) {
-                    if (DEV) console.log('Couldnt find this object in parents children, something went wrong ' + i);
+                    if (DEV) console.log("Couldn't find this object in parents' children, something went wrong, element #" + i);
                     return false;
                 }
             }
@@ -334,32 +334,11 @@ var Sketchpad = function(canvasId) {
         };
 
         /**
-         * Flags this._isArray
-         * @return {Boolean}  this._isArray
-         */
-        this._checkArrayness = function() {
-            this._isArray = false;
-
-            if (this._type == 'xwrap') {
-                this._isArray = is(this._value).type('array');  // USING ONTOLOGY.JS, TO REMOVE
-            } else {
-                for (var l = this._parentLengths.length, i = 0; i < l; i++) {
-                    if (this._parentLengths[i]) {  // if any parent length != 0
-                        this._isArray = true;
-                        break;
-                    }
-                }
-            };
-
-            return this._isArray;
-        };
-
-        /**
          * Calls updateElement and updateChildren on all object's children
          */
         this._updateChildren = function() {
             this._children.forEach(function(elem) {
-                if (DEV) console.log('DEBUG: updating "' + elem._name + '"');
+                if (DEV) console.log('DEBUG: updating "' + elem._name + '", id#' + elem._id);
                 elem._updateElement();
                 elem._updateChildren();
             });
@@ -367,61 +346,10 @@ var Sketchpad = function(canvasId) {
 
         /**
          * A function that encompasses all update actions for this object
-         * @param  {boolean} forceDeep Update even if parents haven't changed? 
          */
-        this._updateElement = function(forceDeep) {
-
-            // REVIEW THIS WHEN DOING ARRAY STUFF
-                // // Check if size of parents has changed
-                // var changed = false;
-                // if (forceDeep) {
-                //     changed = true;
-                // } else {
-                //     for (var l = this._parents.length, i = 0; i < l; i++) {
-                //         var len = this._parents[i]._isArray ? this._parents[i]._value.length : 0;
-                //         if (len != this._parentLengths[i]) {
-                //             this._parentLengths[i] = len;  
-                //             changed = true;
-                //         }
-                //     }
-                // }
-
-                // // If parents changed in size, update 'arrayness' the matching pattern 
-                // if (changed) {
-                //     this._checkArrayness();  // flag this XVAR as array-like
-                //     this._updateMatchPattern();  // recalculate parent matching pattern
-                // }
-
-            // Check if there a _preUpdate funtion was registered, and run it
+        this._updateElement = function() {
+            // Check if a _preUpdate funtion was registered, and run it
             if (this._preUpdate) this._preUpdate();
-
-                // // Now call the _update function according to the matching pattern
-                // // Call _update passing extracted parent values according to matching pattern
-                // if (this._isArray) {
-                //     this._value = [];
-                //     for (var i = 0; i < this._matchPattern.length; i++) {
-                //         var slice = this._parentSlice(this._matchPattern[i]);
-                //         this._value.push(this._update(slice, i));
-                //     }
-                // } else {
-                //     var slice = this._parentSlice();
-                //     this._value = this._update(slice, 0);
-                // }
-
-            var slice = this._parentSlice();
-            this._value = this._update(slice, 0);
-
-        };
-
-        
-
-                // Calls updateElement and updateChildren on all object's children
-        this._updateChildren = function() {
-            this._children.forEach(function(elem) {
-                if (DEV) console.log('DEBUG: updating "' + elem._name + '"');
-                elem._updateElement();
-                elem._updateChildren();
-            });
         };
 
     };
@@ -430,6 +358,17 @@ var Sketchpad = function(canvasId) {
 
 
 
+
+
+
+
+
+    //  ██████╗ ██████╗  █████╗ ██████╗ ██╗  ██╗██╗ ██████╗
+    // ██╔════╝ ██╔══██╗██╔══██╗██╔══██╗██║  ██║██║██╔════╝
+    // ██║  ███╗██████╔╝███████║██████╔╝███████║██║██║     
+    // ██║   ██║██╔══██╗██╔══██║██╔═══╝ ██╔══██║██║██║     
+    // ╚██████╔╝██║  ██║██║  ██║██║     ██║  ██║██║╚██████╗
+    //  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝ ╚═════╝
 
 
 
@@ -472,7 +411,7 @@ var Sketchpad = function(canvasId) {
     // ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
 
     /**
-     * A base class for XVar objects to inherit from
+     * A base class for XVar and XWrap objects to inherit from
      * Contains the _value property, and the .value gsetters 
      * @param {Object} value 
      */
@@ -505,6 +444,55 @@ var Sketchpad = function(canvasId) {
             }
 
             return arr;
+        };
+
+        /**
+         * A function that encompasses all update actions for this object
+         * @override
+         * @param  {boolean} forceDeep Update even if parents haven't changed
+         */
+        this._updateElement = function(forceDeep) {
+
+            // REVIEW THIS WHEN DOING ARRAY STUFF
+                // // Check if size of parents has changed
+                // var changed = false;
+                // if (forceDeep) {
+                //     changed = true;
+                // } else {
+                //     for (var l = this._parents.length, i = 0; i < l; i++) {
+                //         var len = this._parents[i]._isArray ? this._parents[i]._value.length : 0;
+                //         if (len != this._parentLengths[i]) {
+                //             this._parentLengths[i] = len;  
+                //             changed = true;
+                //         }
+                //     }
+                // }
+
+                // // If parents changed in size, update 'arrayness' the matching pattern 
+                // if (changed) {
+                //     this._checkArrayness();  // flag this XVAR as array-like
+                //     this._updateMatchPattern();  // recalculate parent matching pattern
+                // }
+
+            // Check if a _preUpdate funtion was registered, and run it
+            if (this._preUpdate) this._preUpdate();
+
+                // // Now call the _update function according to the matching pattern
+                // // Call _update passing extracted parent values according to matching pattern
+                // if (this._isArray) {
+                //     this._value = [];
+                //     for (var i = 0; i < this._matchPattern.length; i++) {
+                //         var slice = this._parentSlice(this._matchPattern[i]);
+                //         this._value.push(this._update(slice, i));
+                //     }
+                // } else {
+                //     var slice = this._parentSlice();
+                //     this._value = this._update(slice, 0);
+                // }
+
+            var slice = this._parentSlice();
+            this._value = this._update(slice, 0);
+
         };
         
     };
@@ -554,6 +542,7 @@ var Sketchpad = function(canvasId) {
     };
 
 
+
     // ██╗  ██╗██╗    ██╗██████╗  █████╗ ██████╗ 
     // ╚██╗██╔╝██║    ██║██╔══██╗██╔══██╗██╔══██╗
     //  ╚███╔╝ ██║ █╗ ██║██████╔╝███████║██████╔╝
@@ -571,6 +560,18 @@ var Sketchpad = function(canvasId) {
         this._type = 'xwrap';
         this._isConstrained = false;
         // this._checkArrayness();  // see if the _value in this element is an array
+
+        /**
+         * Flags this._isArray
+         * @return {Boolean}
+         */
+        this._checkArrayness = function() {
+            this._isArray = Array.isArray ? 
+                Array.isArray(this._value) :                       // first try ECMAScript 5 native
+                toString.call(this._value) === '[object Array]';   // else compare array string
+            return this._isArray;
+        };
+
     };
     XWrap.prototype = Object.create(XBase.prototype);
     XWrap.prototype.constructor = XWrap;
@@ -593,6 +594,24 @@ var Sketchpad = function(canvasId) {
     var XVar = function(value) {
         XBase.call(this, value);
         this._type = 'xvar';
+
+        /**
+         * Flags this._isArray
+         * @return {Boolean}  this._isArray
+         */
+        this._checkArrayness = function() {
+            this._isArray = false;
+
+            for (var l = this._parentLengths.length, i = 0; i < l; i++) {
+                if (this._parentLengths[i]) {  // if any parent's length != 0
+                    this._isArray = true;
+                    break;
+                }
+            }
+
+            return this._isArray;
+        };
+
     };
     XVar.prototype = Object.create(XBase.prototype);
     XVar.prototype.constructor = XVar;
@@ -888,7 +907,6 @@ var Sketchpad = function(canvasId) {
     //////////////////////
     // BASE CONSTRUCTOR //
     //////////////////////
-
     this.var = function(value) {
         if (arguments.length != 1) {
             if (log) console.warn('Sketchpad.js: Invalid arguments for sketch.var()');
