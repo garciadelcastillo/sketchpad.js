@@ -45,7 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1202;
+    this.build = 1203;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -82,8 +82,8 @@ var Sketchpad = function(canvasId) {
 
     // Some constants
     var TAU = 2 * Math.PI,          // ;)
-        TO_DEGS = 180 / Math.PI,
-        TO_RADS = Math.PI / 180;
+        TO_DEGS = 360 / TAU,
+        TO_RADS = TAU / 360;
 
     // Incremental id assignment
     var index = 1;                  // zero is reserved
@@ -124,6 +124,52 @@ var Sketchpad = function(canvasId) {
     };
 
 
+    /**
+     * Returns an array with the _value prop of the 'parents' objs
+     * for specified 'indexArray' (pattern matching)
+     */
+    var parentValuesSlice = function(parents, indexArray) {
+        var arr = [];
+
+        // If no index passed (singleton parents)
+        if (typeof indexArray === 'undefined') {
+            for (var len = parents.length, i = 0; i < len; i++) {
+                arr.push(parents[i]._value);
+            }
+
+        // If array parents 
+        } else {
+            for (var len = parents.length, i = 0; i < len; i++) {
+                arr.push( indexArray[i] === -1 ?   // is singleton?
+                        parents[i]._value :
+                        parents[i]._value[indexArray[i]]);
+            }
+        }
+
+        return arr;
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -148,7 +194,7 @@ var Sketchpad = function(canvasId) {
     this._initialized = false;      // was this correctly initialized
     this._canvas;                   // the html canvas element this Sketchpad is attached to
     this._canvasId;                 // the id of _canvas
-    this._gr;                       // graphic context of the canvas
+    this._ctx;                      // graphic context of the canvas
     this._parentNode;               // this canvas' parent node, used for width/height calculations
     this._canvasWidth;              
     this._canvasHeight;
@@ -183,21 +229,21 @@ var Sketchpad = function(canvasId) {
         //if (DEV) console.log("Rendering frame " + this._frameCount);
         
         // Clean the background
-        this._gr.globalAlpha = 1.00;
-        this._gr.fillStyle = "#ffffff";
-        this._gr.clearRect(0, 0, this._canvasWidth, this._canvasHeight);
-        this._gr.fillRect(0, 0, this._canvasWidth, this._canvasHeight);
+        this._ctx.globalAlpha = 1.00;
+        this._ctx.fillStyle = "#ffffff";
+        this._ctx.clearRect(0, 0, this._canvasWidth, this._canvasHeight);
+        this._ctx.fillRect(0, 0, this._canvasWidth, this._canvasHeight);
         
         // Gross workaround to the 1px line aliasing problem: http://stackoverflow.com/a/3279863/1934487
-        this._gr.translate(0.5, 0.5);
+        this._ctx.translate(0.5, 0.5);
 
-        // Render each element --> TODO: only render Renderable elements
-        for (var i = 0; i < S._elements.length; i++) {
-            // S._elements[i]._render();
+        // Render each element
+        for (var i = 0; i < S._renderableElements.length; i++) {
+            S._renderableElements[i]._render();
         }
 
         // Revert the translation
-        this._gr.translate(-0.5, -0.5);  
+        this._ctx.translate(-0.5, -0.5);  
     };
 
     /**
@@ -352,6 +398,9 @@ var Sketchpad = function(canvasId) {
             if (this._preUpdate) this._preUpdate();
         };
 
+
+
+
     };
 
 
@@ -363,12 +412,286 @@ var Sketchpad = function(canvasId) {
 
 
 
-    //  ██████╗ ██████╗  █████╗ ██████╗ ██╗  ██╗██╗ ██████╗
-    // ██╔════╝ ██╔══██╗██╔══██╗██╔══██╗██║  ██║██║██╔════╝
-    // ██║  ███╗██████╔╝███████║██████╔╝███████║██║██║     
-    // ██║   ██║██╔══██╗██╔══██║██╔═══╝ ██╔══██║██║██║     
-    // ╚██████╔╝██║  ██║██║  ██║██║     ██║  ██║██║╚██████╗
-    //  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝ ╚═════╝
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ██████╗ ███████╗███╗   ██╗██████╗ ███████╗██████╗  █████╗ ██████╗ ██╗     ███████╗
+    // ██╔══██╗██╔════╝████╗  ██║██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔══██╗██║     ██╔════╝
+    // ██████╔╝█████╗  ██╔██╗ ██║██║  ██║█████╗  ██████╔╝███████║██████╔╝██║     █████╗  
+    // ██╔══██╗██╔══╝  ██║╚██╗██║██║  ██║██╔══╝  ██╔══██╗██╔══██║██╔══██╗██║     ██╔══╝  
+    // ██║  ██║███████╗██║ ╚████║██████╔╝███████╗██║  ██║██║  ██║██████╔╝███████╗███████╗
+    // ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝
+
+    /**
+     * A subclass representing all Elements that have a visual renderable component
+     */
+    var Renderable = function() {
+        // calls super
+        Element.call(this);
+        
+        // Renderable properties
+        this._renderable = true;
+        this._visible = true;
+        this._type = "renderable";
+
+        S._renderableElements.push(this);   // store a reference to this object in the renderable collection. @TODO: maintain? Deleting an object would have to look for it in _elements and _renderable... too
+    };
+    Renderable.prototype = Object.create(Element.prototype);
+    Renderable.prototype.constructor = Renderable;
+
+    // Renderable.prototype.setVisible = function(isVisible) {
+
+    // }
+
+
+
+
+    //  ██████╗ ███████╗ ██████╗ ███╗   ███╗███████╗████████╗██████╗ ██╗   ██╗
+    // ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+    // ██║  ███╗█████╗  ██║   ██║██╔████╔██║█████╗     ██║   ██████╔╝ ╚████╔╝ 
+    // ██║   ██║██╔══╝  ██║   ██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗  ╚██╔╝  
+    // ╚██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   
+    //  ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
+
+    /**
+     * A middleware class for geometry-like renderable element.
+     * This may exclude things such as text-tags, images or whatever.
+     */
+    var Geometry = function() {
+        Renderable.call(this);
+
+        this._type = "geometry";
+        this._value = {};               // a _value object storing all core properties
+
+        /**
+         * A function that encompasses all update actions for this object
+         * @override Element._updateElement
+         */
+        this._updateElement = function() {
+
+            // (here we would have parent array checks and deep changes) 
+
+            // Check if a _preUpdate funtion was registered, and run it
+            if (this._preUpdate) this._preUpdate();
+
+            // (here we would do matching pattern updates)
+
+            // var slice = this._parentSlice();
+            var slice = parentValuesSlice(this._parents);
+            this._value = this._update(slice, 0);
+        }
+
+    };
+    Geometry.prototype = Object.create(Renderable.prototype);
+    Geometry.prototype.constructor = Geometry;
+
+
+
+
+
+
+
+    // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
+    // ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
+    // ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   
+    // ██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   
+    // ██║     ╚██████╔╝██║██║ ╚████║   ██║   
+    // ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   
+
+    var Point = function(x, y) {
+        Geometry.call(this);
+
+        this._type = 'point';
+        // this._visible = false;
+
+        // Core properties
+        // this._x = x;
+        // this._y = y;
+        // this._r = r || 1;
+
+        // Core properties
+        this._value = {
+            x: x,
+            y: y
+        };
+
+        this._radius = 1;
+
+    };
+    Point.prototype = Object.create(Geometry.prototype);
+    Point.prototype.constructor = Point;
+
+    Point.prototype._render = function() {
+        S._ctx.strokeStyle = 'black';
+        S._ctx.lineWidth = 1;
+        S._ctx.fillStyle = 'red';
+        S._ctx.beginPath();
+        S._ctx.arc(this._value.x, this._value.y, this._radius, 0, TAU);
+        S._ctx.stroke();
+        S._ctx.fill();
+    };
+
+    /**
+     * Update functions
+     * @type {Object}
+     */
+    Point._updates = {
+
+        fromValues: function(p) {
+            return {
+                x: p[0],
+                y: p[1]
+            }
+        }
+
+    };
+
+    //////////////////////
+    // PUBLIC FACTORIES //
+    //////////////////////
+
+    this.point = function(x, y) {
+        var a = arguments, len = a.length;
+
+        if (len == 2) {
+            if (DEV) console.log('DEBUG: creating point');
+            return build('point', arguments, 'fromValues');
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.point');
+        return undefined;
+    };  
+
+
+
+
+
+
+
+
+
+
+
+    // ██╗     ██╗███╗   ██╗███████╗
+    // ██║     ██║████╗  ██║██╔════╝
+    // ██║     ██║██╔██╗ ██║█████╗  
+    // ██║     ██║██║╚██╗██║██╔══╝  
+    // ███████╗██║██║ ╚████║███████╗
+    // ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝
+
+    var Line = function(x0, y0, x1, y1) {
+        Geometry.call(this);
+
+        this._type = 'line';
+
+        // Core properties
+        this._value = {
+            x0: x0,
+            y0: y0,
+            x1: x1,
+            y1: y1
+        };
+    };
+    Line.prototype = Object.create(Geometry.prototype);
+    Line.prototype.constructor = Line;
+
+    Line.prototype._render = function() {
+        S._ctx.strokeStyle = 'black';
+        S._ctx.lineWidth = 1;
+        S._ctx.beginPath();
+        S._ctx.moveTo(this._value.x0, this._value.y0);
+        S._ctx.lineTo(this._value.x1, this._value.y1);
+        S._ctx.stroke();
+    };
+
+    Line._updates = {
+
+        fromCoordinates: function(p) {
+            return {
+                x0: p[0],
+                y0: p[1],
+                x1: p[2],
+                y1: p[3]
+            }
+        },
+
+        fromPointPoint: function(p) {
+            return {
+                x0: p[0].x,
+                y0: p[0].y,
+                x1: p[1].x,
+                y1: p[1].y
+            }
+        }
+    };
+
+
+    //////////////////////
+    // PUBLIC FACTORIES //
+    //////////////////////
+
+    this.line = function() {
+        var a = arguments, len = a.length;
+
+        switch (len) {
+            case 2:
+                return build('line', a, 'fromPointPoint');
+                break;
+
+            case 4:
+                return build('line', a, 'fromCoordinates');
+                break;
+        } 
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -970,10 +1293,13 @@ var Sketchpad = function(canvasId) {
 
     // An object mapping Object types to private constructors
     var typeMap = {
-        'element'  : Element,
-        'xbase'    : XBase,
-        'xwrap'    : XWrap,
-        'xvar'     : XVar
+        'element'   : Element,
+        'geometry'  : Geometry,
+        'point'     : Point,
+        'line'      : Line,
+        'xbase'     : XBase,
+        'xwrap'     : XWrap,
+        'xvar'      : XVar
     };
 
 
@@ -993,7 +1319,7 @@ var Sketchpad = function(canvasId) {
     if (this._canvas) {
         // init canvas
         // this.style = new this.Style({});
-        this._gr = this._canvas.getContext('2d');
+        this._ctx = this._canvas.getContext('2d');
         this._parentNode = this._canvas.parentNode;
         this._canvasWidth = $(this._parentNode).innerWidth();
         this._canvasHeight = $(this._parentNode).innerHeight();
