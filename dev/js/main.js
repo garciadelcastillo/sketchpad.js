@@ -41,13 +41,38 @@ var pad = new Sketchpad('sketchPadCanvas');
 
 // var node1 = pad.node(100, 200);
 
-var a = pad.var(100);
+
+
+
+// var a = pad.var(100);
+
+// var A = pad.node(100, 100),
+//     B = pad.node(200, 100);
+
+// var AB = pad.line(A, B);
+
+// var C = AB.center();
+
+
+// var X = pad.var(20), 
+//     Y = pad.var(5);
+
+// var vec = pad.vector(X, Y);
+// vec.setRenderPosition(125, 125);
+
+// var Ax = A.x(),
+//     By = B.y();
+// var vec2 = pad.vector(Ax, By);
+// vec.setRenderPosition(125, 225);
+
+
 
 var A = pad.node(100, 100),
     B = pad.node(200, 100);
 
 var AB = pad.line(A, B);
 
-var C = AB.center();
+var vector = pad.vector(AB.x1(), AB.y1());
+
 
 pad.autoNames();

@@ -45,7 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1205;
+    this.build = 1206;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -189,6 +189,41 @@ var Sketchpad = function(canvasId) {
             }
         };
     };
+
+    /**
+     * Given a coreProperty name, it returns an update function that 
+     * reads that value from its single parent
+     * @param  {String} coreProperty
+     * @return {Function}              
+     */
+    var singleParentCorePropertySpawner = function(coreProperty) {
+        return function(p) {
+            return p[0][coreProperty];
+        }
+    };
+
+    /**
+     * Given a class and an object with 'coreProperty: objectType' pairs, 
+     * it binds methods to that prototype that return linked children objects
+     * @param  {Class} clazz     
+     * @param  {Object} coreProps 
+     */
+    var bindCorePropertiesSpawners = function(clazz, coreProps) {
+        for (var prop in coreProps) {
+            if (coreProps.hasOwnProperty(prop)) {
+                (function(spawnProp) {
+                    clazz.prototype[spawnProp] = function() {
+                        return typeof this._properties[spawnProp] !== 'undefined' ?
+                                this._properties[spawnProp] : 
+                                this._register(spawnProp, build(coreProps[spawnProp], [this], 'fromValue', {
+                                    '_update': singleParentCorePropertySpawner(spawnProp)
+                                }));
+                    }
+                }(prop));
+            }
+        }
+    };
+
 
 
 
@@ -563,6 +598,85 @@ var Sketchpad = function(canvasId) {
 
 
 
+    // ██╗   ██╗███████╗ ██████╗████████╗ ██████╗ ██████╗ 
+    // ██║   ██║██╔════╝██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗
+    // ██║   ██║█████╗  ██║        ██║   ██║   ██║██████╔╝
+    // ╚██╗ ██╔╝██╔══╝  ██║        ██║   ██║   ██║██╔══██╗
+    //  ╚████╔╝ ███████╗╚██████╗   ██║   ╚██████╔╝██║  ██║
+    //   ╚═══╝  ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+    var Vector = function(x, y) {
+        Geometry.call(this);
+
+        this._type = 'vector';
+        // this._visible = false;
+
+        this._value = {
+            x: x, 
+            y: y
+        };
+
+        // Some values for rendering purposes
+        this._renderValues = {
+            x: 0, 
+            y: 0
+        };
+    };
+    Vector.prototype = Object.create(Geometry.prototype);
+    Vector.prototype.constructor = Vector;        
+
+    Vector.coreProperties = {
+        'x' : 'xvar',
+        'y' : 'xvar'
+    };
+    bindCorePropertiesSpawners(Vector, Vector.coreProperties);
+
+    Vector.prototype._render = function() {
+        S._ctx.strokeStyle = 'red';
+        S._ctx.lineWidth = 1;
+        S._ctx.beginPath();
+        S._ctx.arc(this._renderValues.x + this._value.x, this._renderValues.y + this._value.y, 1, 0, TAU);
+        S._ctx.moveTo(this._renderValues.x, this._renderValues.y);
+        S._ctx.lineTo(this._renderValues.x + this._value.x, this._renderValues.y + this._value.y);
+        S._ctx.stroke();
+        S._ctx.closePath();
+    };
+
+    Vector.prototype.setRenderPosition = function(x, y) {
+        this._renderValues = {
+            x: x, 
+            y: y
+        };
+    };
+
+    /**
+     * Update functions
+     * @type {Object}
+     */
+    Vector._updates = {
+        vectorFromCoordinates: function(p) {
+            return {
+                x: p[0],
+                y: p[1]
+            };
+        },
+    };
+
+    //////////////////////
+    // PUBLIC FACTORIES //
+    //////////////////////
+    this.vector = function(x, y) {
+        var a = arguments, len = a.length;
+
+        if (len == 2) {
+            return build('vector', arguments, 'vectorFromCoordinates');
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.vector');
+        return undefined;
+    };  
+
+
+
     // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
     // ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
     // ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   
@@ -587,6 +701,12 @@ var Sketchpad = function(canvasId) {
     Point.prototype = Object.create(Geometry.prototype);
     Point.prototype.constructor = Point;
 
+    Point.coreProperties = {
+        'x' : 'xvar',
+        'y' : 'xvar'
+    };
+    bindCorePropertiesSpawners(Point, Point.coreProperties);
+
     Point.prototype._render = function() {
         S._ctx.strokeStyle = 'black';
         S._ctx.lineWidth = 1;
@@ -595,6 +715,7 @@ var Sketchpad = function(canvasId) {
         S._ctx.arc(this._value.x, this._value.y, this._radius, 0, TAU);
         S._ctx.stroke();
         S._ctx.fill();
+        S._ctx.closePath();
     };
 
     /**
@@ -681,6 +802,12 @@ var Sketchpad = function(canvasId) {
     Node.prototype = Object.create(Point.prototype);
     Node.prototype.constructor = Node;
 
+    Node.coreProperties = {
+        'x' : 'xvar',
+        'y' : 'xvar'
+    };
+    bindCorePropertiesSpawners(Node, Node.coreProperties);
+
     Node.prototype._render = function() {
         S._ctx.strokeStyle = 'black';
         S._ctx.lineWidth = 1.5;
@@ -689,7 +816,43 @@ var Sketchpad = function(canvasId) {
         S._ctx.arc(this._value.x, this._value.y, this._radius, 0, TAU);
         S._ctx.stroke();
         S._ctx.fill();
+        S._ctx.closePath();
     };
+
+    
+
+
+
+
+    // for (var prop in protos) {
+    //     if (protos.hasOwnProperty(prop)) {
+    //         // Immediately invoke the function to lock in the state of 'prop' on closure
+    //         (function(thisProp) {
+    //             clazz.prototype[thisProp] = function() {  // @todo a programmatic function name could be added here to help debugging?
+    //                 return typeof this._properties[thisProp] !== 'undefined' ?
+    //                         this._properties[thisProp] :
+    //                         this._register(thisProp, build(returnType, [this], protos[thisProp]));
+    //             }
+    //         }(prop));
+    //     }
+    // };
+
+
+
+
+
+    // Node.prototype.x = function() {
+    //     return typeof this._properties['x'] !== 'undefined' ?
+    //             this._properties['x'] :
+    //             this._register('x', build('xvar', [this], 'xvarXProperty'));
+    // };
+
+    // Node.prototype.y = function() {
+    //     return typeof this._properties['y'] !== 'undefined' ?
+    //             this._properties['y'] :
+    //             this._register('y', build('xvar', [this], 'xvarYProperty'));
+    // };
+
 
     /**
      * Update functions
@@ -744,6 +907,14 @@ var Sketchpad = function(canvasId) {
     Line.prototype = Object.create(Geometry.prototype);
     Line.prototype.constructor = Line;
 
+    Line.coreProperties = {
+        'x0' : 'xvar',
+        'y0' : 'xvar',
+        'x1' : 'xvar',
+        'y1' : 'xvar'
+    };
+    bindCorePropertiesSpawners(Line, Line.coreProperties);
+
     Line.prototype._render = function() {
         S._ctx.strokeStyle = 'black';
         S._ctx.lineWidth = 1;
@@ -751,6 +922,7 @@ var Sketchpad = function(canvasId) {
         S._ctx.moveTo(this._value.x0, this._value.y0);
         S._ctx.lineTo(this._value.x1, this._value.y1);
         S._ctx.stroke();
+        S._ctx.closePath();
     };
 
     /**
@@ -810,13 +982,6 @@ var Sketchpad = function(canvasId) {
         console.error('Sketchpad: invalid arguments for Sketchpad.line');
         return undefined;
     };
-
-
-
-
-
-
-
 
 
 
@@ -1342,6 +1507,19 @@ var Sketchpad = function(canvasId) {
         // A dummy update, will in fact be overriden by the custom callback
         compose: function(p) {
             return p[0];
+        },
+
+
+        /////////////////////////////////
+        // CHARACTERISTIC PROPS (TEMP) //
+        /////////////////////////////////
+
+        xvarXProperty: function(p) {
+            return p[0].x;
+        },
+
+        xvarYProperty: function(p) {
+            return p[0].y;
         }
 
     };
@@ -1445,6 +1623,7 @@ var Sketchpad = function(canvasId) {
     var typeMap = {
         'element'   : Element,
         'geometry'  : Geometry,
+        'vector'    : Vector,
         'point'     : Point,
         'node'      : Node,
         'line'      : Line,
