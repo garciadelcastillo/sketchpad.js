@@ -45,7 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1206;
+    this.build = 1207;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -659,6 +659,13 @@ var Sketchpad = function(canvasId) {
                 y: p[1]
             };
         },
+
+        vectorFromPointPoint: function(p) {
+            return {
+                x: p[1].x - p[0].x,
+                y: p[1].y - p[0].y
+            }
+        }
     };
 
     //////////////////////
@@ -673,7 +680,18 @@ var Sketchpad = function(canvasId) {
 
         console.error('Sketchpad: invalid arguments for Sketchpad.vector');
         return undefined;
-    };  
+    };
+
+    this.vector.twoPoints = function(startPoint, endPoint) {
+        var a = arguments, len = a.length;
+
+        if (len == 2) {
+            return build('vector', arguments, 'vectorFromPointPoint');
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.vector.twoPoints');
+        return undefined;
+    };
 
 
 
@@ -819,41 +837,6 @@ var Sketchpad = function(canvasId) {
         S._ctx.closePath();
     };
 
-    
-
-
-
-
-    // for (var prop in protos) {
-    //     if (protos.hasOwnProperty(prop)) {
-    //         // Immediately invoke the function to lock in the state of 'prop' on closure
-    //         (function(thisProp) {
-    //             clazz.prototype[thisProp] = function() {  // @todo a programmatic function name could be added here to help debugging?
-    //                 return typeof this._properties[thisProp] !== 'undefined' ?
-    //                         this._properties[thisProp] :
-    //                         this._register(thisProp, build(returnType, [this], protos[thisProp]));
-    //             }
-    //         }(prop));
-    //     }
-    // };
-
-
-
-
-
-    // Node.prototype.x = function() {
-    //     return typeof this._properties['x'] !== 'undefined' ?
-    //             this._properties['x'] :
-    //             this._register('x', build('xvar', [this], 'xvarXProperty'));
-    // };
-
-    // Node.prototype.y = function() {
-    //     return typeof this._properties['y'] !== 'undefined' ?
-    //             this._properties['y'] :
-    //             this._register('y', build('xvar', [this], 'xvarYProperty'));
-    // };
-
-
     /**
      * Update functions
      * @type {Object}
@@ -879,6 +862,14 @@ var Sketchpad = function(canvasId) {
         console.error('Sketchpad: invalid arguments for Sketchpad.node');
         return undefined;
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -983,6 +974,97 @@ var Sketchpad = function(canvasId) {
         return undefined;
     };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ██████╗ ██╗      █████╗ ███╗   ██╗███████╗
+    // ██╔══██╗██║     ██╔══██╗████╗  ██║██╔════╝
+    // ██████╔╝██║     ███████║██╔██╗ ██║█████╗  
+    // ██╔═══╝ ██║     ██╔══██║██║╚██╗██║██╔══╝  
+    // ██║     ███████╗██║  ██║██║ ╚████║███████╗
+    // ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝
+                                              
+    var Plane = function(centerPoint, xAxis) {
+        Geometry.call(this);
+
+        this._type = 'plane';
+
+        // Core properties
+        this._value = {
+            center: centerPoint,
+            x: xAxis
+        };
+
+    };
+    Plane.prototype = Object.create(Geometry.prototype);
+    Plane.prototype.constructor = Plane;
+
+    Plane.coreProperties = {
+        'center' : 'point',
+        'x' : 'vector'
+    };
+    bindCorePropertiesSpawners(Plane, Plane.coreProperties);
+
+    Plane.prototype._render = function() {
+        var ang = Math.atan2(this._value.x.y, this._value.x.x);  // could bind it like pad.var.atan2?
+        var len = Math.sqrt(this._value.x.y * this._value.x.y + 
+                this._value.x.x * this._value.x.x);
+        
+        S._ctx.strokeStyle = 'blue';
+        S._ctx.lineWidth = 1;
+
+        S._ctx.save();
+        S._ctx.translate(this._value.center.x, this._value.center.y);
+        S._ctx.beginPath();
+        S._ctx.moveTo(0, 0);
+        S._ctx.lineTo(this._value.x.x, this._value.x.y);
+        S._ctx.stroke();
+        S._ctx.closePath();
+        
+        S._ctx.rotate(ang);
+        S._ctx.lineWidth = 0.5;
+        S._ctx.strokeRect(-len, -len, 2 * len, 2 * len);
+
+        S._ctx.restore();
+    };
+
+    /**
+     * Update functions
+     * @type {Object}
+     */
+    Plane._updates = {
+
+        planeFromPointVector: function(p) {
+            return {
+                center: p[0],
+                x: p[1]
+            }
+        }
+
+    };
+
+    //////////////////////
+    // PUBLIC FACTORIES //
+    //////////////////////
+
+    this.plane = function(center, xAxis) {
+        if (arguments.length != 2) {
+            console.error('Sketchpad: invalid arguments for Sketchpad.plane');
+            return undefined;
+        };
+
+        return build('plane', arguments, 'planeFromPointVector')
+    };
 
 
 
@@ -1627,6 +1709,7 @@ var Sketchpad = function(canvasId) {
         'point'     : Point,
         'node'      : Node,
         'line'      : Line,
+        'plane'     : Plane,
         'xbase'     : XBase,
         'xwrap'     : XWrap,
         'xvar'      : XVar

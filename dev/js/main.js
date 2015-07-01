@@ -67,12 +67,27 @@ var pad = new Sketchpad('sketchPadCanvas');
 
 
 
+// var A = pad.node(100, 100),
+//     B = pad.node(200, 100);
+
+// var AB = pad.line(A, B);
+
+// var vector = pad.vector(AB.x1(), AB.y1());
+
+
+
+
+var x = pad.var(50),
+    y = pad.var(25);
+
 var A = pad.node(100, 100),
-    B = pad.node(200, 100);
+    X = pad.vector(x, y);
 
-var AB = pad.line(A, B);
+X.setVisible(false);
 
-var vector = pad.vector(AB.x1(), AB.y1());
+var plane = pad.plane(A, X);
+
+
 
 
 pad.autoNames();
