@@ -45,7 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1203;
+    this.build = 1204;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -84,6 +84,25 @@ var Sketchpad = function(canvasId) {
     var TAU = 2 * Math.PI,          // ;)
         TO_DEGS = 360 / TAU,
         TO_RADS = TAU / 360;
+
+    /**
+     * This controls whether if a 0.5px drawing translation is effective
+     * to avoid aliading problems. 
+     * Weird, but this effect has completely opposite effects on Chr and FF,
+     * should implement browser recognition and discrimination?
+     *
+     * @ref http://stackoverflow.com/a/3279863/1934487
+     * @type {Boolean}
+     */
+    var ANTIALIASING = true;
+
+    /**
+     * Proportional extension of object shape for dragging purposes.
+     * Eg: a value of 1 limits the dragging area to strictly the shape, 
+     * a value of 2 offsets this area to twice its boundary
+     * @type {Number}
+     */
+    var DRAG_TOLERANCE = 1.3; 
 
     // Incremental id assignment
     var index = 1;                  // zero is reserved
@@ -149,6 +168,27 @@ var Sketchpad = function(canvasId) {
         return arr;
     };
 
+    /**
+     * A function that binds a set of characteristic-object spawning methods to 
+     * a class' proto
+     * @param  {Class} clazz
+     * @param  {String} returnType 
+     * @param  {Object} protos
+     */
+    var attachCharacteristicObjectsProtos = function(clazz, returnType, protos) {
+        for (var prop in protos) {
+            if (protos.hasOwnProperty(prop)) {
+                // Immediately invoke the function to lock in the state of 'prop' on closure
+                (function(thisProp) {
+                    clazz.prototype[thisProp] = function() {  // @todo a programmatic function name could be added here to help debugging?
+                        return typeof this._properties[thisProp] !== 'undefined' ?
+                                this._properties[thisProp] :
+                                this._register(thisProp, build(returnType, [this], protos[thisProp]));
+                    }
+                }(prop));
+            }
+        };
+    };
 
 
 
@@ -235,15 +275,15 @@ var Sketchpad = function(canvasId) {
         this._ctx.fillRect(0, 0, this._canvasWidth, this._canvasHeight);
         
         // Gross workaround to the 1px line aliasing problem: http://stackoverflow.com/a/3279863/1934487
-        this._ctx.translate(0.5, 0.5);
+        if (ANTIALIASING) this._ctx.translate(0.5, 0.5);
 
         // Render each element
         for (var i = 0; i < S._renderableElements.length; i++) {
-            S._renderableElements[i]._render();
+            if (S._renderableElements[i]._visible) S._renderableElements[i]._render();
         }
 
         // Revert the translation
-        this._ctx.translate(-0.5, -0.5);  
+        if (ANTIALIASING) this._ctx.translate(-0.5, -0.5);  
     };
 
     /**
@@ -456,9 +496,10 @@ var Sketchpad = function(canvasId) {
     Renderable.prototype = Object.create(Element.prototype);
     Renderable.prototype.constructor = Renderable;
 
-    // Renderable.prototype.setVisible = function(isVisible) {
-
-    // }
+    Renderable.prototype.setVisible = function(isVisible) {
+        this._visible = isVisible;
+        return this._visible;
+    };
 
 
 
@@ -508,6 +549,8 @@ var Sketchpad = function(canvasId) {
 
 
 
+
+
     // ██████╗  ██████╗ ██╗███╗   ██╗████████╗
     // ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝
     // ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   
@@ -522,18 +565,12 @@ var Sketchpad = function(canvasId) {
         // this._visible = false;
 
         // Core properties
-        // this._x = x;
-        // this._y = y;
-        // this._r = r || 1;
-
-        // Core properties
         this._value = {
             x: x,
             y: y
         };
 
         this._radius = 1;
-
     };
     Point.prototype = Object.create(Geometry.prototype);
     Point.prototype.constructor = Point;
@@ -541,11 +578,21 @@ var Sketchpad = function(canvasId) {
     Point.prototype._render = function() {
         S._ctx.strokeStyle = 'black';
         S._ctx.lineWidth = 1;
-        S._ctx.fillStyle = 'red';
+        S._ctx.fillStyle = 'white';
         S._ctx.beginPath();
         S._ctx.arc(this._value.x, this._value.y, this._radius, 0, TAU);
         S._ctx.stroke();
         S._ctx.fill();
+    };
+
+    /**
+     * Sets the (x, y) coordinates of the Point
+     * @TODO  Check if Point is constrained by parents
+     */
+    Point.prototype.setPosition = function(x, y) {
+        this._value.x = x;
+        this._value.y = y;
+        this._updateChildren();
     };
 
     /**
@@ -554,11 +601,32 @@ var Sketchpad = function(canvasId) {
      */
     Point._updates = {
 
-        fromValues: function(p) {
+        pointFromCoordinates: function(p) {
             return {
                 x: p[0],
                 y: p[1]
-            }
+            };
+        },
+
+        centerPointOfLine: function(p) {
+            return {
+                x: p[0].x0 + 0.5 * (p[0].x1 - p[0].x0),
+                y: p[0].y0 + 0.5 * (p[0].y1 - p[0].y0)
+            };
+        },
+
+        startPointOfLine: function(p) {
+            return {
+                x: p[0].x0,
+                y: p[0].y0
+            };
+        },
+
+        endPointOfLine: function(p) {
+            return {
+                x: p[0].x1,
+                y: p[0].y1
+            };
         }
 
     };
@@ -571,8 +639,8 @@ var Sketchpad = function(canvasId) {
         var a = arguments, len = a.length;
 
         if (len == 2) {
-            if (DEV) console.log('DEBUG: creating point');
-            return build('point', arguments, 'fromValues');
+            // if (DEV) console.log('DEBUG: creating point');
+            return build('point', arguments, 'pointFromCoordinates');
         }
 
         console.error('Sketchpad: invalid arguments for Sketchpad.point');
@@ -582,8 +650,60 @@ var Sketchpad = function(canvasId) {
 
 
 
+    // ███╗   ██╗ ██████╗ ██████╗ ███████╗
+    // ████╗  ██║██╔═══██╗██╔══██╗██╔════╝
+    // ██╔██╗ ██║██║   ██║██║  ██║█████╗  
+    // ██║╚██╗██║██║   ██║██║  ██║██╔══╝  
+    // ██║ ╚████║╚██████╔╝██████╔╝███████╗
+    // ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝
+    /**
+     * Base Node class, represents a Point object that can be dragged under its free constrains
+     */
+    var Node = function(x, y) {
+        Point.call(this, x, y);
 
+        this._type = 'node';
+        this._visible = true;
+        this._radius = 4;
+    };
+    Node.prototype = Object.create(Point.prototype);
+    Node.prototype.constructor = Node;
 
+    Node.prototype._render = function() {
+        S._ctx.strokeStyle = 'black';
+        S._ctx.lineWidth = 1.5;
+        S._ctx.fillStyle = 'white';
+        S._ctx.beginPath();
+        S._ctx.arc(this._value.x, this._value.y, this._radius, 0, TAU);
+        S._ctx.stroke();
+        S._ctx.fill();
+    };
+
+    /**
+     * Update functions
+     * @type {Object}
+     */
+    Node._updates = {
+        nodeFromCoordinates: function(p) {
+            return {
+                x: p[0],
+                y: p[1]
+            };
+        }
+    }
+
+    ///////////////////////
+    // PUBLIC FACTORIES  //
+    ///////////////////////
+
+    this.node = function(x, y) {
+        var a = arguments, len = a.length;
+
+        if (len == 2) return build('node', arguments, 'nodeFromCoordinates');
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.node');
+        return undefined;
+    };
 
 
 
@@ -621,9 +741,24 @@ var Sketchpad = function(canvasId) {
         S._ctx.stroke();
     };
 
+    /**
+     * Attach a set of simple characteristic-object-generation 
+     * methods to the proto. 
+     */
+    var lineProtos = {
+        'center'    : 'centerPointOfLine',
+        'start'     : 'startPointOfLine',
+        'end'       : 'endPointOfLine'
+    };
+    attachCharacteristicObjectsProtos(Line, 'point', lineProtos);
+
+    /**
+     * Update functions
+     * @type {Object}
+     */
     Line._updates = {
 
-        fromCoordinates: function(p) {
+        lineFromCoordinates: function(p) {
             return {
                 x0: p[0],
                 y0: p[1],
@@ -632,7 +767,7 @@ var Sketchpad = function(canvasId) {
             }
         },
 
-        fromPointPoint: function(p) {
+        lineFromPointPoint: function(p) {
             return {
                 x0: p[0].x,
                 y0: p[0].y,
@@ -652,13 +787,16 @@ var Sketchpad = function(canvasId) {
 
         switch (len) {
             case 2:
-                return build('line', a, 'fromPointPoint');
+                return build('line', a, 'lineFromPointPoint');
                 break;
 
             case 4:
-                return build('line', a, 'fromCoordinates');
+                return build('line', a, 'lineFromCoordinates');
                 break;
-        } 
+        }
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.line');
+        return undefined;
     };
 
 
@@ -1296,6 +1434,7 @@ var Sketchpad = function(canvasId) {
         'element'   : Element,
         'geometry'  : Geometry,
         'point'     : Point,
+        'node'      : Node,
         'line'      : Line,
         'xbase'     : XBase,
         'xwrap'     : XWrap,
@@ -1372,16 +1511,21 @@ var Sketchpad = function(canvasId) {
         downY: 0,
         dragObject: null,
 
+        /**
+         * Calculate twice the distance to the Node, useful for comparisons to avoid sqrting
+         */
         dist2ToNode: function (x, y, node) {
-            return (node.x - x) * (node.x - x) + (node.y - y) * (node.y - y);
+            return (node._value.x - x) * (node._value.x - x) + (node._value.y - y) * (node._value.y - y);
         },
 
         searchNodeToDrag: function (x, y) {
-            // for (var len = S.elements.length, i = 0; i < len; i++) {
             for (var i = S._elements.length - 1; i > -1; i--) {  // loop backwards to favour most recent elements
                 var elem = S._elements[i];
-                if (elem.constructor != S.Node) continue;
-                if (this.dist2ToNode(x, y, elem) < 25) return elem;     // <--- SUPER DIRTY, NEEDS IMPROV
+                if (elem._type != 'node') continue;
+                if (this.dist2ToNode(x, y, elem) < DRAG_TOLERANCE * elem._radius * elem._radius ) {
+                    if (DEV) console.log("DEBUG: Dragging node id #" + elem._id);
+                    return elem;
+                }
             }
             return null;
         },
@@ -1401,7 +1545,7 @@ var Sketchpad = function(canvasId) {
                 S.mouse.dragObject.setPosition(S.mouse.x, S.mouse.y);
                 // S.mouse.dragObject.x = S.mouse.x;
                 // S.mouse.dragObject.y = S.mouse.y;
-                S.mouse.dragObject.updateChildren();
+                // S.mouse.dragObject.updateChildren();  // this is part of _updateChildren
             }
         },
 
