@@ -45,7 +45,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1204;
+    this.build = 1205;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -297,6 +297,17 @@ var Sketchpad = function(canvasId) {
         S._frameCount++;
     };
 
+    /**
+     * Searches the context (usually the window object) for properties with 
+     * the same name as this pad's elements, and assigns them names correspondingly
+     */
+    this.autoNames = function(context) {
+        var ctx = context || window;
+        this._elements.forEach(function(e) {
+            if (!e._name) e._findName(ctx);
+        });
+    };
+
 
 
 
@@ -350,6 +361,7 @@ var Sketchpad = function(canvasId) {
         this._parentLengths = [];
         this._matchPatternType = 'longest-list';    // default behavior
         this._matchPattern = [];                    // an array with indices representing the match pattern
+
 
 
         /**
@@ -438,21 +450,21 @@ var Sketchpad = function(canvasId) {
             if (this._preUpdate) this._preUpdate();
         };
 
-
-
-
+        /**
+         * Searches for this element in the context (usually the window object) 
+         * and retrieves its property as object name.
+         * @return {boolean} Returns the name if found an instance of this object, false otherwise
+         */
+        this._findName = function(context) {
+            for (var a in context) {
+                if (context.hasOwnProperty(a) && context[a] == this) {  // deprecation warning ?!
+                    this._name = a;
+                    return a;
+                }
+            }
+            return false;
+        };
     };
-
-
-
-
-
-
-
-
-
-
-
 
 
 

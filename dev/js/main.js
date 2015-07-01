@@ -43,9 +43,11 @@ var pad = new Sketchpad('sketchPadCanvas');
 
 var a = pad.var(100);
 
-var A = pad.node(a, 100),
+var A = pad.node(100, 100),
     B = pad.node(200, 100);
 
 var AB = pad.line(A, B);
 
 var C = AB.center();
+
+pad.autoNames();
