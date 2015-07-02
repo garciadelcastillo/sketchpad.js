@@ -32,8 +32,7 @@
 var Sketchpad = function(canvasId) {
 
     // Turn development mode on for extra-verbose console logs
-    var DEV = true;  
-
+    var DEV = true;
 
 
     //  ██████╗ ██████╗ ██████╗ ███████╗
@@ -45,7 +44,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1207;
+    this.build = 1208;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -103,6 +102,13 @@ var Sketchpad = function(canvasId) {
      * @type {Number}
      */
     var DRAG_TOLERANCE = 1.3; 
+
+    /**
+     * How much bigger from its real size planes should render, 
+     * without scaling strokes
+     * @type {Number}
+     */
+    var PLANE_RENDER_FACTOR = 50; 
 
     // Incremental id assignment
     var index = 1;                  // zero is reserved
@@ -343,6 +349,15 @@ var Sketchpad = function(canvasId) {
         });
     };
 
+    /**
+     * Sets the default render magnification factor for Planes
+     * @param {Number} factor
+     */
+    this.setPlaneRenderFactor = function(factor) {
+        PLANE_RENDER_FACTOR = size;
+        return PLANE_RENDER_FACTOR;
+    };
+
 
 
 
@@ -471,7 +486,7 @@ var Sketchpad = function(canvasId) {
          */
         this._updateChildren = function() {
             this._children.forEach(function(elem) {
-                if (DEV) console.log('DEBUG: updating "' + elem._name + '", id#' + elem._id);
+                // if (DEV) console.log('DEBUG: updating "' + elem._name + '", id#' + elem._id);
                 elem._updateElement();
                 elem._updateChildren();
             });
@@ -641,6 +656,11 @@ var Sketchpad = function(canvasId) {
         S._ctx.closePath();
     };
 
+    Vector.prototype.normalize = 
+    Vector.prototype.unitize = function() {
+        return build('vector', [this], 'normalizedVectorFromVector');
+    };
+
     Vector.prototype.setRenderPosition = function(x, y) {
         this._renderValues = {
             x: x, 
@@ -664,6 +684,14 @@ var Sketchpad = function(canvasId) {
             return {
                 x: p[1].x - p[0].x,
                 y: p[1].y - p[0].y
+            }
+        },
+
+        normalizedVectorFromVector: function(p) {
+            var len = util.vectorLength(p[0]);
+            return {
+                x: p[0].x / len,
+                y: p[0].y / len
             }
         }
     };
@@ -746,6 +774,10 @@ var Sketchpad = function(canvasId) {
         this._updateChildren();
     };
 
+    // Point.prototype.transform = function(plane) {
+
+    // };
+
     /**
      * Update functions
      * @type {Object}
@@ -757,6 +789,10 @@ var Sketchpad = function(canvasId) {
                 x: p[0],
                 y: p[1]
             };
+        },
+
+        pointFromPointAndPlane: function(p) {
+
         },
 
         centerPointOfLine: function(p) {
@@ -1009,32 +1045,38 @@ var Sketchpad = function(canvasId) {
     Plane.prototype = Object.create(Geometry.prototype);
     Plane.prototype.constructor = Plane;
 
+    // Plane.coreProperties = {
+    //     'center' : 'point',
+    //     'x' : 'vector'
+    // };
     Plane.coreProperties = {
-        'center' : 'point',
-        'x' : 'vector'
-    };
+        'x' : 'xvar',
+        'y' : 'xvar',
+        'rotation' : 'xvar',
+        'scale' : 'xvar'
+    }
     bindCorePropertiesSpawners(Plane, Plane.coreProperties);
 
     Plane.prototype._render = function() {
-        var ang = Math.atan2(this._value.x.y, this._value.x.x);  // could bind it like pad.var.atan2?
-        var len = Math.sqrt(this._value.x.y * this._value.x.y + 
-                this._value.x.x * this._value.x.x);
-        
         S._ctx.strokeStyle = 'blue';
         S._ctx.lineWidth = 1;
 
         S._ctx.save();
-        S._ctx.translate(this._value.center.x, this._value.center.y);
+        S._ctx.translate(this._value.x, this._value.y);
+        S._ctx.rotate(this._value.rotation);
+        S._ctx.scale(this._value.scale, this._value.scale);  // should stroke scaling be avoided?
+
         S._ctx.beginPath();
         S._ctx.moveTo(0, 0);
-        S._ctx.lineTo(this._value.x.x, this._value.x.y);
+        S._ctx.lineTo(PLANE_RENDER_FACTOR, 0);
+        // S._ctx.lineTo(this._value.scale, 0);
         S._ctx.stroke();
         S._ctx.closePath();
         
-        S._ctx.rotate(ang);
         S._ctx.lineWidth = 0.5;
-        S._ctx.strokeRect(-len, -len, 2 * len, 2 * len);
-
+        S._ctx.strokeRect(-PLANE_RENDER_FACTOR, -PLANE_RENDER_FACTOR, 
+                2 * PLANE_RENDER_FACTOR, 2 * PLANE_RENDER_FACTOR);
+        // S._ctx.strokeRect(-this._value.scale, -this._value.scale, 2 * this._value.scale, 2 * this._value.scale);
         S._ctx.restore();
     };
 
@@ -1046,8 +1088,12 @@ var Sketchpad = function(canvasId) {
 
         planeFromPointVector: function(p) {
             return {
-                center: p[0],
-                x: p[1]
+                // center: p[0],
+                // x: p[1]
+                x: p[0].x,
+                y: p[0].y,
+                rotation: Math.atan2(p[1].y, p[1].x),
+                scale: Math.sqrt(p[1].x * p[1].x + p[1].y * p[1].y)
             }
         }
 
@@ -1719,6 +1765,39 @@ var Sketchpad = function(canvasId) {
 
 
 
+
+
+
+
+    // ██╗   ██╗████████╗██╗██╗     
+    // ██║   ██║╚══██╔══╝██║██║     
+    // ██║   ██║   ██║   ██║██║     
+    // ██║   ██║   ██║   ██║██║     
+    // ╚██████╔╝   ██║   ██║███████╗
+     // ╚═════╝    ╚═╝   ╚═╝╚══════╝
+
+    /**
+     * A private library with self-contained utility functions
+     * @type {Object}
+     */
+    var util = {
+
+        vectorLength: function(vectorProps) {
+            return Math.sqrt(vectorProps.x * vectorProps.x 
+                    + vectorProps.y * vectorProps.y);
+        }
+
+    };
+
+
+
+
+
+
+
+
+
+
     // ██╗███╗   ██╗██╗████████╗
     // ██║████╗  ██║██║╚══██╔══╝
     // ██║██╔██╗ ██║██║   ██║   
@@ -1760,7 +1839,7 @@ var Sketchpad = function(canvasId) {
     } else {
         console.error('Sketchpad: Must initialize Sketchpad with a valid id for a' + 
             ' DOM canvas object, e.g. var pad = new Sketchpad("padCanvasId")');
-        return undefined;
+        //return undefined;
     }
 
 
@@ -1797,7 +1876,7 @@ var Sketchpad = function(canvasId) {
                 var elem = S._elements[i];
                 if (elem._type != 'node') continue;
                 if (this.dist2ToNode(x, y, elem) < DRAG_TOLERANCE * elem._radius * elem._radius ) {
-                    if (DEV) console.log("DEBUG: Dragging node id #" + elem._id);
+                    // if (DEV) console.log("DEBUG: Dragging node id #" + elem._id);
                     return elem;
                 }
             }

@@ -9,3 +9,6 @@
 
 # Ignore private files
 /private
+
+# IDE
+/.idea
