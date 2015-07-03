@@ -44,7 +44,7 @@ var Sketchpad = function(canvasId) {
     
     // Versioning
     this.version = "v0.1.0";
-    this.build = 1209;
+    this.build = 1210;
 
     // jQuery detection
     if (!window.jQuery) {
@@ -360,7 +360,7 @@ var Sketchpad = function(canvasId) {
      * @param {Number} factor
      */
     this.setPlaneRenderFactor = function(factor) {
-        PLANE_RENDER_FACTOR = size;
+        PLANE_RENDER_FACTOR = factor;
         return PLANE_RENDER_FACTOR;
     };
 
@@ -587,6 +587,7 @@ var Sketchpad = function(canvasId) {
         Renderable.call(this);
 
         this._type = "geometry";
+
         this._value = {};               // a _value object storing all core properties
 
         /**
@@ -664,7 +665,15 @@ var Sketchpad = function(canvasId) {
 
     Vector.prototype.normalize = 
     Vector.prototype.unitize = function() {
-        return build('vector', [this], 'normalizedVectorFromVector');
+        return typeof this._properties['unit'] !== 'undefined' ?
+                    this._properties[prop] :
+                    this._register('unit', build('vector', [this], 'normalizedVectorFromVector'));
+    };
+
+    Vector.prototype.angle = function() {
+        return typeof this._properties['angle'] !== 'undefined' ?
+                    this._properties['angle'] :
+                    this._register('angle', build('xvar', [this], 'vectorAngle'));
     };
 
     Vector.prototype.setRenderPosition = function(x, y) {
@@ -965,6 +974,10 @@ var Sketchpad = function(canvasId) {
         S._ctx.closePath();
     };
 
+    Line.prototype.applyTransform = function() {
+        return build('line', [this, arguments[0]], 'lineFromLineAndTransform')
+    };
+
     /**
      * Attach a set of simple characteristic-object-generation 
      * methods to the proto. 
@@ -988,7 +1001,7 @@ var Sketchpad = function(canvasId) {
                 y0: p[1],
                 x1: p[2],
                 y1: p[3]
-            }
+            };
         },
 
         lineFromPointPoint: function(p) {
@@ -997,8 +1010,20 @@ var Sketchpad = function(canvasId) {
                 y0: p[0].y,
                 x1: p[1].x,
                 y1: p[1].y
-            }
+            };
+        },
+
+        lineFromLineAndTransform: function(p) {
+            var s = util.linearTransformation(p[1], {x: p[0].x0, y: p[0].y0}),
+                e = util.linearTransformation(p[1], {x: p[0].x1, y: p[0].y1});
+            return {
+                x0: s.x,
+                y0: s.y,
+                x1: e.x,
+                y1: e.y
+            };
         }
+
     };
 
 
@@ -1128,6 +1153,7 @@ var Sketchpad = function(canvasId) {
 
 
 
+
     // ████████╗██████╗  █████╗ ███╗   ██╗███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗
     // ╚══██╔══╝██╔══██╗██╔══██╗████╗  ██║██╔════╝██╔════╝██╔═══██╗██╔══██╗████╗ ████║
     //    ██║   ██████╔╝███████║██╔██╗ ██║███████╗█████╗  ██║   ██║██████╔╝██╔████╔██║
@@ -1192,6 +1218,31 @@ var Sketchpad = function(canvasId) {
     bindCorePropertiesSpawners(Transform, Transform.coreProperties);
 
     Transform._updates = {
+        transformFromPlane: function(p) {
+            var s = sin(p[0].rotation), 
+                c = cos(p[0].rotation),
+                S = p[0].scale,
+                x = p[0].x,
+                y = p[0].y;
+            return {
+                m00: S * c, m01: -S * s, m02: x,
+                m10: S * s, m11:  S * c, m12: y
+            }
+        },
+
+        transformFromTransforms: function(p) {
+            var len = p.length, out = p[0];
+            for (var i = 1; i < len; i++) {
+                out = util.mat2dMultiplication(p[i], out);  // Matrix pre-multiplication
+            }
+            return out;
+        },
+
+        // @TODO
+        // transformFromTransforms: function(p) {
+
+        // },
+
         translateTransformFromCoordinates: function(p) {
             return {
                 m00: 1, m01: 0, m02: p[0],
@@ -1233,15 +1284,12 @@ var Sketchpad = function(canvasId) {
                 m00: p[0].x, m01:      0, m02: 0,
                 m10:      0, m11: p[0].y, m12: 0
             }
-        },
-
-        transformFromTransforms: function(p) {
-            // Matrix pre-multiplication
-            for (var len = p.length, i = len - 1, out = p[i]; i >= 0; --i) {
-                out = util.mat2dMultiplication(p[i], out);
-            }
-            return out;
         }
+
+
+
+
+
     };
 
 
@@ -1249,23 +1297,57 @@ var Sketchpad = function(canvasId) {
     // PUBLIC FACTORIES //
     //////////////////////
 
-
     /**
-     * Creates a compound affine transformation out of a series of transforms 
-     * passed as arguments. Note: order matters!
-     * @return {Transform} The compound transform
+     * Creates an affine Transformation out of a Plane object
+     * @return {[type]} [description]
      */
-    this.transform = function() {
-        var a = arguments, len = a.length;
+    this.transform = function(plane) {
 
-        for (var i = 0; i < len; i++) {
-            if (a[i]._type != 'transform') {
-                console.error('Sketchpad: invalid arguments for Sketchpad.transform');
-                return undefined;
-            }
+        if (arguments.length == 1 && plane._type == 'plane') {
+            return build('transform', [plane], 'transformFromPlane');
         }
 
-        return build('transform', arguments, 'transformFromTransforms');
+        console.error('Sketchpad: invalid arguments for Sketchpad.transform');
+        return undefined;
+    };
+
+    /**
+     * Concatenates a series of affine transformations out of Transforms
+     * passed as arguments. This function also accepts Planes as arguments, since
+     * they represent a spatial transformation with translation, rotation and scaling ;)
+     * NOTE: ORDER MATTERS!
+     * Arguments must be passed in the order in which they should be executed (their 
+     * order will be internally reversed for pre-multiplication). Example:
+     *     pad.transform(T1, T2, T3);  // will internally do T3*T2**T1*V
+     * 
+     * @return {Transform} The compound transform
+     */
+    this.transform.concat =  // alias
+    this.transform.concatenate = function() {
+        var a = arguments, len = a.length;
+
+        // this should be ontologized... ;)
+        var transforms = true;
+        for (var i = 0; i < len; i++) {
+            if (a[i]._type != 'transform') {
+                transforms = false; 
+                break;
+            }
+        }
+        if (transforms) return build('transform', arguments, 'transformFromTransforms');
+
+        // @TODO
+        // var planes = true;
+        // for (var i = 0; i < len; i++) {
+        //     if (a[i]._type != 'planes') {
+        //         planes = false; 
+        //         break;
+        //     }
+        // }
+        // if (planes) return build('transform', arguments, 'transformFromPlanes');
+
+        console.error('Sketchpad: invalid arguments for Sketchpad.transform.concatenate');
+        return undefined;
     };
 
     this.transform.translation = function() {
@@ -1293,10 +1375,6 @@ var Sketchpad = function(canvasId) {
         return undefined;
     };
 
-    /**
-     * [scale description]
-     * @return {[type]} [description]
-     */
     this.transform.scaling = function() {
         var a = arguments, len = a.length;
 
@@ -1375,7 +1453,8 @@ var Sketchpad = function(canvasId) {
      */
     var XBase = function(value) {
         Element.call(this);
-        this._value = value;
+
+        this._value = value;    
         this._type = 'xbase';
 
         /**
@@ -1671,6 +1750,14 @@ var Sketchpad = function(canvasId) {
             return 2 * p[0];
         },
 
+        negative: function(p) {
+            return -p[0];
+        },
+
+        inverse: function(p) {
+            return 1 / p[0];
+        },
+
         abs: function(p) {
             return Math.abs(p[0]);
         },
@@ -1833,16 +1920,12 @@ var Sketchpad = function(canvasId) {
         },
 
 
-        /////////////////////////////////
-        // CHARACTERISTIC PROPS (TEMP) //
-        /////////////////////////////////
+        ////////////////////////
+        // GEOMETRY FUNCTIONS //
+        ////////////////////////
 
-        xvarXProperty: function(p) {
-            return p[0].x;
-        },
-
-        xvarYProperty: function(p) {
-            return p[0].y;
+        vectorAngle: function(p) {
+            return util.vectorAngleXAxis(p[0]);
         }
 
     };
@@ -1855,6 +1938,8 @@ var Sketchpad = function(canvasId) {
         'not',
         'half',
         'double',
+        'negative',
+        'inverse',
         'abs',
         'sqrt',
         'sin',
@@ -1984,7 +2069,7 @@ var Sketchpad = function(canvasId) {
         },
 
         vectorAngleXAxis: function(vectorProps) {
-            return atan2(vectorProps.y, vectorProps.y);
+            return atan2(vectorProps.y, vectorProps.x);
         },
 
         /**
@@ -2013,6 +2098,9 @@ var Sketchpad = function(canvasId) {
         }
 
     };
+
+    // Temp public alias
+    this._util = util;
 
 
 
